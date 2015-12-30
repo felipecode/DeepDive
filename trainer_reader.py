@@ -4,9 +4,9 @@ import re
 
 from PIL import Image
 
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 100
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 1
 NUM_EPOCHS_PER_DECAY = 10
-batch_size = 50
+batch_size = 1
 MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
 
 
@@ -22,9 +22,9 @@ def read_from_file(tf_records_file):
     # Dimensions of the images in the CIFAR-10 dataset.
     # See http://www.cs.toronto.edu/~kriz/cifar.html for a description of the
     # input format.
-    label_bytes = 1  # 2 for CIFAR-100
-    result.height = 32
-    result.width = 32
+    label_bytes = 184*184*3  # 2 for CIFAR-100
+    result.height = 184
+    result.width = 184
     result.depth = 3
     image_bytes = result.height * result.width * result.depth
     # Every record consists of a label followed by the image, with a
@@ -85,7 +85,7 @@ def _generate_image_and_label_batch(image, label, min_queue_examples):
     capacity=min_queue_examples + 3 * batch_size)
 
   # Display the training images in the visualizer.
-  tf.image_summary('images', images)
+  # tf.image_summary('images', images)
   return images, tf.reshape(label_batch, [batch_size])
 
 def train(total_loss, global_step, learning_rate, lr_decay):
