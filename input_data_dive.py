@@ -23,9 +23,10 @@ import numpy
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
-def extract_images(path):
+def extract_images(path, max_im, max_y, max_x):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
   print 'Loading images...'
+  images = []
   for i in range(2, max_im):
     for j in range(1, max_y):
       for k in range(1, max_x):
@@ -33,10 +34,18 @@ def extract_images(path):
         im = misc.imread(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png')
         images.append(im)
 
-  return images
+  return np.array(images)
 
-def extract_labels(path):
+def extract_single_image(path):
+  """Extract the image and return a 3D uint8 numpy array [y, x, depth]."""
+  print 'Loading image...'
+  im = misc.imread(path)
+
+  return np.array(im)
+
+def extract_labels(path, max_im, max_y, max_x):
   """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
+  labels = []
   print 'Loading labels...'
   for i in range(2, max_im):
     for j in range(1, max_y):
@@ -45,7 +54,7 @@ def extract_labels(path):
         label = misc.imread(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png')
         labels.append(label)
 
-  return labels
+  return np.array(labels)
 
 class DataSet(object):
   def __init__(self, images, labels, fake_data=False, one_hot=False):
@@ -107,8 +116,10 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
 
   path = 'Photo3D/'
 
-  train_images = extract_images(path)
-  train_labels = extract_labels(path)
+  # train_images = extract_images(path, max_im=3, max_y=, max_x=)
+  # train_labels = extract_labels(path, max_im=3, max_y=, max_x=)
+
+  train_image = extract_single_image(path + 'Training/i')
 
   # test_images = extract_images(path)
   # test_labels = extract_labels(path)
