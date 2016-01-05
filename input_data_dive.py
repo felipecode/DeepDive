@@ -16,10 +16,11 @@
 """Functions for downloading and reading MNIST data."""
 from __future__ import absolute_import
 from __future__ import division
-from __future__ import print_function
 import gzip
 import os
-import numpy
+import numpy as np
+import Image
+from scipy import misc
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
@@ -31,7 +32,7 @@ def extract_images(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open train
-        im = misc.imread(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png')
+        im = misc.imread(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
         images.append(im)
 
   return np.array(images)
@@ -39,7 +40,7 @@ def extract_images(path, max_im, max_y, max_x):
 def extract_single_image(path):
   """Extract the image and return a 3D uint8 numpy array [y, x, depth]."""
   print 'Loading image...'
-  im = misc.imread(path)
+  im = Image.open(path).convert('RGB')
 
   return np.array(im)
 
@@ -51,7 +52,7 @@ def extract_labels(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open gt
-        label = misc.imread(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png')
+        label = misc.imread(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
         labels.append(label)
 
   return np.array(labels)
@@ -66,12 +67,12 @@ class DataSet(object):
     self._num_examples = images.shape[0]
     # Convert shape from [num examples, rows, columns, depth]
     # to [num examples, rows*columns] (assuming depth == 1)
-    assert images.shape[3] == 1
+    #assert images.shape[3] == 1
     images = images.reshape(images.shape[0],
-                            images.shape[1] * images.shape[2])
+                            images.shape[1] * images.shape[2]*images.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
-    images = images.astype(numpy.float32)
-    images = numpy.multiply(images, 1.0 / 255.0)
+    images = images.astype(np.float32)
+    images = np.multiply(images, 1.0 / 255.0)
     self._images = images
     self._labels = labels
     self._epochs_completed = 0
@@ -96,8 +97,8 @@ class DataSet(object):
       # Finished epoch
       self._epochs_completed += 1
       # Shuffle the data
-      perm = numpy.arange(self._num_examples)
-      numpy.random.shuffle(perm)
+      perm = np.arange(self._num_examples)
+      np.random.shuffle(perm)
       self._images = self._images[perm]
       self._labels = self._labels[perm]
       # Start next epoch
@@ -106,7 +107,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets(train_dir, fake_data=False, one_hot=False):
+def read_data_sets():
   class DataSets(object):
     pass
   data_sets = DataSets()
@@ -114,24 +115,28 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
 
   VALIDATION_SIZE = 500
 
-  path = 'Photo3D/'
+  path = ''
 
   # train_images = extract_images(path, max_im=3, max_y=, max_x=)
   # train_labels = extract_labels(path, max_im=3, max_y=, max_x=)
 
-  train_image = extract_single_image(path + 'Training/i')
+  train_images = np.array([extract_single_image(path + 'imagepatch.png')])
+
+  train_labels = np.array([extract_single_image(path + 'imagepatch.png')])
+
+  print train_images.shape
 
   # test_images = extract_images(path)
   # test_labels = extract_labels(path)
 
-  validation_images = train_images[:VALIDATION_SIZE]
-  validation_labels = train_labels[:VALIDATION_SIZE]
+  #validation_images = train_images[:VALIDATION_SIZE]
+  #validation_labels = train_labels[:VALIDATION_SIZE]
 
-  train_images = train_images[VALIDATION_SIZE:]
-  train_labels = train_labels[VALIDATION_SIZE:]
+  #train_images = train_images[VALIDATION_SIZE:]
+  #train_labels = train_labels[VALIDATION_SIZE:]
 
   data_sets.train = DataSet(train_images, train_labels)
-  data_sets.validation = DataSet(validation_images, validation_labels)
+  #data_sets.validation = DataSet(validation_images, validation_labels)
   # data_sets.test = DataSet(test_images, test_labels)
 
   return data_sets
