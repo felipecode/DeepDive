@@ -5,6 +5,9 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
+import matplotlib.cm as cm
+import numpy as np
+
 sess = tf.InteractiveSession()
 
 
@@ -33,7 +36,7 @@ def weight_constant(shape,file):
 
 
 def bias_constant(shape,file):
-
+  #TODO VERIFICAR O CSV E COMPARAR COM O RESHAPE DO TENSORFLOW
   your_list = list(read_float_csv(file))
   initial = tf.constant(your_list, shape=shape)
 
@@ -60,16 +63,9 @@ def max_pool_2x2(x):
 
 W_conv1 = weight_constant([1,121,1,38],'w_nonoiseC1.csv')
 
-
-
 W_conv2 = weight_constant([121,1,38,38],'w_nonoiseC2.csv')
 
-
-
-
-
 b_conv1 = bias_constant([38],'w_nonoisebc1.csv')
-
 
 b_conv2 = bias_constant([38],'w_nonoisebc2.csv')
 
@@ -97,22 +93,18 @@ xB = x[:,:,2].reshape(184*184)
 
 x_imageR =  tf.reshape(xR, [-1,184,184,1])
 
-h_convR1 = tf.nn.relu(conv2d(x_imageR, W_conv1) + b_conv1)
-
-
-h_convR2 = tf.nn.relu(conv2d(h_convR1, W_conv2) + b_conv2)
+h_convR1 = tf.sigmoid(conv2d(x_imageR, W_conv1) + b_conv1)
+h_convR2 = tf.sigmoid(conv2d(h_convR1, W_conv2) + b_conv2)
 
 x_imageG =  tf.reshape(xG, [-1,184,184,1])
 
-h_convG1 = tf.nn.relu(conv2d(x_imageG, W_conv1) + b_conv1)
-
-h_convG2 = tf.nn.relu(conv2d(h_convG1, W_conv2) + b_conv2)
+h_convG1 = tf.sigmoid(conv2d(x_imageG, W_conv1) + b_conv1)
+h_convG2 = tf.sigmoid(conv2d(h_convG1, W_conv2) + b_conv2)
 
 x_imageB =  tf.reshape(xB, [-1,184,184,1])
 
-h_convB1 = tf.nn.relu(conv2d(x_imageB, W_conv1) + b_conv1)
-
-h_convB2 = tf.nn.relu(conv2d(h_convB1, W_conv2) + b_conv2)
+h_convB1 = tf.sigmoid(conv2d(x_imageB, W_conv1) + b_conv1)
+h_convB2 = tf.sigmoid(conv2d(h_convB1, W_conv2) + b_conv2)
 
 
 
@@ -121,7 +113,14 @@ h_conv1 = tf.concat(3,[h_convR2,h_convG2,h_convB2])
 
 # DENOISE STAGE 
 
+sess.run(tf.initialize_all_variables())
+sess.run(h_convR2)
 
+print h_convR2.eval().shape
+
+implot = plt.imshow(h_convR2.eval()[0,:,:,14],cmap= cm.Greys_r)
+
+plt.show()
 
 
 W_noise1 = weight_constant([16,16,114,512],'w_nonoiseC1_sec.csv')
@@ -130,7 +129,7 @@ W_noise1 = weight_constant([16,16,114,512],'w_nonoiseC1_sec.csv')
 W_noise2 = weight_constant([1,1,512,512],'w_nonoiseC2_sec.csv')
 
 
-W_noise3 = weight_constant([8,8,512,3],'w_nonoiseC3_sec.csv')
+W_noise3 = weight_constant([8,8,512,192],'w_nonoiseC3_sec.csv')
 
 
 
@@ -141,30 +140,44 @@ b_noise1 = bias_constant([512],'w_nonoisebc1_sec.csv')
 b_noise2 = bias_constant([512],'w_nonoisebc2_sec.csv')
 
 
-#b_noise3 = bias_constant([192],'w_nonoisebc3_sec.csv')
+b_noise3 = bias_constant([192],'w_nonoisebc3_sec.csv')
 
 
 
 
-h_noise1 = tf.nn.relu(conv2d(h_conv1, W_noise1) + b_noise1)
+h_noise1 = tf.sigmoid(conv2d(h_conv1, W_noise1) + b_noise1)
 
 
 
-h_noise2 = tf.nn.relu(conv2d(h_noise1, W_noise2) + b_noise2)
+h_noise2 = tf.sigmoid(conv2d(h_noise1, W_noise2) + b_noise2)
 
 print h_noise2
 
 
-h_noise3 = tf.nn.relu(conv2dS(h_noise2, W_noise3))
+h_noise3 = tf.sigmoid(conv2dS(h_noise2, W_noise3) + b_noise3)
 
 
 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 sess.run(tf.initialize_all_variables())
 sess.run(h_noise3)
 
-print h_noise3.eval().shape
 
-implot = plt.imshow(h_noise3.eval()[0])
+
+image =h_noise3.eval()[0]
+sumImage = image[:,:,0]
+for i in range(1,192):
+  sumImage= image[:,:,i] + sumImage
+
+sumImage = sumImage/192.0
+
+maxImage = np.amax(sumImage)
+sumImage = np.array((sumImage/maxImage)*255,dtype=np.uint8)
+
+print maxImage
+
+print sumImage
+
+implot = plt.imshow(sumImage,cmap= cm.Greys_r)
 
 plt.show()
 
@@ -180,14 +193,14 @@ plt.show()
 # W_conv2 = weight_variable([121, 38, 3, 1])
 # b_conv2 = bias_variable([38])
 
-# h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
+# h_conv2 = tf.sigmoid(conv2d(h_conv1, W_conv2) + b_conv2)
 # h_pool2 = max_pool_2x2(h_conv2)
 
 # W_fc1 = weight_variable([7 * 7 * 64, 1024])
 # b_fc1 = bias_variable([1024])
 
 # h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
-# h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+# h_fc1 = tf.sigmoid(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 # keep_prob = tf.placeholder("float")
 # h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
