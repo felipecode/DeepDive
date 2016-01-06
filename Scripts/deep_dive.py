@@ -1,3 +1,8 @@
+"""
+Implements the DeepDive class.
+Use it to create the convolutional neural network architecture.
+"""
+
 import csv
 import tensorflow as tf
 import numpy as np

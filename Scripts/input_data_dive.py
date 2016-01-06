@@ -115,7 +115,7 @@ def read_data_sets():
 
   VALIDATION_SIZE = 500
 
-  path = ''
+  path = '../Local_aux/'
 
   # train_images = extract_images(path, max_im=3, max_y=, max_x=)
   # train_labels = extract_labels(path, max_im=3, max_y=, max_x=)
