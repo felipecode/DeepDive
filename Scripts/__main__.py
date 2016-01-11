@@ -138,11 +138,21 @@ loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
 
 train_step = tf.train.AdamOptimizer(1e-4).minimize(loss_function)
 
+tf.image_summary('inputs', tf.reshape(x, [184,184]))
+tf.image_summary('outputs', tf.reshape(y_, [56, 56]))
+tf.scalar_summary('loss', loss_function)
+
+summary_op = tf.merge_all_summaries()
+
 
 # keep_prob = tf.placeholder("float")
 # h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 sess.run(tf.initialize_all_variables())
+
+
+summary_writer = tf.train.SummaryWriter('/tmp/deep_dive',
+                                            graph_def=sess.graph_def)
 
 
 for i in range(20000):
@@ -152,7 +162,8 @@ for i in range(20000):
         x:batch[0], y_: batch[1]})
     print("step %d, training accuracy %g"%(i, train_accuracy))
   train_step.run(feed_dict={x: batch[0], y_: batch[1]})
-
+  summary_str = sess.run(summary_op)
+  summary_writer.add_summary(summary_str, step)
 
 
 # image =h_noise3.eval()[0]
