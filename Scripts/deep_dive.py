@@ -34,7 +34,7 @@ class DeepDive(object):
     return weights
 
   """Creates a weight variable (TODO)"""
-  def weight_variable(self, shape, file):
+  def weight_variable(self, shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
 

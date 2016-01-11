@@ -32,8 +32,10 @@ def extract_images(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open train
-        im = misc.imread(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
+        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+        im = np.array(im)
         images.append(im)
+
 
   return np.array(images)
 
@@ -52,7 +54,10 @@ def extract_labels(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open gt
-        label = misc.imread(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
+        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+
+        label = label.resize((56, 56), Image.ANTIALIAS)
+        label = np.array(label)
         labels.append(label)
 
   return np.array(labels)
@@ -69,10 +74,19 @@ class DataSet(object):
     # to [num examples, rows*columns] (assuming depth == 1)
     #assert images.shape[3] == 1
     images = images.reshape(images.shape[0],
-                            images.shape[1] * images.shape[2]*images.shape[3])
+                            images.shape[1] * images.shape[2])
     # Convert from [0, 255] -> [0.0, 1.0].
     images = images.astype(np.float32)
     images = np.multiply(images, 1.0 / 255.0)
+
+
+    labels = labels.reshape(labels.shape[0],
+                            labels.shape[1] * labels.shape[2])
+    # Convert from [0, 255] -> [0.0, 1.0].
+    labels = labels.astype(np.float32)
+    labels = np.multiply(labels, 1.0 / 255.0)
+
+
     self._images = images
     self._labels = labels
     self._epochs_completed = 0
@@ -117,14 +131,14 @@ def read_data_sets():
 
   path = '../Local_aux/'
 
-  # train_images = extract_images(path, max_im=3, max_y=, max_x=)
-  # train_labels = extract_labels(path, max_im=3, max_y=, max_x=)
+  train_images = extract_images(path , max_im=5, max_y=19, max_x=13)
+  train_labels = extract_labels(path , max_im=5, max_y=19, max_x=13)
 
-  train_images = np.array([extract_single_image(path + 'imagepatch.png')])
+  #train_images = np.array([extract_single_image(path + 'imagepatch.png')])
 
-  train_labels = np.array([extract_single_image(path + 'imagepatch.png')])
+  #train_labels = np.array([extract_single_image(path + 'imagepatch.png')])
 
-  print train_images.shape
+
 
   # test_images = extract_images(path)
   # test_labels = extract_labels(path)
