@@ -23,6 +23,7 @@ import Image
 from scipy import misc
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
+import random
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 def extract_images(path, max_im, max_y, max_x):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
@@ -133,6 +134,14 @@ def read_data_sets():
 
   train_images = extract_images(path , max_im=5, max_y=19, max_x=13)
   train_labels = extract_labels(path , max_im=5, max_y=19, max_x=13)
+
+  """shuffling inputs"""
+  shuffler = list(zip(train_images, train_labels))
+  random.shuffle(shuffler)
+  train_images, train_labels = zip(*shuffler)
+
+  train_images = np.array(train_images)
+  train_labels = np.array(train_labels)
 
   #train_images = np.array([extract_single_image(path + 'imagepatch.png')])
 

@@ -10,11 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-global_step = tf.Variable(0, trainable=False)
+global_step = tf.Variable(0, trainable=False, name="global_step")
 dataset = input_data_dive.read_data_sets()
 
-x = tf.placeholder("float", shape=[None, 184*184])
-y_ = tf.placeholder("float", shape=[None, 56*56])
+x = tf.placeholder("float", shape=[None, 184*184], name="input_image")
+y_ = tf.placeholder("float", shape=[None, 56*56], name="output_image")
 
 sess = tf.InteractiveSession()
 
@@ -41,19 +41,19 @@ b_conv3 = deep_dive.bias_variable([1])
 #x_image = tf.reshape(x, [-1,184,184,3])
 
 
-x_image = tf.reshape(x, [-1,184,184,1])
+x_image = tf.reshape(x, [-1,184,184,1], "flattening_reshape")
 
 """Red Channel"""
 # x_imageR =  tf.reshape(xR, [-1,184,184,1])
-h_conv1 = tf.sigmoid(deep_dive.conv2d(x_image, W_conv1) + b_conv1)
-h_conv2 = tf.sigmoid(deep_dive.conv2d(h_conv1, W_conv2) + b_conv2)
+h_conv1 = tf.sigmoid(deep_dive.conv2d(x_image, W_conv1) + b_conv1, name="first_sigmoid")
+h_conv2 = tf.sigmoid(deep_dive.conv2d(h_conv1, W_conv2) + b_conv2, name="second_sigmoid")
 
 
 
-h_conv3 = tf.sigmoid(deep_dive.conv2d(h_conv2, W_conv3) + b_conv3)
+h_conv3 = tf.sigmoid(deep_dive.conv2d(h_conv2, W_conv3) + b_conv3, name="third_sigmoid")
 
 
-print  h_conv3
+# print  h_conv3
 
 #inserting smooth w
 # h_convR1_concat = tf.reshape(h_convR1[:,:,:,0], [-1, 184, 64, 1])
@@ -131,6 +131,7 @@ print  h_conv3
 
 # y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
+batch_size = 50
 
 y_image = tf.reshape(y_, [-1,56,56,1])
 
@@ -138,32 +139,34 @@ loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
 
 train_step = tf.train.AdamOptimizer(1e-4).minimize(loss_function)
 
-tf.image_summary('inputs', tf.reshape(x, [184,184]))
-tf.image_summary('outputs', tf.reshape(y_, [56, 56]))
+tf.image_summary('inputs', tf.reshape(x, [batch_size, 184, 184, 1]))
+tf.image_summary('outputs(h_conv3)', tf.reshape(h_conv3, [batch_size, 56, 56, 1]))
 tf.scalar_summary('loss', loss_function)
+
 
 summary_op = tf.merge_all_summaries()
 
+saver = tf.train.Saver(tf.all_variables())
 
 # keep_prob = tf.placeholder("float")
 # h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 sess.run(tf.initialize_all_variables())
 
-
-summary_writer = tf.train.SummaryWriter('/tmp/deep_dive',
+summary_writer = tf.train.SummaryWriter('/tmp/deep_dive_1',
                                             graph_def=sess.graph_def)
 
-
 for i in range(20000):
-  batch = dataset.train.next_batch(50)
-  if i%100 == 0:
-    train_accuracy = loss_function.eval(feed_dict={
-        x:batch[0], y_: batch[1]})
-    print("step %d, training accuracy %g"%(i, train_accuracy))
+  batch = dataset.train.next_batch(batch_size)
+  if i%50 == 0:
+  	saver.save(sess, 'model.ckpt', global_step=i)
+
+  train_accuracy = loss_function.eval(feed_dict={
+      x:batch[0], y_: batch[1]})
+  print("step %d, training accuracy %g"%(i, train_accuracy))
   train_step.run(feed_dict={x: batch[0], y_: batch[1]})
-  summary_str = sess.run(summary_op)
-  summary_writer.add_summary(summary_str, step)
+  summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
+  summary_writer.add_summary(summary_str, i)
 
 
 # image =h_noise3.eval()[0]
