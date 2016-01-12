@@ -33,7 +33,7 @@ def extract_images(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open train
-        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
         im = np.array(im)
         images.append(im)
 
@@ -47,7 +47,7 @@ def extract_single_image(path):
 
   return np.array(im)
 
-def extract_labels(path, max_im, max_y, max_x):
+def extract_labels(path, max_im, max_y, max_x, label_size):
   """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
   labels = []
   print 'Loading labels...'
@@ -55,9 +55,9 @@ def extract_labels(path, max_im, max_y, max_x):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open gt
-        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
 
-        label = label.resize((56, 56), Image.ANTIALIAS)
+        label = label.resize(label_size, Image.ANTIALIAS)
         label = np.array(label)
         labels.append(label)
 
@@ -75,14 +75,14 @@ class DataSet(object):
     # to [num examples, rows*columns] (assuming depth == 1)
     #assert images.shape[3] == 1
     images = images.reshape(images.shape[0],
-                            images.shape[1] * images.shape[2])
+                            images.shape[1] * images.shape[2] * images.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
     images = images.astype(np.float32)
     images = np.multiply(images, 1.0 / 255.0)
 
 
     labels = labels.reshape(labels.shape[0],
-                            labels.shape[1] * labels.shape[2])
+                            labels.shape[1] * labels.shape[2] * labels.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
     labels = labels.astype(np.float32)
     labels = np.multiply(labels, 1.0 / 255.0)
@@ -122,7 +122,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets():
+def read_data_sets(label_size):
   class DataSets(object):
     pass
   data_sets = DataSets()
@@ -130,10 +130,10 @@ def read_data_sets():
 
   VALIDATION_SIZE = 500
 
-  path = '../Local_aux/'
+  path = '/home/nautec/Downloads/TURBID/Photo3D/'
 
-  train_images = extract_images(path , max_im=5, max_y=19, max_x=13)
-  train_labels = extract_labels(path , max_im=5, max_y=19, max_x=13)
+  train_images = extract_images(path , max_im=5, max_y=58, max_x=40)
+  train_labels = extract_labels(path , max_im=5, max_y=58, max_x=40, label_size=label_size)
 
   """shuffling inputs"""
   shuffler = list(zip(train_images, train_labels))
