@@ -6,6 +6,7 @@ Use it to create the convolutional neural network architecture.
 import csv
 import tensorflow as tf
 import numpy as np
+from random import randint
 
 #x = tf.placeholder("float", shape=[None, 101568])
 #y_ = tf.placeholder("float", shape=[None, 101568])
@@ -59,6 +60,10 @@ class DeepDive(object):
   """
   def conv2d(self, x, W, strides=[1,1,1,1], padding='VALID'):
     return tf.nn.conv2d(x, W, strides=strides ,padding=padding)
+
+  def dropout(self, x, keep_prob=0.9):
+    seed = randint(0, 100000)
+    return tf.nn.dropout(x=x, keep_prob=keep_prob, seed=seed)
 
   """
   Creates a 2d Depth Wise Convolution layer.

@@ -25,11 +25,11 @@ from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import random
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
-def extract_images(path, max_im, max_y, max_x):
+def extract_images(path, max_im, start_im, max_y, max_x):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
   print 'Loading images...'
   images = []
-  for i in range(2, max_im):
+  for i in range(start_im, max_im):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open train
@@ -45,13 +45,13 @@ def extract_single_image(path):
   print 'Loading image...'
   im = Image.open(path).convert('RGB')
 
-  return np.array(im)
+  return im
 
-def extract_labels(path, max_im, max_y, max_x, label_size):
+def extract_labels(path, start_im, max_im, max_y, max_x, label_size):
   """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
   labels = []
   print 'Loading labels...'
-  for i in range(2, max_im):
+  for i in range(start_im, max_im):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open gt
@@ -64,7 +64,7 @@ def extract_labels(path, max_im, max_y, max_x, label_size):
   return np.array(labels)
 
 class DataSet(object):
-  def __init__(self, images, labels, fake_data=False, one_hot=False):
+  def __init__(self, images, labels, label_size, fake_data=False, one_hot=False):
     """Construct a DataSet. one_hot arg is used only if fake_data is true."""
 
     assert images.shape[0] == labels.shape[0], (
@@ -104,7 +104,7 @@ class DataSet(object):
   @property
   def epochs_completed(self):
     return self._epochs_completed
-  def next_batch(self, batch_size, fake_data=False):
+  def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
     self._index_in_epoch += batch_size
@@ -122,7 +122,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets(label_size):
+def read_data_sets(path, label_size):
   class DataSets(object):
     pass
   data_sets = DataSets()
@@ -130,10 +130,8 @@ def read_data_sets(label_size):
 
   VALIDATION_SIZE = 500
 
-  path = '/home/nautec/Downloads/TURBID/Photo3D/'
-
-  train_images = extract_images(path , max_im=5, max_y=58, max_x=40)
-  train_labels = extract_labels(path , max_im=5, max_y=58, max_x=40, label_size=label_size)
+  train_images = extract_images(path, start_im=5, max_im=6, max_y=58, max_x=40)
+  train_labels = extract_labels(path, start_im=5, max_im=6, max_y=58, max_x=40, label_size=label_size)
 
   """shuffling inputs"""
   shuffler = list(zip(train_images, train_labels))
@@ -158,7 +156,7 @@ def read_data_sets(label_size):
   #train_images = train_images[VALIDATION_SIZE:]
   #train_labels = train_labels[VALIDATION_SIZE:]
 
-  data_sets.train = DataSet(train_images, train_labels)
+  data_sets.train = DataSet(train_images, train_labels, label_size=label_size)
   #data_sets.validation = DataSet(validation_images, validation_labels)
   # data_sets.test = DataSet(test_images, test_labels)
 
