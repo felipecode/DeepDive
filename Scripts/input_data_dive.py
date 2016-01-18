@@ -23,16 +23,17 @@ import Image
 from scipy import misc
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
+import random
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
-def extract_images(path, max_im, max_y, max_x):
+def extract_images(path, max_im, start_im, max_y, max_x):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
   print 'Loading images...'
   images = []
-  for i in range(2, max_im):
+  for i in range(start_im, max_im):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open train
-        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
         im = np.array(im)
         images.append(im)
 
@@ -44,26 +45,26 @@ def extract_single_image(path):
   print 'Loading image...'
   im = Image.open(path).convert('RGB')
 
-  return np.array(im)
+  return im
 
-def extract_labels(path, max_im, max_y, max_x):
+def extract_labels(path, start_im, max_im, max_y, max_x, label_size):
   """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
   labels = []
   print 'Loading labels...'
-  for i in range(2, max_im):
+  for i in range(start_im, max_im):
     for j in range(1, max_y):
       for k in range(1, max_x):
         #open gt
-        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('L')
+        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
 
-        label = label.resize((56, 56), Image.ANTIALIAS)
+        label = label.resize(label_size, Image.ANTIALIAS)
         label = np.array(label)
         labels.append(label)
 
   return np.array(labels)
 
 class DataSet(object):
-  def __init__(self, images, labels, fake_data=False, one_hot=False):
+  def __init__(self, images, labels, label_size, fake_data=False, one_hot=False):
     """Construct a DataSet. one_hot arg is used only if fake_data is true."""
 
     assert images.shape[0] == labels.shape[0], (
@@ -74,14 +75,14 @@ class DataSet(object):
     # to [num examples, rows*columns] (assuming depth == 1)
     #assert images.shape[3] == 1
     images = images.reshape(images.shape[0],
-                            images.shape[1] * images.shape[2])
+                            images.shape[1] * images.shape[2] * images.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
     images = images.astype(np.float32)
     images = np.multiply(images, 1.0 / 255.0)
 
 
     labels = labels.reshape(labels.shape[0],
-                            labels.shape[1] * labels.shape[2])
+                            labels.shape[1] * labels.shape[2] * labels.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
     labels = labels.astype(np.float32)
     labels = np.multiply(labels, 1.0 / 255.0)
@@ -103,7 +104,7 @@ class DataSet(object):
   @property
   def epochs_completed(self):
     return self._epochs_completed
-  def next_batch(self, batch_size, fake_data=False):
+  def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
     self._index_in_epoch += batch_size
@@ -121,7 +122,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets():
+def read_data_sets(path, label_size):
   class DataSets(object):
     pass
   data_sets = DataSets()
@@ -129,10 +130,16 @@ def read_data_sets():
 
   VALIDATION_SIZE = 500
 
-  path = '../Local_aux/'
+  train_images = extract_images(path, start_im=5, max_im=6, max_y=58, max_x=40)
+  train_labels = extract_labels(path, start_im=5, max_im=6, max_y=58, max_x=40, label_size=label_size)
 
-  train_images = extract_images(path , max_im=5, max_y=19, max_x=13)
-  train_labels = extract_labels(path , max_im=5, max_y=19, max_x=13)
+  """shuffling inputs"""
+  shuffler = list(zip(train_images, train_labels))
+  random.shuffle(shuffler)
+  train_images, train_labels = zip(*shuffler)
+
+  train_images = np.array(train_images)
+  train_labels = np.array(train_labels)
 
   #train_images = np.array([extract_single_image(path + 'imagepatch.png')])
 
@@ -149,7 +156,7 @@ def read_data_sets():
   #train_images = train_images[VALIDATION_SIZE:]
   #train_labels = train_labels[VALIDATION_SIZE:]
 
-  data_sets.train = DataSet(train_images, train_labels)
+  data_sets.train = DataSet(train_images, train_labels, label_size=label_size)
   #data_sets.validation = DataSet(validation_images, validation_labels)
   # data_sets.test = DataSet(test_images, test_labels)
 
