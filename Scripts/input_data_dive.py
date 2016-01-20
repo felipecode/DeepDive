@@ -29,14 +29,28 @@ def extract_images(path, max_im, start_im, max_y, max_x):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
   print 'Loading images...'
   images = []
-  for i in range(start_im, max_im):
-    for j in range(1, max_y):
-      for k in range(1, max_x):
-        #open train
-        im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
-        im = np.array(im)
-        images.append(im)
+  # for i in range(start_im, max_im):
+  #   for j in range(1, max_y):
+  #     for k in range(1, max_x):
+  #       #open train
+  #       im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
+  #       im = np.array(im)
+  #       images.append(im)
+  for i in range(1, 21):
+    if i < 8:
+      im = Image.open(path + str(i) + '.jpg')
+    elif i < 10:
+      im = Image.open(path + str(i) + 'pd.jpg')
+    elif i < 20:
+      im = Image.open(path + 'a' + str(i) + 'pd.jpg')
+    else:
+      im = Image.open(path + 'b' + str(i) + 'pd.jpg')
 
+    im = im.resize((1200, 815), Image.ANTIALIAS)
+
+    images.append(np.array(im))
+
+  # print images[0]
 
   return np.array(images)
 
@@ -50,16 +64,20 @@ def extract_single_image(path):
 def extract_labels(path, start_im, max_im, max_y, max_x, label_size):
   """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
   labels = []
-  print 'Loading labels...'
-  for i in range(start_im, max_im):
-    for j in range(1, max_y):
-      for k in range(1, max_x):
-        #open gt
-        label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
+  # print 'Loading labels...'
+  # for i in range(start_im, max_im):
+  #   for j in range(1, max_y):
+  #     for k in range(1, max_x):
+  #       #open gt
+  #       label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
 
-        label = label.resize(label_size, Image.ANTIALIAS)
-        label = np.array(label)
-        labels.append(label)
+  #       label = label.resize(label_size, Image.ANTIALIAS)
+  #       label = np.array(label)
+  #       labels.append(label)
+  for i in range(1, 21):
+    im = Image.open(path + '1.jpg')
+    im = im.resize((1200, 815), Image.ANTIALIAS)
+    labels.append(np.array(im))
 
   return np.array(labels)
 
