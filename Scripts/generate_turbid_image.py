@@ -105,7 +105,9 @@ def read_eval_data(path):
   
   return np.array(im, dtype=np.float32)
 
-path = 'shark.jpg'
+path = 'local_images/shark.jpg'
+im_size = (256, 256)
+# im_size = (500, 496)
 
 x = read_eval_data(path)
 
@@ -122,7 +124,10 @@ weight = net.params['conv1'][0].data[weight]
 
 # weight = np.array([list(weight[2]), list(weight[1]), list(weight[0])])
 # weight = np.array(weight[0])
-weight = np.dstack((weight[2],weight[1],weight[0]))
+# weight = np.dstack((weight[2],weight[1],weight[0]))
+# print weight.shape
+# weight = np.dstack((weight[2], np.zeros(11,11), np.zeros(11,11)))
+# weight = np.dstack((np.linalg.inv(weight[2]),np.linalg.inv(weight[1]),np.linalg.inv(weight[0])))
 print weight.shape
 
 # raise
@@ -132,34 +137,48 @@ print weight.shape
 # weight = np.flipud(weight)
 # print w_aux.shape
 
-plt.imshow(weight)
+# plt.imshow(weight)
 
-plt.show()
+# plt.show()
 # print weight
 
 conv_w = tf.constant(weight, shape=[weight.shape[0], weight.shape[1], weight.shape[2], 1])
 # conv_w = tf.constant(weight, shape=[weight.shape[1], weight.shape[2], weight.shape[0], 1])
 conv_w = tf.Variable(conv_w)
+# conv_w = tf.concat([tf.matrix_inverse(conv_w[0]), tf.matrix_inverse(conv_w[1]), tf.matrix_inverse(conv_w[2])])
 
-x_image = tf.reshape(x, [-1,256,256,3], "unflattening_reshape")
+x_image = tf.reshape(x, [-1,im_size[0],im_size[1],3], "unflattening_reshape")
 
-result = tf.nn.relu(tf.nn.conv2d(x_image, conv_w, strides=[1,1,1,1], padding='VALID'))
+
+result = tf.nn.relu(tf.nn.conv2d(x_image, conv_w, strides=[1,1,1,1], padding='SAME'))
 
 sess.run(tf.initialize_all_variables())
 sess.run(result)
 
-print result.eval()[0,:,:,0].shape
+print result.eval().shape
 
-implot = plt.imshow(result.eval()[0,:,:,0], cmap= cm.gray)
+implot = plt.imshow(result.eval()[0,:,:,0])
 plt.show()
 
-# x = result.eval()
-# x_image2 = tf.reshape(x, [1, 256, 256, 1], "name")
-# # w = tf.constant(weight, shape=[1, 3, 11, 11])
-# conv2_w = tf.constant(weight, shape=[11, 11, 3, 1])
-# conv2_w = tf.Variable(conv2_w)
+# original = tf.fft2d(result.eval()[0,:,:,0])
+# kernel   = tf.fft2d(weight)
+# new = original * kernel
+# new = tf.ifft2d(new)
+# new = deconv2d
+# print new.eval().shape
 
-# result = deconv2d(x_image2, conv2_w, (1, 256, 256, 3), strides=[1,1,1,1], padding="SAME", name=None)
+# implot = plt.imshow(namew.eval)
+
+# new = result.eval()[0,:,:,0]
+# new = tf.reshape(new, [1, 256, 256, 1], "name")
+# # # w = tf.constant(weight, shape=[1, 3, 11, 11])
+# conv2_w = tf.constant(weight, shape=[11, 11, 3, 1])
+# # conv2_w = tf.Variable(conv2_w)
+# result = tf.nn.conv2d(x_image, conv_w, strides=[1,1,1,1], padding='SAME')
+# # result = tf.nn.conv2d_transpose(new, conv2_w, (1, 256, 256, 3), strides=[1,1,1,1], padding="SAME", name=None)
+# implot = plt.imshow(result.eval()[0])
+# print result.eval()[0].shape
+# plt.show()
 
 # # conv2_w = tf.batch_matrix_inverse(tf.Variable(w))
 # # conv2_w = tf.reshape(conv2_w, [11, 11, 1, 3])
@@ -168,8 +187,3 @@ plt.show()
 
 # sess.run(tf.initialize_all_variables())
 # sess.run(result)
-
-# print result.eval()[0].shape
-# implot = plt.imshow(result.eval()[0])
-# plt.show()
-

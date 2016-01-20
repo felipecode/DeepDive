@@ -3,7 +3,7 @@ from deep_dive import DeepDive
 import input_data_dive
 
 """Structure"""
-from dirt_or_rain_structure import create_structure
+from super_resolution import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -21,12 +21,14 @@ parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive
                   help="write logdir (same you use in tensorboard)", metavar="FILE")
 parser.add_option("-e", "--eval", dest="evaluation", default='False',
                   help="True if evaluating the model")
+parser.add_option("-r", "--restore", dest="restore", default='False',
+                  help="True if restoring to a previous model") """TODO"""
 
 (options, args) = parser.parse_args()
 print 'Logging into ' + options.summary_path
 
-input_size = (64, 64, 3)
-output_size = (42, 42, 3)
+input_size = (1200, 815, 3)
+output_size = (1200, 815, 3)
 
 global_step = tf.Variable(0, trainable=False, name="global_step")
 dataset = input_data_dive.read_data_sets(path='/home/nautec/Downloads/TURBID/Photo3D/', label_size=(output_size[0], output_size[1]))
@@ -41,19 +43,20 @@ path = '../Local_aux/weights/'
 
 h_conv3 = create_structure(tf, x)
 
-batch_size = 25
+batch_size = 1
 learning_rate = 1e-5
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
 loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
+#PSNR
+# loss_function = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 
 tf.image_summary('inputs', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
 tf.image_summary('outputs(h_conv3)', tf.reshape(h_conv3, [batch_size, output_size[0], output_size[1], output_size[2]]))
 tf.scalar_summary('loss', loss_function)
-
 
 summary_op = tf.merge_all_summaries()
 
@@ -71,13 +74,14 @@ summary_writer = tf.train.SummaryWriter(options.summary_path,
 for i in range(20000):
   batch = dataset.train.next_batch(batch_size)
   if i%50 == 0:
-  	saver.save(sess, 'models/model.ckpt', global_step=i)
+    saver.save(sess, 'models/model.ckpt', global_step=i)
+    print 'Model saved.'
 
   train_accuracy = loss_function.eval(feed_dict={
       x:batch[0], y_: batch[1]})
   
   if i%10 == 0:
-  	print("step %d, images used %d, training accuracy %g"%(i, i*batch_size, train_accuracy))
+    print("step %d, images used %d, loss %g"%(i, i*batch_size, train_accuracy))
   
   train_step.run(feed_dict={x: batch[0], y_: batch[1]})
   summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
