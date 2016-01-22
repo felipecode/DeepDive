@@ -1,7 +1,9 @@
 import tensorflow as tf
 from deep_dive import DeepDive
 import input_data_haze
-from deep_haze_alex import create_structure
+import sys
+sys.path.append('structures')
+from deep_haze_alex_structure import create_structure
 
 sess = tf.InteractiveSession()
 
@@ -14,7 +16,7 @@ y_ = tf.placeholder("float", shape=[None, 2], name="output")
 
 y_conv = create_structure(tf, x)
 
-batch_size = 15
+batch_size = 1
 
 cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
 train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
@@ -33,18 +35,22 @@ saver = tf.train.Saver(tf.all_variables())
 sess.run(tf.initialize_all_variables())
 
 
-for i in range(20000):
+for i in range(4001):
   batch = dataset.train.next_batch(batch_size)
   if i%1000 == 0:	
-    saver.save(sess, 'models_haze/model.ckpt', global_step=i)
+    saver.save(sess, 'models_haze_alex/model.ckpt', global_step=i)
     print('Model saved.')
   
   if i%50 == 0:
     train_accuracy = accuracy.eval(feed_dict={
-        x:batch[0], y_: batch[1], keep_prob: 1.0})
+        x:batch[0], y_: batch[1]})
     print("step %d, training accuracy %g"%(i, train_accuracy))
 
   # summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
-  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-  summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+  train_step.run(feed_dict={x: batch[0], y_: batch[1]})
+  summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
   summary_writer.add_summary(summary_str, i)
+
+
+print("test accuracy %g"%accuracy.eval(feed_dict={
+    x: dataset.test.images[0:20], y_: dataset.test.labels[0:20]}))
