@@ -162,8 +162,6 @@ def read_data_sets():
   random.shuffle(shuffler)
   train_images, train_labels = zip(*shuffler)
 
-
-
   test_images = np.array(train_images[:TEST_SIZE])
   test_labels = np.array(train_labels[:TEST_SIZE])
 

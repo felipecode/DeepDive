@@ -3,7 +3,9 @@ from deep_dive import DeepDive
 import input_data_dive
 
 """Structure"""
-from super_resolution import create_structure
+import sys
+sys.path.append('structures')
+from super_resolution_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -21,17 +23,20 @@ parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive
                   help="write logdir (same you use in tensorboard)", metavar="FILE")
 parser.add_option("-e", "--eval", dest="evaluation", default='False',
                   help="True if evaluating the model")
+
+"""TODO"""
 parser.add_option("-r", "--restore", dest="restore", default='False',
-                  help="True if restoring to a previous model") """TODO"""
+                  help="True if restoring to a previous model")
+"""TODO_END"""
 
 (options, args) = parser.parse_args()
 print 'Logging into ' + options.summary_path
 
-input_size = (1200, 815, 3)
-output_size = (1200, 815, 3)
+input_size = (600, 300, 3)
+output_size = (600, 300, 3)
 
 global_step = tf.Variable(0, trainable=False, name="global_step")
-dataset = input_data_dive.read_data_sets(path='/home/nautec/Downloads/TURBID/Photo3D/', label_size=(output_size[0], output_size[1]))
+dataset = input_data_dive.read_data_sets(path='/home/nautec/Documents/DeepDive/Simulator/Dataset1/Training/', input_size=input_size)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
