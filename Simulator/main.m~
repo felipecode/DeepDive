@@ -1,0 +1,15 @@
+  
+image = imvec{1};
+
+distance = 0.58;
+dmapR = calculateDmap(image(:,:,1),distance); 
+[I, spImage] = spAverageImageGray(image,164);
+[dmap] = spAverageImageWSpImageGray(dmapR,spImage);
+
+J = imread('hor
+
+BinfR=1;
+BinfG=1;
+BinfB=1;
+%[J, spImage] = spAverageImage(imvec{i} ,96);
+simulateTurbidImage(J,I,BinfR,BinfG,BinfB,dmap)
