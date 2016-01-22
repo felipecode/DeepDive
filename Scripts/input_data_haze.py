@@ -42,7 +42,7 @@ def extract_images(path_uw, path_off):
   imlist = glob(path_uw + '*.jpg') + glob(path_uw + '*.png') + glob(path_uw + '*.jpeg') + glob(path_uw + '*.JPG') + glob(path_uw + '*.bmp')
   cont = 0
   for im in imlist:
-    if cont >= 2000:
+    if cont >= 200:
       break
     cont += 1
     im = Image.open(im).convert('RGB')
@@ -55,7 +55,7 @@ def extract_images(path_uw, path_off):
   #1959 images
   imlist = glob(path_off + '*.JPEG')
   for im in imlist:
-    if cont >= 1959:
+    if cont >= 200:
       break
     cont += 1
     im = Image.open(im).convert('RGB')
@@ -83,10 +83,10 @@ def extract_labels():
   #       labels.append(label)
   
   """All with participative media"""
-  for i in range(0, 2000):
+  for i in range(0, 200):
     labels.append(np.array([0, 1]))
   """All without participative media"""
-  for j in range(0, 1959):
+  for j in range(0, 200):
     labels.append(np.array([1, 0]))
 
   return np.array(labels)
@@ -149,6 +149,7 @@ def read_data_sets():
 
 
   TEST_SIZE = 20
+  VALIDATION_SIZE = 100
 
   path_uw = '/home/nautec/UwImNet/'
   path_off = '/home/nautec/NoWater/'
@@ -161,13 +162,19 @@ def read_data_sets():
   random.shuffle(shuffler)
   train_images, train_labels = zip(*shuffler)
 
-  train_images = np.array(train_images[TEST_SIZE:])
-  train_labels = np.array(train_labels[TEST_SIZE:])
+
 
   test_images = np.array(train_images[:TEST_SIZE])
   test_labels = np.array(train_labels[:TEST_SIZE])
 
+  valid_images = np.array(train_images[TEST_SIZE:VALIDATION_SIZE])
+  valid_labels = np.array(train_labels[TEST_SIZE:VALIDATION_SIZE])
+
+  train_images = np.array(train_images[TEST_SIZE+VALIDATION_SIZE:])
+  train_labels = np.array(train_labels[TEST_SIZE+VALIDATION_SIZE:])
+
   data_sets.train = DataSet(train_images, train_labels)
+  data_sets.validation = DataSet(valid_images, valid_labels)
   data_sets.test  = DataSet(test_images, test_labels)
 
   return data_sets
