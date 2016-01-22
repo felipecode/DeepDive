@@ -1,22 +1,52 @@
   
-image = imvec{18};
-I1 = imvec{1};
-distance = 0.58;
+% Color Hard Green
+
+% Binf = [ 0.2, 0.85, 0.4];
+% c = [ 4.0, 2.3 , 2.8];
+
+
+% Color Hard Blue
+
+% Binf = [ 0.2, 0.6, 0.85];
+% c = [ 4.0, 2.8 , 2.5];
+
+
+% Color Ciano Blue
+
+
+%Binf = [ 0.2, 0.85, 0.85];
+%c = [ 4.0, 2.8 , 2.8];
+
+
+%image = imvec{18};
+input = imvec{1};
+%distance = 0.58;
 %dmapR = calculateDmap(image(:,:,1),distance); 
 
 
-[I, spImage] = spAverageImageGray(image,164);
-dmapR = calculateDmap(image(:,:,1),distance); 
+% [I, spImage] = spAverageImage(image,164);
+% dmapR = calculateDmap(image(:,:,1),distance); 
   
-[dmapInput] = spAverageImageWSpImageGray(dmapR,spImage);
-dmapOutput = dmapInput;
+% [dmapInput] = spAverageImageWSpImageGray(dmapR,spImage);
+dmapOutput = imread('dmap.png');
+dmapOutput = double(dmapOutput)/255;
 
 
-input = imvec{1};
-[J] = spAverageImageWSpImageGray(I1, spImage);
+% input = imvec{1};
+% [J] = spAverageImageWSpImage(I1, spImage);
  
-BinfR=0.2;
-BinfG=1;
-BinfB=0.7;
+
+
+Binf = [ 0.2, 0.85, 0.85];
+
+
+
+c = [ 4.0, 2.8 , 2.8];
+
+
+input = imresize(input,size(dmapOutput));
+
 %[J, spImage] = spAverageImage(imvec{i} ,96);
-T =simulateTurbidImage(input,J,I,BinfR,BinfG,BinfB,dmapInput,dmapOutput);
+T =simulateTurbidImage(input,Binf,c,dmapOutput);
+
+figure; imshow(T);

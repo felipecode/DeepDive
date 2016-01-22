@@ -1,4 +1,4 @@
-function T = simulateTurbidImage(input,J,I,BinfR,BinfG,BinfB,dmapInput,dmapOutput)
+function T = simulateTurbidImage(input,Binf,c,dmap)
 
     % Set distance of the scene, for our experiment is always 0.58
     
@@ -7,9 +7,9 @@ function T = simulateTurbidImage(input,J,I,BinfR,BinfG,BinfB,dmapInput,dmapOutpu
     %[H S I ] = rgb2hsv(I);
     %[H S J ] = rgb2hsv(J);
     %Binf = double(rgb2gray(Binf))/255;    
-
-    J = double(J);
-    I = double(I);
+%     
+%     J = double(J);
+%     I = double(I);
     
 
     
@@ -46,25 +46,27 @@ function T = simulateTurbidImage(input,J,I,BinfR,BinfG,BinfB,dmapInput,dmapOutpu
         
     
     
-    cR = estimateC(J,I,dmapInput,BinfR);
-    cG = estimateC(J,I,dmapInput,BinfG);
-    cB = estimateC(J,I,dmapInput,BinfB);
+    %cR = estimateC(J,I,dmapInput,BinfR);
+    %cR = 0.4;
+    %cG = estimateC(J,I,dmapInput,BinfG);
+    %cB = estimateC(J,I,dmapInput,BinfB);
+    
 
     
-    dmapOutput = double(dmapOutput)./max(max(double(dmapOutput)));
+%     dmapOutput = double(dmapOutput)./max(max(double(dmapOutput)));
 
      averageCossine = 0.75;
 %     calculate the image with just the turbid noise
      
 
-     TR = calculateTurbidImage(double(input(:,:,1))/255,cR,dmapOutput,averageCossine,BinfR); 
+     TR = calculateTurbidImage(double(input(:,:,1))/255,c(1),dmap,averageCossine,Binf(1)); 
      averageCossine = 0.714;
      
      
-     TG = calculateTurbidImage(double(input(:,:,1))/255,cG,dmapOutput,averageCossine,BinfG); 
+     TG = calculateTurbidImage(double(input(:,:,2))/255,c(2),dmap,averageCossine,Binf(2)); 
 %     
      averageCossine = 0.681;
-     TB = calculateTurbidImage(double(input(:,:,1))/255,cB,dmapOutput,averageCossine,BinfB); 
+     TB = calculateTurbidImage(double(input(:,:,3))/255,c(3),dmap,averageCossine,Binf(3)); 
 %     
 %     
      T(:,:,1) = TR;
