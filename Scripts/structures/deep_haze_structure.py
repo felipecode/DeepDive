@@ -31,6 +31,7 @@ def create_structure(tf, x):
 	h_conv1 = tf.nn.relu(deep_dive.conv2d(x_image, W_conv1) + b_conv1, name="first_sigmoid")
 
 	h_conv2 = tf.nn.relu(deep_dive.conv2d(h_conv1, W_conv2) + b_conv2)
+	
 	h_conv2_flat = tf.reshape(h_conv2, [-1, 178*178*20])
 
 	h_fc1 = tf.nn.relu(tf.matmul(h_conv2_flat, W_fc1) + b_fc1)

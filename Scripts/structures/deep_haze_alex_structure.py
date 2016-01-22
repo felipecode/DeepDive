@@ -51,11 +51,10 @@ def create_structure(tf, x):
 
 	b_conv1 = deep_dive.bias_variable([96])
 
-	W_fc1 = deep_dive.weight_variable([174 * 174 * 96, 45])
+	W_fc1 = deep_dive.weight_variable([87 * 87 * 96, 56])
+	b_fc1 = deep_dive.bias_variable([56])
 
-	b_fc1 = deep_dive.bias_variable([45])
-
-	W_fc2 = deep_dive.weight_variable([45, 2])
+	W_fc2 = deep_dive.weight_variable([56, 2])
 	b_fc2 = deep_dive.bias_variable([2])
 
 
@@ -64,12 +63,16 @@ def create_structure(tf, x):
 	x_image = tf.reshape(x, [-1, 184, 184, 3])
 
 	h_conv1 = tf.nn.relu(deep_dive.conv2d(x_image, W_conv1) + b_conv1, name="first_sigmoid")
-	h_conv1_flat = tf.reshape(h_conv1, [-1, 174*174*96])
 
-	h_fc1 = tf.nn.relu(tf.matmul(h_conv1_flat, W_fc1) + b_fc1)
+	h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
+                          strides=[1, 2, 2, 1], padding='SAME')
+
+	h_pool1_flat = tf.reshape(h_pool1, [-1, 87*87*96])
+
+	h_fc1 = tf.nn.relu(tf.matmul(h_pool1_flat, W_fc1) + b_fc1)
 
 	# keep_prob = tf.placeholder("float")
-	h_fc1_drop = tf.nn.dropout(h_fc1, 0.5)
+	h_fc1_drop = tf.nn.dropout(h_fc1, 0.9)
 
 	y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
