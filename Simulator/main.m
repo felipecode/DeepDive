@@ -41,12 +41,25 @@ Binf = [ 0.2, 0.85, 0.85];
 
 
 
-c = [ 4.0, 2.8 , 2.8];
+
+c = [ 2.0, 0.8 , 0.8];
 
 
 input = imresize(input,size(dmapOutput));
 
 %[J, spImage] = spAverageImage(imvec{i} ,96);
-T =simulateTurbidImage(input,Binf,c,dmapOutput);
+delta = 10;
+for wave = 400:delta:720
+    % Load an absorption model of a certain water tipe
+    load('watermodel')
+    % Get the c for this wavelenght
+    cwave = feval(watermodel,wave);
+    
+    Energy =simulateTurbidImage(input,Binf,c,0.58);
+    
+    T(:.:.1) = cameraModelR(Energy)
+    
+    
+end
 
 figure; imshow(T);
