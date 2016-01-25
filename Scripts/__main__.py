@@ -5,7 +5,7 @@ import input_data_dive
 """Structure"""
 import sys
 sys.path.append('structures')
-from super_resolution_structure import create_structure
+from dirt_or_rain_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -17,26 +17,27 @@ import matplotlib.cm as cm
 
 """Python libs"""
 from optparse import OptionParser
+from PIL import Image
 
 parser = OptionParser()
 parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
                   help="write logdir (same you use in tensorboard)", metavar="FILE")
-parser.add_option("-e", "--eval", dest="evaluation", default='False',
-                  help="True if evaluating the model")
-
-"""TODO"""
 parser.add_option("-r", "--restore", dest="restore", default='False',
                   help="True if restoring to a previous model")
-"""TODO_END"""
+parser.add_option("-e", "--eval", dest="evaluation", default='False',
+                  help="True if evaluating the model")
 
 (options, args) = parser.parse_args()
 print 'Logging into ' + options.summary_path
 
-input_size = (600, 300, 3)
-output_size = (600, 300, 3)
+input_size = (184, 184, 3)
+output_size = (184, 184, 3)
+n_images = 400  #Number of images reading at each time
 
 global_step = tf.Variable(0, trainable=False, name="global_step")
-dataset = input_data_dive.read_data_sets(path='/home/nautec/Documents/DeepDive/Simulator/Dataset1/Training/', input_size=input_size)
+
+if options.evaluation != 'True':
+  dataset = input_data_dive.read_data_sets(path='/home/nautec/DeepDive/Simulator/Dataset1/Training/', input_size=input_size, n_images=n_images)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
@@ -59,9 +60,10 @@ loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 
-tf.image_summary('inputs', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
-tf.image_summary('outputs(h_conv3)', tf.reshape(h_conv3, [batch_size, output_size[0], output_size[1], output_size[2]]))
-tf.scalar_summary('loss', loss_function)
+tf.image_summary('Input', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
+tf.image_summary('Output', h_conv3)
+tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
+tf.scalar_summary('Loss', loss_function)
 
 summary_op = tf.merge_all_summaries()
 
@@ -76,9 +78,47 @@ summary_writer = tf.train.SummaryWriter(options.summary_path,
                                             graph_def=sess.graph_def)
 
 
+ckpt = tf.train.get_checkpoint_state('models')
+if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
+  print 'Restoring from ', ckpt.model_checkpoint_path  
+  saver.restore(sess, 'models/' + ckpt.model_checkpoint_path)
+
+if options.evaluation == 'True':
+
+  path = '/home/nautec/Downloads/TURBID/Photo3D/a16pd.jpg'
+  im = Image.open(path).convert('RGB')
+
+  """TODO - arrumar erro de resize e trocar para chunks"""
+  im = im.resize((184, 184))
+  im = np.array(im, dtype=np.float32)
+
+  im = im.reshape([1, np.prod(np.array(input_size))])
+  im = im.astype(np.float32)
+  im = np.multiply(im, 1.0 / 255.0)
+
+  out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
+  result = sess.run(h_conv3, feed_dict={x: im, y_: out})
+  summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
+  summary_writer.add_summary(summary_str, 1)
+  
+  fig = plt.figure()
+  fig.add_subplot(1,2,1)
+  plt.imshow(im.reshape([184, 184, 3]))
+  fig.add_subplot(1,2,2)
+
+  plt.imshow(result[0])
+  plt.show()
+
+  sys.exit()
+
+
 for i in range(20000):
+  
+  if i%n_images == 0:
+    dataset = input_data_dive.read_data_sets(path='/home/nautec/DeepDive/Simulator/Dataset1/Training/', input_size=input_size, n_images=n_images)
+  
   batch = dataset.train.next_batch(batch_size)
-  if i%50 == 0:
+  if i%300 == 0:
     saver.save(sess, 'models/model.ckpt', global_step=i)
     print 'Model saved.'
 

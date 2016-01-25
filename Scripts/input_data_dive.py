@@ -28,7 +28,7 @@ import glob
 
 import matplotlib.pyplot as plt
 
-def extract_dataset(path, input_size):
+def extract_dataset(path, input_size, n_images):
   """Creates chunkes of inputs and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
   print 'Loading images...'
   images = []
@@ -51,8 +51,12 @@ def extract_dataset(path, input_size):
   #     im = Image.open(path + 'b' + str(i) + 'pd.jpg')
   im_names =  glob.glob(path + "*.jpg")
   im_opened = 0
+  random.shuffle(im_names)
 
   for name in im_names:
+    if im_opened >= n_images:
+      break
+
     im = Image.open(name)
     repls = ('Ciano_', ''), ('Blue_', ''), ('Green_', ''), ('Training', 'GroundTruth')
 
@@ -76,12 +80,8 @@ def extract_dataset(path, input_size):
         labels.append(chunk)
 
         im_opened += 1
-        if im_opened % 500 == 0:
-          print 'Images and labels generated: ', im_opened
 
   return np.array(images), np.array(labels)
-
-
 
 
 def extract_images(path, max_im, start_im, max_y, max_x):
@@ -201,7 +201,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets(path, input_size):
+def read_data_sets(path, input_size, n_images):
   
   class DataSets(object):
     pass
@@ -211,7 +211,7 @@ def read_data_sets(path, input_size):
   TEST_SIZE = 20
   VALIDATION_SIZE = 100
 
-  train_images, train_labels = extract_dataset(path, input_size)
+  train_images, train_labels = extract_dataset(path, input_size, n_images)
 
   """shuffling inputs"""
   shuffler = list(zip(train_images, train_labels))
