@@ -93,7 +93,6 @@ sess.run(tf.initialize_all_variables())
 summary_writer = tf.train.SummaryWriter(options.summary_path,
                                             graph_def=sess.graph_def)
 
-
 ckpt = tf.train.get_checkpoint_state('models')
 if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
   print 'Restoring from ', ckpt.model_checkpoint_path  
@@ -101,16 +100,15 @@ if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
 
 if options.evaluation == 'True':
 
+  overlap_size = (10, 10)
+
   path = options.path
   
-  mask = Image.open('/home/nautec/DeepDivePreliminarResults/mask.png').convert('RGB')
-  mask = np.array(mask, dtype=np.float32)
-  mask = np.multiply(mask, 1.0 / 255.0)
-
-  np.place(mask, mask==0.0, 1.0)
-
   im = Image.open(path).convert('RGB')
   im = np.array(im, dtype=np.float32)
+
+  im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
+
   original = im
   visualizer = original
   original = original.astype(np.float32)
@@ -121,14 +119,14 @@ if options.evaluation == 'True':
   united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
   out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
 
-  for h in range(0, height, input_size[0]):
-    for w in range(0, width, input_size[1]):
+  for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
+    for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
       h_end = h + input_size[0]
       w_end = w + input_size[1]
 
       chunk = original[h:h_end, w:w_end]
       if chunk.shape != input_size:
-        chunk = np.lib.pad(chunk, ((0, 184-chunk.shape[0]), (0, 184-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
+        chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
 
       im = chunk.reshape([1, np.prod(np.array(input_size))])
 
@@ -136,13 +134,8 @@ if options.evaluation == 'True':
       summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
       summary_writer.add_summary(summary_str, 1)
 
-      result[0] = np.divide(result[0], mask)
-      plt.imshow(result[0])
-      plt.show()
+      united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
 
-      united_images[h:h+input_size[0], w:w+input_size[1], :] = result[0]
-
-    
   fig = plt.figure()
   fig.add_subplot(1,2,1)
   plt.imshow(np.array(visualizer, dtype=np.uint8))
