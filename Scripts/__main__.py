@@ -18,6 +18,7 @@ import matplotlib.cm as cm
 """Python libs"""
 from optparse import OptionParser
 from PIL import Image
+import cv2
 
 parser = OptionParser()
 parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
@@ -26,8 +27,18 @@ parser.add_option("-r", "--restore", dest="restore", default='False',
                   help="True if restoring to a previous model")
 parser.add_option("-e", "--eval", dest="evaluation", default='False',
                   help="True if evaluating the model")
+parser.add_option("-p", "--path", dest="path", default='/home/nautec/DeepDive/Simulator/Dataset1/Training/',
+                  help="path to training set. if eval is true, path points to a single image to be evaluated")
+
 
 (options, args) = parser.parse_args()
+
+"""Verifying options integrity"""
+if options.evaluation not in ('True', 'False'):
+  raise Exception('Wrong eval option. (True or False)')
+if options.restore not in ('True', 'False'):
+  raise Exception('Wrong restore option. (True or False)')
+
 print 'Logging into ' + options.summary_path
 
 input_size = (184, 184, 3)
@@ -37,7 +48,7 @@ n_images = 400  #Number of images reading at each time
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 if options.evaluation != 'True':
-  dataset = input_data_dive.read_data_sets(path='/home/nautec/DeepDive/Simulator/Dataset1/Training/', input_size=input_size, n_images=n_images)
+  dataset = input_data_dive.read_data_sets(path=options.path, input_size=input_size, n_images=n_images)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
@@ -49,7 +60,12 @@ path = '../Local_aux/weights/'
 
 h_conv3 = create_structure(tf, x)
 
-batch_size = 1
+
+if options.evaluation != 'True':
+  batch_size = 2
+else:
+  batch_size = 1
+
 learning_rate = 1e-5
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
@@ -85,28 +101,54 @@ if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
 
 if options.evaluation == 'True':
 
-  path = '/home/nautec/Downloads/TURBID/Photo3D/a16pd.jpg'
-  im = Image.open(path).convert('RGB')
-
-  """TODO - arrumar erro de resize e trocar para chunks"""
-  im = im.resize((184, 184))
-  im = np.array(im, dtype=np.float32)
-
-  im = im.reshape([1, np.prod(np.array(input_size))])
-  im = im.astype(np.float32)
-  im = np.multiply(im, 1.0 / 255.0)
-
-  out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
-  result = sess.run(h_conv3, feed_dict={x: im, y_: out})
-  summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
-  summary_writer.add_summary(summary_str, 1)
+  path = options.path
   
+  mask = Image.open('/home/nautec/DeepDivePreliminarResults/mask.png').convert('RGB')
+  mask = np.array(mask, dtype=np.float32)
+  mask = np.multiply(mask, 1.0 / 255.0)
+
+  np.place(mask, mask==0.0, 1.0)
+
+  im = Image.open(path).convert('RGB')
+  im = np.array(im, dtype=np.float32)
+  original = im
+  visualizer = original
+  original = original.astype(np.float32)
+  original = np.multiply(original, 1.0 / 255.0)
+
+  height, width = im.shape[0], im.shape[1]
+
+  united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
+  out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
+
+  for h in range(0, height, input_size[0]):
+    for w in range(0, width, input_size[1]):
+      h_end = h + input_size[0]
+      w_end = w + input_size[1]
+
+      chunk = original[h:h_end, w:w_end]
+      if chunk.shape != input_size:
+        chunk = np.lib.pad(chunk, ((0, 184-chunk.shape[0]), (0, 184-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
+
+      im = chunk.reshape([1, np.prod(np.array(input_size))])
+
+      result = sess.run(h_conv3, feed_dict={x: im, y_: out})
+      summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
+      summary_writer.add_summary(summary_str, 1)
+
+      result[0] = np.divide(result[0], mask)
+      plt.imshow(result[0])
+      plt.show()
+
+      united_images[h:h+input_size[0], w:w+input_size[1], :] = result[0]
+
+    
   fig = plt.figure()
   fig.add_subplot(1,2,1)
-  plt.imshow(im.reshape([184, 184, 3]))
+  plt.imshow(np.array(visualizer, dtype=np.uint8))
   fig.add_subplot(1,2,2)
 
-  plt.imshow(result[0])
+  plt.imshow(united_images)
   plt.show()
 
   sys.exit()
@@ -115,11 +157,11 @@ if options.evaluation == 'True':
 for i in range(20000):
   
   if i%n_images == 0:
-    dataset = input_data_dive.read_data_sets(path='/home/nautec/DeepDive/Simulator/Dataset1/Training/', input_size=input_size, n_images=n_images)
+    dataset = input_data_dive.read_data_sets(path=options.path, input_size=input_size, n_images=n_images)
   
   batch = dataset.train.next_batch(batch_size)
   if i%300 == 0:
-    saver.save(sess, 'models/model.ckpt', global_step=i)
+    saver.save(sess, 'models/model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
     print 'Model saved.'
 
   train_accuracy = loss_function.eval(feed_dict={
