@@ -33,28 +33,13 @@ def extract_dataset(path, input_size, n_images):
   print 'Loading images...'
   images = []
   labels = []
-  # for i in range(start_im, max_im):
-  #   for j in range(1, max_y):
-  #     for k in range(1, max_x):
-  #       #open train
-  #       im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
-  #       im = np.array(im)
-  #       images.append(im)
-  # for i in range(1, 21):
-  #   if i < 8:
-  #     im = Image.open(path + str(i) + '.jpg')
-  #   elif i < 10:
-  #     im = Image.open(path + str(i) + 'pd.jpg')
-  #   elif i < 20:
-  #     im = Image.open(path + 'a' + str(i) + 'pd.jpg')
-  #   else:
-  #     im = Image.open(path + 'b' + str(i) + 'pd.jpg')
+
   im_names =  glob.glob(path + "*.jpg")
-  im_opened = 0
+  im_generated = 0
   random.shuffle(im_names)
 
   for name in im_names:
-    if im_opened >= n_images:
+    if im_generated >= n_images:
       break
 
     im = Image.open(name)
@@ -79,71 +64,10 @@ def extract_dataset(path, input_size, n_images):
         chunk = lb[h: h_end, w:w_end]
         labels.append(chunk)
 
-        im_opened += 1
+        im_generated += 1
 
   return np.array(images), np.array(labels)
 
-
-def extract_images(path, max_im, start_im, max_y, max_x):
-  """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
-  print 'Loading images...'
-  images = []
-  # for i in range(start_im, max_im):
-  #   for j in range(1, max_y):
-  #     for k in range(1, max_x):
-  #       #open train
-  #       im = Image.open(path + 'Training/i' + str(i) + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
-  #       im = np.array(im)
-  #       images.append(im)
-  # for i in range(1, 21):
-  #   if i < 8:
-  #     im = Image.open(path + str(i) + '.jpg')
-  #   elif i < 10:
-  #     im = Image.open(path + str(i) + 'pd.jpg')
-  #   elif i < 20:
-  #     im = Image.open(path + 'a' + str(i) + 'pd.jpg')
-  #   else:
-  #     im = Image.open(path + 'b' + str(i) + 'pd.jpg')
-  # im_names =   glob.glob(path + "*.jpg")
-
-  #   for name in im_names:
-  #     im = Image.open(name)
-
-
-  #     im = im.resize((1200, 815), Image.ANTIALIAS)
-
-  #   images.append(np.array(im))
-
-  # print images[0]
-
-  return np.array(images)
-
-def extract_single_image(path):
-  """Extract the image and return a 3D uint8 numpy array [y, x, depth]."""
-  print 'Loading image...'
-  im = Image.open(path).convert('RGB')
-
-  return im
-
-def extract_labels(path, start_im, max_im, max_y, max_x, label_size):
-  """Extract the labels into a 4D uint8 numpy array [index, y, x, depth]."""
-  labels = []
-  # print 'Loading labels...'
-  # for i in range(start_im, max_im):
-  #   for j in range(1, max_y):
-  #     for k in range(1, max_x):
-  #       #open gt
-  #       label = Image.open(path + 'GroundTruth/i1' + 'x' + str(k) + 'y' + str(j) + '.png').convert('RGB')
-
-  #       label = label.resize(label_size, Image.ANTIALIAS)
-  #       label = np.array(label)
-  #       labels.append(label)
-  for i in range(1, 21):
-    im = Image.open(path + '1.jpg')
-    im = im.resize((1200, 815), Image.ANTIALIAS)
-    labels.append(np.array(im))
-
-  return np.array(labels)
 
 class DataSet(object):
   def __init__(self, images, labels):
@@ -208,7 +132,7 @@ def read_data_sets(path, input_size, n_images):
 
   data_sets = DataSets()
 
-  TEST_SIZE = 20
+  TEST_SIZE = 0
   VALIDATION_SIZE = 100
 
   train_images, train_labels = extract_dataset(path, input_size, n_images)
@@ -218,8 +142,8 @@ def read_data_sets(path, input_size, n_images):
   random.shuffle(shuffler)
   train_images, train_labels = zip(*shuffler)
 
-  test_images = np.array(train_images[:TEST_SIZE])
-  test_labels = np.array(train_labels[:TEST_SIZE])
+  # test_images = np.array(train_images[:TEST_SIZE])
+  # test_labels = np.array(train_labels[:TEST_SIZE])
 
   valid_images = np.array(train_images[TEST_SIZE:VALIDATION_SIZE])
   valid_labels = np.array(train_labels[TEST_SIZE:VALIDATION_SIZE])

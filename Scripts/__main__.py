@@ -1,5 +1,4 @@
 """Deep dive libs"""
-from deep_dive import DeepDive
 import input_data_dive
 
 """Structure"""
@@ -18,8 +17,8 @@ import matplotlib.cm as cm
 """Python libs"""
 from optparse import OptionParser
 from PIL import Image
-import cv2
 
+"""Options to add in terminal execution"""
 parser = OptionParser()
 parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
                   help="write logdir (same you use in tensorboard)", metavar="FILE")
@@ -43,7 +42,7 @@ print 'Logging into ' + options.summary_path
 
 input_size = (184, 184, 3)
 output_size = (184, 184, 3)
-n_images = 400  #Number of images reading at each time
+n_images = 800  #Number of images reading at each time
 
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
@@ -55,18 +54,14 @@ y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name=
 
 sess = tf.InteractiveSession()
 
-deep_dive = DeepDive()
-path = '../Local_aux/weights/'
-
 h_conv3 = create_structure(tf, x)
-
 
 if options.evaluation != 'True':
   batch_size = 2
 else:
   batch_size = 1
 
-learning_rate = 1e-5
+learning_rate = tf.Variable(1e-3)
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
@@ -76,31 +71,36 @@ loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 
+"""Creating summaries"""
 tf.image_summary('Input', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
 tf.image_summary('Output', h_conv3)
 tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
+tf.histogram_summary('InputHist', x)
+tf.histogram_summary('OutputHist', h_conv3)
+tf.histogram_summary('GroundTruthHist', y_)
 tf.scalar_summary('Loss', loss_function)
+tf.scalar_summary('learning_rate', learning_rate)
 
 summary_op = tf.merge_all_summaries()
-
 saver = tf.train.Saver(tf.all_variables())
-
-# keep_prob = tf.placeholder("float")
-# h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 sess.run(tf.initialize_all_variables())
 
 summary_writer = tf.train.SummaryWriter(options.summary_path,
                                             graph_def=sess.graph_def)
 
-ckpt = tf.train.get_checkpoint_state('models')
+"""Load a previous model if restore is set to True"""
+models_path = 'models_sigmoid/'
+ckpt = tf.train.get_checkpoint_state(models_path)
 if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
   print 'Restoring from ', ckpt.model_checkpoint_path  
-  saver.restore(sess, 'models/' + ckpt.model_checkpoint_path)
+  saver.restore(sess, models_path + ckpt.model_checkpoint_path)
 
+
+"""Evaluation"""
 if options.evaluation == 'True':
 
-  overlap_size = (10, 10)
+  overlap_size = (12, 12)
 
   path = options.path
   
@@ -119,6 +119,7 @@ if options.evaluation == 'True':
   united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
   out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
 
+  """Separating the image in chunks"""
   for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
     for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
       h_end = h + input_size[0]
@@ -147,22 +148,31 @@ if options.evaluation == 'True':
   sys.exit()
 
 
+"""Training"""
 for i in range(20000):
   
-  if i%n_images == 0:
+  """Read dataset images again not to waste CPU"""
+  if i%(n_images/batch_size) == 0:
     dataset = input_data_dive.read_data_sets(path=options.path, input_size=input_size, n_images=n_images)
-  
   batch = dataset.train.next_batch(batch_size)
+  
+  """Save the model every 300 iterations"""
   if i%300 == 0:
-    saver.save(sess, 'models/model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
-    print 'Model saved.'
+    if ckpt:
+      saver.save(sess, models_path + 'model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
+      print 'Model saved.'
+    else:
+      saver.save(sess, models_path + 'model.ckpt', global_step=i)
+      print 'Model saved.'
 
+  """Calculate the loss"""
   train_accuracy = loss_function.eval(feed_dict={
       x:batch[0], y_: batch[1]})
   
   if i%10 == 0:
     print("step %d, images used %d, loss %g"%(i, i*batch_size, train_accuracy))
   
+  """Run training and write the summaries"""
   train_step.run(feed_dict={x: batch[0], y_: batch[1]})
   summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
   summary_writer.add_summary(summary_str, i)
