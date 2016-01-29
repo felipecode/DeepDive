@@ -28,47 +28,6 @@ import glob
 
 import matplotlib.pyplot as plt
 
-def extract_dataset(path, input_size, n_images):
-  """Creates chunkes of inputs and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
-  print 'Loading images...'
-  images = []
-  labels = []
-
-  im_names =  glob.glob(path + "*.jpg")
-  im_generated = 0
-  random.shuffle(im_names)
-
-  for name in im_names:
-    if im_generated >= n_images:
-      break
-
-    im = Image.open(name)
-    repls = ('Ciano_', ''), ('Blue_', ''), ('Green_', ''), ('Training', 'GroundTruth')
-
-    name = reduce(lambda a, kv: a.replace(*kv), repls, name)
-    lb = Image.open(name) 
-
-    im = np.asarray(im)
-    lb = np.asarray(lb)
-
-    height, width = im.shape[0], im.shape[1]
-
-    for h in range(0, height-input_size[0], input_size[0]):
-      for w in range(0, width-input_size[1], input_size[1]):
-        h_end = h + input_size[0]
-        w_end = w + input_size[1]
-
-        chunk = im[h:h_end, w:w_end]
-        images.append(chunk)
-
-        chunk = lb[h: h_end, w:w_end]
-        labels.append(chunk)
-
-        im_generated += 1
-
-  return np.array(images), np.array(labels)
-
-
 class DataSet(object):
   def __init__(self, images, labels):
 
@@ -95,6 +54,7 @@ class DataSet(object):
     self._labels = labels
     self._epochs_completed = 0
     self._index_in_epoch = 0
+
   @property
   def images(self):
     return self._images
@@ -125,34 +85,90 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
-def read_data_sets(path, input_size, n_images):
-  
-  class DataSets(object):
-    pass
 
-  data_sets = DataSets()
+class DataSetManager(object):
 
-  TEST_SIZE = 0
-  VALIDATION_SIZE = 100
+  def __init__(self, path, input_size):
+    self.input_size = input_size
+    self.im_names =  glob.glob(path + "*.jpg")
+    random.shuffle(self.im_names)
+    self.tracker = 0
 
-  train_images, train_labels = extract_dataset(path, input_size, n_images)
 
-  """shuffling inputs"""
-  shuffler = list(zip(train_images, train_labels))
-  random.shuffle(shuffler)
-  train_images, train_labels = zip(*shuffler)
+  def extract_dataset(self, n_images):
+    """Creates chunkes of inputs and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
+    print 'Loading images...'
+    images = []
+    labels = []
 
-  # test_images = np.array(train_images[:TEST_SIZE])
-  # test_labels = np.array(train_labels[:TEST_SIZE])
+    im_generated = 0
+    
+    while im_generated < n_images:
+      if self.tracker >= len(self.im_names):
+        self.tracker = 0
+        random.shuffle(self.im_names)
+      
+      name = self.im_names[self.tracker]
+      print 'Opening image: ', name
 
-  valid_images = np.array(train_images[TEST_SIZE:VALIDATION_SIZE])
-  valid_labels = np.array(train_labels[TEST_SIZE:VALIDATION_SIZE])
+      im = Image.open(name)
+      repls = ('Ciano_', ''), ('Blue_', ''), ('Green_', ''), ('Training', 'GroundTruth')
 
-  train_images = np.array(train_images[TEST_SIZE+VALIDATION_SIZE:])
-  train_labels = np.array(train_labels[TEST_SIZE+VALIDATION_SIZE:])
+      name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+      lb = Image.open(name) 
 
-  data_sets.train = DataSet(train_images, train_labels)
-  data_sets.validation = DataSet(valid_images, valid_labels)
-  data_sets.test  = DataSet(test_images, test_labels)
+      im = np.asarray(im)
+      lb = np.asarray(lb)
 
-  return data_sets
+      height, width = im.shape[0], im.shape[1]
+
+      """Generate chunks"""
+      for h in range(0, height-self.input_size[0], self.input_size[0]):
+        for w in range(0, width-self.input_size[1], self.input_size[1]):
+          h_end = h + self.input_size[0]
+          w_end = w + self.input_size[1]
+
+          chunk = im[h:h_end, w:w_end]
+          images.append(chunk)
+
+          chunk = lb[h: h_end, w:w_end]
+          labels.append(chunk)
+
+          im_generated += 1
+
+      self.tracker += 1
+
+    return np.array(images), np.array(labels)
+
+
+  def read_data_sets(self, n_images):
+    
+    class DataSets(object):
+      pass
+
+    data_sets = DataSets()
+
+    TEST_SIZE = 0
+    VALIDATION_SIZE = 100
+
+    train_images, train_labels = self.extract_dataset(n_images)
+
+    """shuffling inputs"""
+    shuffler = list(zip(train_images, train_labels))
+    random.shuffle(shuffler)
+    train_images, train_labels = zip(*shuffler)
+
+    # test_images = np.array(train_images[:TEST_SIZE])
+    # test_labels = np.array(train_labels[:TEST_SIZE])
+
+    valid_images = np.array(train_images[TEST_SIZE:VALIDATION_SIZE])
+    valid_labels = np.array(train_labels[TEST_SIZE:VALIDATION_SIZE])
+
+    train_images = np.array(train_images[TEST_SIZE+VALIDATION_SIZE:])
+    train_labels = np.array(train_labels[TEST_SIZE+VALIDATION_SIZE:])
+
+    data_sets.train = DataSet(train_images, train_labels)
+    data_sets.validation = DataSet(valid_images, valid_labels)
+    # data_sets.test  = DataSet(test_images, test_labels)
+
+    return data_sets

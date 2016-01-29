@@ -1,5 +1,6 @@
 """Deep dive libs"""
-import input_data_dive
+from input_data_dive import DataSetManager
+from config import *
 
 """Structure"""
 import sys
@@ -15,53 +16,44 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 """Python libs"""
+import os
 from optparse import OptionParser
 from PIL import Image
+import subprocess
 
-"""Options to add in terminal execution"""
-parser = OptionParser()
-parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
-                  help="write logdir (same you use in tensorboard)", metavar="FILE")
-parser.add_option("-r", "--restore", dest="restore", default='False',
-                  help="True if restoring to a previous model")
-parser.add_option("-e", "--eval", dest="evaluation", default='False',
-                  help="True if evaluating the model")
-parser.add_option("-p", "--path", dest="path", default='/home/nautec/DeepDive/Simulator/Dataset1/Training/',
-                  help="path to training set. if eval is true, path points to a single image to be evaluated")
+# """Options to add in terminal execution"""
+# parser = OptionParser()
+# parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
+#                   help="write logdir (same you use in tensorboard)", metavar="FILE")
+# parser.add_option("-r", "--restore", dest="restore", default='False',
+#                   help="True if restoring to a previous model")
+# parser.add_option("-e", "--eval", dest="evaluation", default='False',
+#                   help="True if evaluating the model")
+# parser.add_option("-p", "--path", dest="path", default='/home/nautec/DeepDive/Simulator/Dataset1/Training/',
+#                   help="path to training set. if eval is true, path points to a single image to be evaluated")
 
 
-(options, args) = parser.parse_args()
+# (options, args) = parser.parse_args()
 
 """Verifying options integrity"""
-if options.evaluation not in ('True', 'False'):
+if evaluation not in (True, False):
   raise Exception('Wrong eval option. (True or False)')
-if options.restore not in ('True', 'False'):
+if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-print 'Logging into ' + options.summary_path
-
-input_size = (184, 184, 3)
-output_size = (184, 184, 3)
-n_images = 800  #Number of images reading at each time
-
+manager = DataSetManager(path, input_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
-if options.evaluation != 'True':
-  dataset = input_data_dive.read_data_sets(path=options.path, input_size=input_size, n_images=n_images)
+if not evaluation:
+  dataset = manager.read_data_sets(n_images=n_images)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
 
+# sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
 
 h_conv3 = create_structure(tf, x)
-
-if options.evaluation != 'True':
-  batch_size = 2
-else:
-  batch_size = 1
-
-learning_rate = tf.Variable(1e-3)
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
@@ -79,38 +71,44 @@ tf.histogram_summary('InputHist', x)
 tf.histogram_summary('OutputHist', h_conv3)
 tf.histogram_summary('GroundTruthHist', y_)
 tf.scalar_summary('Loss', loss_function)
-tf.scalar_summary('learning_rate', learning_rate)
+# tf.scalar_summary('learning_rate', learning_rate)
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
 
 sess.run(tf.initialize_all_variables())
 
-summary_writer = tf.train.SummaryWriter(options.summary_path,
+summary_writer = tf.train.SummaryWriter(summary_path,
                                             graph_def=sess.graph_def)
 
+# """Open tensorboard"""
+# subprocess.Popen(['gnome-terminal', '-e', 'tensorboard --logdir ' + summary_path], shell=True)
+  
 """Load a previous model if restore is set to True"""
-models_path = 'models_sigmoid/'
+if not os.path.exists(models_path):
+  os.mkdir(models_path)
 ckpt = tf.train.get_checkpoint_state(models_path)
-if ckpt and ckpt.model_checkpoint_path and options.restore == 'True':
+if ckpt and ckpt.model_checkpoint_path and restore:
   print 'Restoring from ', ckpt.model_checkpoint_path  
   saver.restore(sess, models_path + ckpt.model_checkpoint_path)
 
 
+print 'Logging into ' + summary_path
+
 """Evaluation"""
-if options.evaluation == 'True':
+if evaluation:
 
   overlap_size = (12, 12)
 
-  path = options.path
+  path = path
   
   im = Image.open(path).convert('RGB')
   im = np.array(im, dtype=np.float32)
+  visualizer = im
 
   im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
 
   original = im
-  visualizer = original
   original = original.astype(np.float32)
   original = np.multiply(original, 1.0 / 255.0)
 
@@ -137,6 +135,9 @@ if options.evaluation == 'True':
 
       united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
 
+  jump = (input_size[0]-(2*overlap_size[0]), input_size[1]-(2*overlap_size[1]))
+  united_images = united_images[jump[0]:visualizer.shape[0]+jump[0], jump[1]:visualizer.shape[1]+jump[1], :]
+
   fig = plt.figure()
   fig.add_subplot(1,2,1)
   plt.imshow(np.array(visualizer, dtype=np.uint8))
@@ -149,13 +150,13 @@ if options.evaluation == 'True':
 
 
 """Training"""
-for i in range(20000):
+for i in range(1, 20000):
   
   """Read dataset images again not to waste CPU"""
   if i%(n_images/batch_size) == 0:
-    dataset = input_data_dive.read_data_sets(path=options.path, input_size=input_size, n_images=n_images)
+    dataset = manager.read_data_sets(n_images=n_images)
   batch = dataset.train.next_batch(batch_size)
-  
+
   """Save the model every 300 iterations"""
   if i%300 == 0:
     if ckpt:
@@ -170,13 +171,18 @@ for i in range(20000):
       x:batch[0], y_: batch[1]})
   
   if i%10 == 0:
-    print("step %d, images used %d, loss %g"%(i, i*batch_size, train_accuracy))
+    if ckpt:
+      print("step %d, images used %d, loss %g"%(i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy))
+    else:
+      print("step %d, images used %d, loss %g"%(i, i*batch_size, train_accuracy))
   
   """Run training and write the summaries"""
   train_step.run(feed_dict={x: batch[0], y_: batch[1]})
   summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
-  summary_writer.add_summary(summary_str, i)
-
+  if ckpt:
+    summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
+  else:
+    summary_writer.add_summary(summary_str, i)
 
 # image =h_noise3.eval()[0]
 # sumImage = image[:,:,0]
