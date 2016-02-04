@@ -20,6 +20,7 @@ import os
 from optparse import OptionParser
 from PIL import Image
 import subprocess
+import time
 
 # """Options to add in terminal execution"""
 # parser = OptionParser()
@@ -53,13 +54,13 @@ y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name=
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
 
-h_conv3 = create_structure(tf, x)
+h_conv3 = create_structure(tf, x,input_size)
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
 loss_function = tf.reduce_mean(tf.pow(tf.sub(h_conv3, y_image),2))
 #PSNR
-# loss_function = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
+#loss_function_psnr = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 
@@ -67,10 +68,11 @@ train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 tf.image_summary('Input', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
 tf.image_summary('Output', h_conv3)
 tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
-tf.histogram_summary('InputHist', x)
-tf.histogram_summary('OutputHist', h_conv3)
-tf.histogram_summary('GroundTruthHist', y_)
+# tf.histogram_summary('InputHist', x)
+# tf.histogram_summary('OutputHist', h_conv3)
+# tf.histogram_summary('GroundTruthHist', y_)
 tf.scalar_summary('Loss', loss_function)
+#tf.scalar_summary('Loss_PSNR', loss_function_psnr)
 # tf.scalar_summary('learning_rate', learning_rate)
 
 summary_op = tf.merge_all_summaries()
@@ -150,8 +152,8 @@ if evaluation:
 
 
 """Training"""
-for i in range(1, 20000):
-  
+for i in range(1, 5000000):
+
   """Read dataset images again not to waste CPU"""
   if i%(n_images/batch_size) == 0:
     dataset = manager.read_data_sets(n_images=n_images)
@@ -166,19 +168,26 @@ for i in range(1, 20000):
       saver.save(sess, models_path + 'model.ckpt', global_step=i)
       print 'Model saved.'
 
+
+  start_time = time.time()
   """Calculate the loss"""
-  train_accuracy = loss_function.eval(feed_dict={
-      x:batch[0], y_: batch[1]})
+  #train_accuracy = loss_function.eval(feed_dict={
+  #    x:batch[0], y_: batch[1]})
+  """Run training and write the summaries"""
+  #train_step.run(feed_dict={x: batch[0], y_: batch[1]})
+
+  summary_str,train_accuracy,_ = sess.run([summary_op,loss_function,train_step], feed_dict={x: batch[0], y_: batch[1]})
+  duration = time.time() - start_time
   
   if i%10 == 0:
+    num_examples_per_step = batch_size 
+    examples_per_sec = num_examples_per_step / duration
     if ckpt:
-      print("step %d, images used %d, loss %g"%(i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy))
+      print("step %d, images used %d, loss %g, examples per second %f"%(i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy,examples_per_sec))
     else:
-      print("step %d, images used %d, loss %g"%(i, i*batch_size, train_accuracy))
+      print("step %d, images used %d, loss %g, examples per second %f"%(i, i*batch_size, train_accuracy,examples_per_sec))
   
-  """Run training and write the summaries"""
-  train_step.run(feed_dict={x: batch[0], y_: batch[1]})
-  summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
+
   if ckpt:
     summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
   else:

@@ -112,9 +112,11 @@ class DataSetManager(object):
       print 'Opening image: ', name
 
       im = Image.open(name)
-      repls = ('Ciano_', ''), ('Blue_', ''), ('Green_', ''), ('Training', 'GroundTruth')
-
-      name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+      for i in range(1, 7):
+        i = str(i)
+        repls = ('Ciano%s_' % i, ''), ('Blue%s_' % i, ''), ('Green%s_' % i, ''), ('Coastal%s_' % i, ''), ('Oceanic%s_' % i, ''), ('Training', 'GroundTruth')
+        name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+        
       lb = Image.open(name) 
 
       im = np.asarray(im)

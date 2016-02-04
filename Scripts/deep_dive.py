@@ -5,6 +5,7 @@ Use it to create the convolutional neural network architecture.
 import tensorflow as tf
 import numpy as np
 from random import randint
+from config import *
 
 class DeepDive(object):
 
@@ -16,8 +17,13 @@ class DeepDive(object):
   shape: tuple defining the number of weights
   """
   def weight_variable(self, shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    initial = tf.truncated_normal(shape, stddev=init_std_dev)
     return tf.Variable(initial)
+
+  def weight_variable_scaling(self, shape, name):
+    initializer = tf.uniform_unit_scaling_initializer(factor=1.15)
+    initial = tf.get_variable(name=name, shape=shape, initializer=initializer, trainable=True)
+    return initial
 
   """
   Creates a bias variable
