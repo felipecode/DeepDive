@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from dirt_or_rain_structure import create_structure
+from deep_dive_test_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -28,8 +28,8 @@ import glob
 overlap_size = (12, 12)
 
 
-path = '/home/nautec/DeepDive/Simulator/Dataset1_2/Evaluation/'
-out_path ='/home/nautec/DeepDive/Simulator/Dataset1_2/EvaluationResults/'
+path = '/home/nautec/DeepDive/Simulator/Dataset1_2R1/Evaluation/'
+out_path ='/home/nautec/DeepDive/Simulator/Dataset1_2R1/EvaluationResults/'
 im_names =  glob.glob(path + "*.jpg")
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
@@ -40,7 +40,7 @@ sess = tf.InteractiveSession()
 
 
 
-h_conv3 = create_structure(tf, x,input_size)
+h_conv3 = create_structure(tf, x, input_size)
 
 sess.run(tf.initialize_all_variables())
 saver = tf.train.Saver(tf.all_variables())
