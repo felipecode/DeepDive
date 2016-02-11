@@ -33,9 +33,9 @@ class DeepDive(object):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial, name=name)
 
-  def bias_variable(self, shape):  
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+  # def bias_variable(self, shape):  
+  #   initial = tf.constant(0.1, shape=shape)
+  #   return tf.Variable(initial)
 
   """
   Creates a 2d Convolution layer.
