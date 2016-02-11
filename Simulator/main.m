@@ -19,7 +19,7 @@
 
 
 %image = imvec{18};
-input = imvec{1};
+input = imread('UWSIM1_18.jpg');
 %distance = 0.58;
 %dmapR = calculateDmap(image(:,:,1),distance); 
 
@@ -42,24 +42,66 @@ Binf = [ 0.2, 0.85, 0.85];
 
 
 
-c = [ 2.0, 0.8 , 0.8];
 
 
 input = imresize(input,size(dmapOutput));
 
 %[J, spImage] = spAverageImage(imvec{i} ,96);
 delta = 10;
-for wave = 400:delta:720
+%Energy = zeros(size(input,1),size(input,2),size(400:delta:720));
+
+c = zeros(3,1);
+sumWeights = zeros(1,3);
+K=6;
+for wave = 400:delta:800
     % Load an absorption model of a certain water tipe
-    load('watermodel')
+    load('deepgreen')
     % Get the c for this wavelenght
-    cwave = feval(watermodel,wave);
+    cwave = feval(deepgreen,wave);
     
-    Energy =simulateTurbidImage(input,Binf,c,0.58);
+
+   
+    % for rgb
+     weights = spectrumRGB(wave)/(length(400:delta:800)/K);
     
-    T(:.:.1) = cameraModelR(Energy)
+     
+
+    for i=1:3
+               
+        c(i) = c(i) + cwave * weights(i);
     
+    end
     
+    %sumWeights = sumWeights + weights;
+
+
 end
 
+
+
+
+k=3.5;              %Schechner,2006
+T=1.0; %1.0; %Transmission coefficient at the water surface - from Processing of field spectroradiometric data - EARSeL
+I0=1.0; %Cor da Luz - Branca Pura
+
+%distance = 1.2;
+
+distance = 1.4;
+
+profundity = 1.2;
+
+for i=1:3
+
+    Binf(i)=k*T*I0*exp(-c(i)*double(profundity));
+
+
+end
+
+
+
+T = simulateTurbidImage(input,Binf,c,distance);
+GT  = simulateTurbidImageGT(input,c,distance,3);    
+
 figure; imshow(T);
+
+figure; imshow(GT);
