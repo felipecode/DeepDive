@@ -88,11 +88,31 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, input_size):
+  def __init__(self, path, input_size, proportions, n_images_dataset):
     self.input_size = input_size
-    self.im_names =  glob.glob(path + "*.jpg")
-    random.shuffle(self.im_names)
+    self.im_names = []
     self.tracker = 0
+
+    """ First thing we do is to elect a folder number based on the proportions vec """
+    #proportions
+    for i in range(0,len(proportions)):
+      n_images_fold = int(proportions[i]*n_images_dataset)
+
+      path_folder = path + '/' + str(i+1)
+
+      """Replace possible // for /"""
+      repls = ('//', '/'), ('', '')
+      path_folder = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
+
+      im_names_fold = glob.glob(path_folder + "/*.jpg")
+
+      #random.shuffle(im_names_fold)
+      im_names_fold = im_names_fold[0:n_images_fold]
+
+      self.im_names = self.im_names + im_names_fold
+      
+    #random.shuffle(self.im_names)
+
 
 
   def extract_dataset(self, n_images):
@@ -109,36 +129,82 @@ class DataSetManager(object):
         random.shuffle(self.im_names)
       
       name = self.im_names[self.tracker]
-      print 'Opening image: ', name
+      #print 'Opening image: ', name
 
       im = Image.open(name)
-      for i in range(1, 7):
-        i = str(i)
-        repls = ('Ciano%s_' % i, ''), ('Blue%s_' % i, ''), ('Green%s_' % i, ''), ('Coastal%s_' % i, ''), ('Oceanic%s_' % i, ''), ('Training', 'GroundTruth')
-        name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+
+      repls = ('Training', 'GroundTruth'), ('', '')
+      name = reduce(lambda a, kv: a.replace(*kv), repls, name)
         
       lb = Image.open(name) 
 
       im = np.asarray(im)
       lb = np.asarray(lb)
 
+      assert im.size == lb.size
+
       height, width = im.shape[0], im.shape[1]
 
       """Generate chunks"""
-      for h in range(0, height-self.input_size[0], self.input_size[0]):
-        for w in range(0, width-self.input_size[1], self.input_size[1]):
-          h_end = h + self.input_size[0]
-          w_end = w + self.input_size[1]
+      # for h in range(0, height-self.input_size[0], self.input_size[0]):
+      #   for w in range(0, width-self.input_size[1], self.input_size[1]):
+      #     h_end = h + self.input_size[0]
+      #     w_end = w + self.input_size[1]
 
-          chunk = im[h:h_end, w:w_end]
-          images.append(chunk)
+      #     chunk = im[h:h_end, w:w_end]
+      #     images.append(chunk)
 
-          chunk = lb[h: h_end, w:w_end]
-          labels.append(chunk)
+      #     chunk = lb[h: h_end, w:w_end]
+      #     labels.append(chunk)
 
-          im_generated += 1
+      #     im_generated += 1
 
       self.tracker += 1
+
+    return np.array(images), np.array(labels)
+
+  def extract_dataset_prop(self, n_images):
+    """Loads images of input and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
+    print 'Loading images...'
+    images = []
+    labels = []
+
+    im_loaded = 0
+    
+
+    #name = self.im_names[self.tracker]
+    while im_loaded < n_images:
+
+
+      """End of an epoch"""
+      if self.tracker >= len(self.im_names):
+        self.tracker = 0
+        random.shuffle(self.im_names)
+
+      name = self.im_names[self.tracker]
+      #print 'Opening image: ', name
+      im = Image.open(name)
+
+      """Replacing names to open its ground truth"""
+      repls = ('Training', 'GroundTruth'), ('', '')
+      name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+        
+      lb = Image.open(name) 
+
+      im = np.asarray(im)
+      lb = np.asarray(lb)
+      #assert im.shape == lb.shape
+
+      images.append(im)
+      labels.append(lb)
+
+      im_loaded += 1
+      self.tracker += 1
+
+      #print im_loaded
+      if im_loaded%500 == 0:
+        print 'Loaded ' + str(im_loaded) + ' images.'
+
 
     return np.array(images), np.array(labels)
 
@@ -153,7 +219,7 @@ class DataSetManager(object):
     TEST_SIZE = 0
     VALIDATION_SIZE = 100
 
-    train_images, train_labels = self.extract_dataset(n_images)
+    train_images, train_labels = self.extract_dataset_prop(n_images)
 
     """shuffling inputs"""
     shuffler = list(zip(train_images, train_labels))
@@ -174,3 +240,5 @@ class DataSetManager(object):
     # data_sets.test  = DataSet(test_images, test_labels)
 
     return data_sets
+
+    

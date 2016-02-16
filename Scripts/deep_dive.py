@@ -29,9 +29,9 @@ class DeepDive(object):
   Creates a bias variable
   shape: tuple defining the number of biases
   """
-  def bias_variable(self, shape, name):  
+  def bias_variable(self, shape):  
     initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name=name)
+    return tf.Variable(initial)
 
   # def bias_variable(self, shape):  
   #   initial = tf.constant(0.1, shape=shape)

@@ -34,6 +34,33 @@ import time
 #                   help="path to training set. if eval is true, path points to a single image to be evaluated")
 
 
+# def _add_loss_summaries(total_loss):
+#   """Add summaries for losses in CIFAR-10 model.
+
+#   Generates moving average for all losses and associated summaries for
+#   visualizing the performance of the network.
+
+#   Args:
+#     total_loss: Total loss from loss().
+#   Returns:
+#     loss_averages_op: op for generating moving averages of losses.
+#   """
+#   # Compute the moving average of all individual losses and the total loss.
+#   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+#   losses = tf.get_collection('losses')
+#   loss_averages_op = loss_averages.apply(losses + [total_loss])
+
+#   # Attach a scalar summmary to all individual losses and the total loss; do the
+#   # same for the averaged version of the losses.
+#   for l in losses + [total_loss]:
+#     # Name each loss as '(raw)' and name the moving average version of the loss
+#     # as the original loss name.
+#     tf.scalar_summary(l.op.name +' (raw)', l)
+#     tf.scalar_summary(l.op.name, loss_averages.average(l))
+
+#   return loss_averages_op
+
+
 # (options, args) = parser.parse_args()
 
 """Verifying options integrity"""
@@ -42,7 +69,7 @@ if evaluation not in (True, False):
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-manager = DataSetManager(path, input_size)
+manager = DataSetManager(path, input_size, proportions, n_images_dataset)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 if not evaluation:
