@@ -14,6 +14,7 @@ import numpy as np
 """Visualization libs"""
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from skimage.measure import structural_similarity as ssim
 
 """Python libs"""
 import os
@@ -21,6 +22,7 @@ from optparse import OptionParser
 from PIL import Image
 import subprocess
 import time
+from ssim_tf import ssim_tf
 
 # """Options to add in terminal execution"""
 # parser = OptionParser()
@@ -86,8 +88,15 @@ last_layer, l2_reg = create_structure(tf, x,input_size)
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
 loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
+
+
+
+loss_function_ssim = ssim_tf(tf,y_image,last_layer)
+
 #PSNR
 #loss_function_psnr = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
+
+
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
 
@@ -97,9 +106,11 @@ tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
-# tf.histogram_summary('GroundTruthHist', y_)
+
 tf.scalar_summary('Loss', loss_function)
+tf.scalar_summary('Loss_SSIM', loss_function_ssim)
 tf.scalar_summary('L2_loss', l2_reg)
+
 #tf.scalar_summary('Loss_PSNR', loss_function_psnr)
 # tf.scalar_summary('learning_rate', learning_rate)
 
@@ -186,6 +197,15 @@ for i in range(1, 5000000):
   if i%(n_images/batch_size) == 0:
     dataset = manager.read_data_sets(n_images=n_images)
   batch = dataset.train.next_batch(batch_size)
+
+  """ Do validation error and generate Images """
+  #if i%50000 == 0:
+
+
+
+
+
+
 
   """Save the model every 300 iterations"""
   if i%300 == 0:
