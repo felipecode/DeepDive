@@ -19,7 +19,7 @@
 
 
 %image = imvec{18};
-input = imread('UWSIM1_18.jpg');
+input = imread('UWSIM1_17.jpg');
 %distance = 0.58;
 %dmapR = calculateDmap(image(:,:,1),distance); 
 
@@ -86,7 +86,7 @@ I0=1.0; %Cor da Luz - Branca Pura
 
 %distance = 1.2;
 
-distance = 1.4;
+distance = 0.4;
 
 profundity = 1.2;
 
