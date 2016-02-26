@@ -1,19 +1,19 @@
-function T = simulateTurbidImage(input,Binf,c,distance)
+function T = simulateTurbidImage(input,Binf,c,distance,noise,fwintensity)
 
     % Set distance of the scene, for our experiment is always 0.58
     
+    fwcossine = [ 0.75 0.714 0.681];
+     
 
-     averageCossine = 0.75;
 
+     TR = calculateTurbidImageFixD(double(input(:,:,1)),c(1),distance,fwcossine(1),Binf(1),noise,fwintensity); 
 
-     TR = calculateTurbidImageFixD(double(input(:,:,1))/255,c(1),distance,averageCossine,Binf(1)); 
-     averageCossine = 0.714;
      
      
-     TG = calculateTurbidImageFixD(double(input(:,:,2))/255,c(2),distance,averageCossine,Binf(2)); 
+     TG = calculateTurbidImageFixD(double(input(:,:,2)),c(2),distance,fwcossine(2),Binf(2),noise,fwintensity); 
 %     
-     averageCossine = 0.681;
-     TB = calculateTurbidImageFixD(double(input(:,:,3))/255,c(3),distance,averageCossine,Binf(3)); 
+
+     TB = calculateTurbidImageFixD(double(input(:,:,3)),c(3),distance,fwcossine(3),Binf(3),noise,fwintensity); 
 %     
 %     
      T(:,:,1) = TR;

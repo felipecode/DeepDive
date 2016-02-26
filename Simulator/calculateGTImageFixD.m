@@ -6,7 +6,7 @@ function Ed = calculateGTImageFixD(J,c,distance,minpixel)
 
 c_mat = c*ones(size(J));
 
-c_mat = c_mat + 0.01*randn(size(c_mat));
+%c_mat = c_mat + 0.01*randn(size(c_mat));
 
 
 dmap = distance*ones(size(J));
@@ -18,6 +18,7 @@ Ed = J.*exp(-dmap.*c_mat);
 %Ed = directComponent(J, c_mat,dmap);
 Ed(Ed<minpixel*0.00392156862) = 0;
 Ed = Ed./max(max(Ed));
+Ed(isnan(Ed)) =0;
 %figure; 
 %imshow(Ed);
 
