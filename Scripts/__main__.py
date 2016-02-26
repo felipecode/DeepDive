@@ -71,7 +71,7 @@ if evaluation not in (True, False):
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-manager = DataSetManager(path, input_size, proportions, n_images_dataset)
+manager = DataSetManager(path,val_path, input_size, proportions, n_images_dataset)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 if not evaluation:
@@ -87,9 +87,11 @@ last_layer, l2_reg = create_structure(tf, x,input_size)
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
-loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
+#loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
+loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2))
 
-
+# using the same function with a different name
+loss_validation = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2))
 
 loss_function_ssim = ssim_tf(tf,y_image,last_layer)
 
@@ -108,6 +110,7 @@ tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], outp
 # tf.histogram_summary('OutputHist', last_layer)
 
 tf.scalar_summary('Loss', loss_function)
+
 tf.scalar_summary('Loss_SSIM', loss_function_ssim)
 tf.scalar_summary('L2_loss', l2_reg)
 
@@ -116,7 +119,7 @@ tf.scalar_summary('L2_loss', l2_reg)
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
-
+val =tf.scalar_summary('Loss_Validation', loss_validation)
 sess.run(tf.initialize_all_variables())
 
 summary_writer = tf.train.SummaryWriter(summary_path,
@@ -191,17 +194,51 @@ if evaluation:
 
 
 """Training"""
-for i in range(1, 5000000):
+
+lowest_error = 1.5;
+lowest_val  = 1.5;
+lowest_iter = 1;
+lowest_val_iter = 1;
+
+
+
+for i in range(1, n_epochs*len(manager.im_names_val)):
 
   """Read dataset images again not to waste CPU"""
   if i%(n_images/batch_size) == 0:
     dataset = manager.read_data_sets(n_images=n_images)
   batch = dataset.train.next_batch(batch_size)
+  
+
+  epoch_number = 1.0+ float(i)/float(len(manager.im_names_val))
+
+
 
   """ Do validation error and generate Images """
-  #if i%50000 == 0:
+  if i%500 == 0:
+    batch_val = dataset.validation.next_batch(batch_size)
+
+    """Calculate the loss for the validation image and also print this image for further validation"""
+
+    # TODO: Change for the correct validation batch.
+    summary_str,train_accuracy,result = sess.run([val, loss_validation,last_layer ], feed_dict={x: batch_val[0], y_: batch_val[1]})
+    result = Image.fromarray((result[0,:,:,:] * 255).astype(np.uint8))
+    result.save(out_path + str(i) + '.jpg')
 
 
+    if  train_accuracy < lowest_val:
+      lowest_val = train_accuracy
+      lowest_val_iter = i/500;
+
+    if ckpt:
+      print("Validation step %d, images used %d, loss %g, lowest_error %g on %d"%((i + int(ckpt.model_checkpoint_path.split('-')[1]))/500, i*batch_size, train_accuracy, lowest_val,lowest_val_iter))
+    else:
+      print("Validation step %d, images used %d, loss %g, lowest_error %g on %d"%(i/500, i*batch_size, train_accuracy, lowest_val,lowest_val_iter))
+  
+    if ckpt:
+      summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
+    else:
+      summary_writer.add_summary(summary_str, i)
 
 
 
@@ -226,14 +263,19 @@ for i in range(1, 5000000):
 
   summary_str,train_accuracy,_ = sess.run([summary_op, loss_function, train_step], feed_dict={x: batch[0], y_: batch[1]})
   duration = time.time() - start_time
-  
+  if  train_accuracy < lowest_error:
+    lowest_error = train_accuracy
+    lowest_iter = i
+
+
   if i%10 == 0:
     num_examples_per_step = batch_size 
     examples_per_sec = num_examples_per_step / duration
+    train_accuracy
     if ckpt:
-      print("step %d, images used %d, loss %g, examples per second %f"%(i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy, examples_per_sec))
+      print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d ,examples per second %f"%(epoch_number, i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy, lowest_error, lowest_iter, examples_per_sec))
     else:
-      print("step %d, images used %d, loss %g, examples per second %f"%(i, i*batch_size, train_accuracy,examples_per_sec))
+      print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
   
 
   if ckpt:

@@ -88,28 +88,37 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, input_size, proportions, n_images_dataset):
+  def __init__(self, path, path_val, input_size, proportions, n_images_dataset):
     self.input_size = input_size
     self.im_names = []
+    self.im_names_val = []
     self.tracker = 0
+    self.tracker_val = 0
+    n_images_dataset_val = int(n_images_dataset*0.1)
 
     """ First thing we do is to elect a folder number based on the proportions vec """
     #proportions
     for i in range(0,len(proportions)):
       n_images_fold = int(proportions[i]*n_images_dataset)
+      n_images_fold_val = int(proportions[i]*n_images_dataset_val)
 
       path_folder = path + '/' + str(i+1)
+      path_folder_val = path_val + '/' + str(i+1)
 
       """Replace possible // for /"""
       repls = ('//', '/'), ('', '')
       path_folder = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
+      path_folder_val = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
 
       im_names_fold = glob.glob(path_folder + "/*.jpg")
+      im_names_fold_val = glob.glob(path_folder_val + "/*.jpg")
 
       #random.shuffle(im_names_fold)
       im_names_fold = im_names_fold[0:n_images_fold]
+      im_names_fold_val = im_names_fold_val[0:n_images_fold_val]
 
       self.im_names = self.im_names + im_names_fold
+      self.im_names_val = self.im_names_val + im_names_fold_val
       
     #random.shuffle(self.im_names)
 
@@ -168,11 +177,16 @@ class DataSetManager(object):
     print 'Loading images...'
     images = []
     labels = []
+    val_images = []
+    val_labels = []
 
     im_loaded = 0
     
 
     #name = self.im_names[self.tracker]
+
+    # Extract first the training images
+
     while im_loaded < n_images:
 
 
@@ -195,6 +209,9 @@ class DataSetManager(object):
       lb = np.asarray(lb)
       #assert im.shape == lb.shape
 
+      # CUT in patches based on parameters
+
+
       images.append(im)
       labels.append(lb)
 
@@ -206,7 +223,51 @@ class DataSetManager(object):
         print 'Loaded ' + str(im_loaded) + ' images.'
 
 
-    return np.array(images), np.array(labels)
+    im_loaded = 0
+    """Extract the validation images"""
+
+    # todo: DO THIS BETTER
+    while im_loaded < n_images/3:
+
+
+      """End of an epoch"""
+      if self.tracker_val >= len(self.im_names_val):
+        self.tracker_val = 0
+        random.shuffle(self.im_names_val)
+
+      name = self.im_names_val[self.tracker_val]
+      #print 'Opening image: ', name
+      im = Image.open(name)
+
+      """Replacing names to open its ground truth"""
+      repls = ('Validation', 'ValidationGroundTruth'), ('', '')
+      name = reduce(lambda a, kv: a.replace(*kv), repls, name)
+        
+      lb = Image.open(name) 
+
+
+
+      im = np.asarray(im)
+      lb = np.asarray(lb)
+      #assert im.shape == lb.shape
+
+      # CUT in patches based on parameters
+
+      
+
+      val_images.append(im)
+      val_labels.append(lb)
+
+      im_loaded += 1
+      self.tracker_val += 1
+
+      #print im_loaded
+      if im_loaded%500 == 0:
+        print 'Loaded ' + str(im_loaded) + ' validation images.'
+
+
+
+    return np.array(images), np.array(labels), np.array(val_images), np.array(val_labels)
 
 
   def read_data_sets(self, n_images):
@@ -219,7 +280,7 @@ class DataSetManager(object):
     TEST_SIZE = 0
     VALIDATION_SIZE = 100
 
-    train_images, train_labels = self.extract_dataset_prop(n_images)
+    train_images, train_labels, valid_images, valid_labels = self.extract_dataset_prop(n_images)
 
     """shuffling inputs"""
     shuffler = list(zip(train_images, train_labels))
@@ -229,8 +290,8 @@ class DataSetManager(object):
     # test_images = np.array(train_images[:TEST_SIZE])
     # test_labels = np.array(train_labels[:TEST_SIZE])
 
-    valid_images = np.array(train_images[TEST_SIZE:VALIDATION_SIZE])
-    valid_labels = np.array(train_labels[TEST_SIZE:VALIDATION_SIZE])
+    valid_images = np.array(valid_images[TEST_SIZE+VALIDATION_SIZE:])
+    valid_labels = np.array(valid_labels[TEST_SIZE+VALIDATION_SIZE:])
 
     train_images = np.array(train_images[TEST_SIZE+VALIDATION_SIZE:])
     train_labels = np.array(train_labels[TEST_SIZE+VALIDATION_SIZE:])
