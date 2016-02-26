@@ -16,9 +16,9 @@ class DeepDive(object):
   Creates a weight variable
   shape: tuple defining the number of weights
   """
-  def weight_variable(self, shape):
+  def weight_variable(self, shape, name):
     initial = tf.truncated_normal(shape, stddev=init_std_dev)
-    return tf.Variable(initial)
+    return tf.Variable(initial, name=name)
 
   def weight_variable_scaling(self, shape, name):
     initializer = tf.uniform_unit_scaling_initializer(factor=1.15)
@@ -32,6 +32,10 @@ class DeepDive(object):
   def bias_variable(self, shape):  
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
+
+  # def bias_variable(self, shape):  
+  #   initial = tf.constant(0.1, shape=shape)
+  #   return tf.Variable(initial)
 
   """
   Creates a 2d Convolution layer.

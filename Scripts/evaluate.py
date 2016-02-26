@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from dirt_or_rain_structure import create_structure
+from deep_dive_test_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -28,10 +28,12 @@ import glob
 overlap_size = (12, 12)
 
 
-path = '/home/nautec/DeepDive/Simulator/Dataset1_2/Evaluation/'
-out_path ='/home/nautec/DeepDive/Simulator/Dataset1_2/EvaluationResults/'
+path = '/home/nautec/DeepDive/Simulator/Dataset1_2R1/Evaluation/'
+out_path ='/home/nautec/DeepDive/Simulator/Dataset1_2R1/EvaluationResults/'
 im_names =  glob.glob(path + "*.jpg")
+im_names = im_names + glob.glob(path + "*.png")
 
+print im_names
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
 
@@ -40,7 +42,7 @@ sess = tf.InteractiveSession()
 
 
 
-h_conv3 = create_structure(tf, x,input_size)
+h_conv3 = create_structure(tf, x, input_size)
 
 sess.run(tf.initialize_all_variables())
 saver = tf.train.Saver(tf.all_variables())
@@ -70,7 +72,7 @@ for i in im_names:
 
   united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
   out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
-
+  #print input_size
   """Separating the image in chunks"""
   for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
     for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
@@ -82,10 +84,12 @@ for i in im_names:
         chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
 
       im = chunk.reshape([1, np.prod(np.array(input_size))])
-
+      #print im.shape
+      #print united_images.shape
       result = sess.run(h_conv3, feed_dict={x: im, y_: out})
+      #print result[0][0].shape
 
-      united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
+      united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
 
   jump = (input_size[0]-(2.25*overlap_size[0]), input_size[1]-(2.25*overlap_size[1]))
   united_images = united_images[jump[0]+overlap_size[0]:visualizer.shape[0]+jump[0]-overlap_size[0], jump[1]+overlap_size[1]:visualizer.shape[1]+jump[1]-overlap_size[0], :]
