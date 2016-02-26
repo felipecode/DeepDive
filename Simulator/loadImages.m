@@ -1,12 +1,20 @@
-function imvec = loadImages(path)
+function imvec = loadImages(path,format,initial,nImages)
+    
 
+    pngFiles = dir(strcat(path,'/*.',format));
+
+    if (nargin<3)
+        nImages=length(pngFiles);
+        initial =1;
+    end;
 
     
-    pngFiles = dir(strcat(path,'/*.jpg'));
+
 
     %imvec = zeros(size()
-    imvec{length(pngFiles)} = 1;
-    for k = 1:length(pngFiles)
+    imvec{nImages} = 1;
+    for k = initial:(initial+nImages-1)
+       
         filename = pngFiles(k).name;
         [I, MAP] = imread(strcat(path,'/',filename));
         
@@ -51,7 +59,7 @@ function imvec = loadImages(path)
         
         %I = imadjust(I);
         %figure; imshow(GaussBlur);
-        imvec{k} = I;
+        imvec{k-initial+1} = I;
 
     end
 

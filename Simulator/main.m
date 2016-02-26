@@ -47,61 +47,62 @@ Binf = [ 0.2, 0.85, 0.85];
 input = imresize(input,size(dmapOutput));
 
 %[J, spImage] = spAverageImage(imvec{i} ,96);
-delta = 10;
-%Energy = zeros(size(input,1),size(input,2),size(400:delta:720));
-
-c = zeros(3,1);
-sumWeights = zeros(1,3);
-K=6;
-for wave = 400:delta:800
-    % Load an absorption model of a certain water tipe
-    load('deepgreen')
-    % Get the c for this wavelenght
-    cwave = feval(deepgreen,wave);
-    
-
-   
-    % for rgb
-     weights = spectrumRGB(wave)/(length(400:delta:800)/K);
-    
-     
-
-    for i=1:3
-               
-        c(i) = c(i) + cwave * weights(i);
-    
-    end
-    
-    %sumWeights = sumWeights + weights;
-
-
-end
-
-
+% delta = 10;
+% %Energy = zeros(size(input,1),size(input,2),size(400:delta:720));
+% 
+% c = zeros(3,1);
+% sumWeights = zeros(1,3);
+% K=6;
+% for wave = 400:delta:800
+%     % Load an absorption model of a certain water tipe
+%     load('TurbidityDatabase/deepgreen')
+%     % Get the c for this wavelenght
+%     cwave = feval(mediafunction,wave);
+%     
+% 
+%    
+%     % for rgb
+%      weights = spectrumRGB(wave)/(length(400:delta:800)/K);
+%     
+%      
+% 
+%     for i=1:3
+%                
+%         c(i) = c(i) + cwave * weights(i);
+%     
+%     end
+%     
+%     %sumWeights = sumWeights + weights;
+% 
+% 
+% end
 
 
-k=3.5;              %Schechner,2006
-T=1.0; %1.0; %Transmission coefficient at the water surface - from Processing of field spectroradiometric data - EARSeL
+
+
+
+l=1.06;              %Schechner,2006
+T=1; %1.0; %Transmission coefficient at the water surface - from Processing of field spectroradiometric data - EARSeL
 I0=1.0; %Cor da Luz - Branca Pura
 
-%distance = 1.2;
+profundity = 1;
 
-distance = 0.4;
-
-profundity = 1.2;
-
+patch = double(imread('TurbidityDatabase/mujereswater.png'))/255;
+c = acquireWaterProperties(patch);
 for i=1:3
 
-    Binf(i)=k*T*I0*exp(-c(i)*double(profundity));
+    Binf(i)=l*T*I0*exp(-c(i)*double(profundity));
 
 
 end
 
+distance =5;
 
-
-T = simulateTurbidImage(input,Binf,c,distance);
+%fwcossine = 0.1*[ 0.75 0.714 0.681];
+fwintesity = 50;
+T = simulateTurbidImage(input,Binf,c,distance,0.01,fwintesity);
 GT  = simulateTurbidImageGT(input,c,distance,3);    
 
 figure; imshow(T);
 
-figure; imshow(GT);
+%figure; imshow(GT);
