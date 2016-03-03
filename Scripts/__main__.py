@@ -75,10 +75,17 @@ manager = DataSetManager(path,val_path, input_size, proportions, n_images_datase
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 if not evaluation:
-  dataset = manager.read_data_sets(n_images=n_images)
+  dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
+
+
+#initial = tf.constant(0,dtype='float32')
+#loss_average_var = tf.Variable(initial, name="total_loss")
+
+#count = tf.Variable(initial, name="count")
+
 
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
@@ -88,12 +95,15 @@ last_layer, l2_reg = create_structure(tf, x,input_size)
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
 #loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
-loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2))
+loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Training')
 
 # using the same function with a different name
-loss_validation = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2))
+loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
+
 
 loss_function_ssim = ssim_tf(tf,y_image,last_layer)
+
+#loss_average = tf.div(tf.add(loss_average_var, loss_validation),tf.add(count,1));
 
 #PSNR
 #loss_function_psnr = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
@@ -101,6 +111,12 @@ loss_function_ssim = ssim_tf(tf,y_image,last_layer)
 
 
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss_function)
+#tf.add_to_collection('losses', loss_validation)
+
+
+
+
+#loss_averages_op = _add_loss_summaries(loss_validation)
 
 """Creating summaries"""
 tf.image_summary('Input', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
@@ -117,10 +133,23 @@ tf.scalar_summary('L2_loss', l2_reg)
 #tf.scalar_summary('Loss_PSNR', loss_function_psnr)
 # tf.scalar_summary('learning_rate', learning_rate)
 
+#val = tf.scalar_summary('Loss_Average', loss_average)
+
+
+
+
+
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
-val =tf.scalar_summary('Loss_Validation', loss_validation)
+
+val  =tf.scalar_summary('Loss_Validation', loss_validation)
+
+
 sess.run(tf.initialize_all_variables())
+
+
+
+
 
 summary_writer = tf.train.SummaryWriter(summary_path,
                                             graph_def=sess.graph_def)
@@ -135,62 +164,63 @@ ckpt = tf.train.get_checkpoint_state(models_path)
 if ckpt and ckpt.model_checkpoint_path and restore:
   print 'Restoring from ', ckpt.model_checkpoint_path  
   saver.restore(sess, models_path + ckpt.model_checkpoint_path)
-
+else:
+  ckpt = 0
 
 print 'Logging into ' + summary_path
 
 """Evaluation"""
-if evaluation:
+# if evaluation:
 
-  overlap_size = (12, 12)
+#   overlap_size = (12, 12)
 
-  path = path
+#   path = path
   
-  im = Image.open(path).convert('RGB')
-  im = np.array(im, dtype=np.float32)
-  visualizer = im
+#   im = Image.open(path).convert('RGB')
+#   im = np.array(im, dtype=np.float32)
+#   visualizer = im
 
-  im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
+#   im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
 
-  original = im
-  original = original.astype(np.float32)
-  original = np.multiply(original, 1.0 / 255.0)
+#   original = im
+#   original = original.astype(np.float32)
+#   original = np.multiply(original, 1.0 / 255.0)
 
-  height, width = im.shape[0], im.shape[1]
+#   height, width = im.shape[0], im.shape[1]
 
-  united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
-  out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
+#   united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
+#   out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
 
-  """Separating the image in chunks"""
-  for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
-    for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
-      h_end = h + input_size[0]
-      w_end = w + input_size[1]
+#   """Separating the image in chunks"""
+#   for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
+#     for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
+#       h_end = h + input_size[0]
+#       w_end = w + input_size[1]
 
-      chunk = original[h:h_end, w:w_end]
-      if chunk.shape != input_size:
-        chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
+#       chunk = original[h:h_end, w:w_end]
+#       if chunk.shape != input_size:
+#         chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
 
-      im = chunk.reshape([1, np.prod(np.array(input_size))])
+#       im = chunk.reshape([1, np.prod(np.array(input_size))])
 
-      result = sess.run(last_layer, feed_dict={x: im, y_: out})
-      summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
-      summary_writer.add_summary(summary_str, 1)
+#       result = sess.run(last_layer, feed_dict={x: im, y_: out})
+#       summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
+#       summary_writer.add_summary(summary_str, 1)
 
-      united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
+#       united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
 
-  jump = (input_size[0]-(2*overlap_size[0]), input_size[1]-(2*overlap_size[1]))
-  united_images = united_images[jump[0]:visualizer.shape[0]+jump[0], jump[1]:visualizer.shape[1]+jump[1], :]
+#   jump = (input_size[0]-(2*overlap_size[0]), input_size[1]-(2*overlap_size[1]))
+#   united_images = united_images[jump[0]:visualizer.shape[0]+jump[0], jump[1]:visualizer.shape[1]+jump[1], :]
 
-  fig = plt.figure()
-  fig.add_subplot(1,2,1)
-  plt.imshow(np.array(visualizer, dtype=np.uint8))
-  fig.add_subplot(1,2,2)
+#   fig = plt.figure()
+#   fig.add_subplot(1,2,1)
+#   plt.imshow(np.array(visualizer, dtype=np.uint8))
+#   fig.add_subplot(1,2,2)
 
-  plt.imshow(united_images)
-  plt.show()
+#   plt.imshow(united_images)
+#   plt.show()
 
-  sys.exit()
+#   sys.exit()
 
 
 """Training"""
@@ -200,45 +230,86 @@ lowest_val  = 1.5;
 lowest_iter = 1;
 lowest_val_iter = 1;
 
+#i + int(ckpt.model_checkpoint_path.split('-')[1])
 
 
-for i in range(1, n_epochs*len(manager.im_names_val)):
+if ckpt:
+  initialIteration = int(ckpt.model_checkpoint_path.split('-')[1])
+else:
+  initialIteration = 1
+
+valiter=3;
+for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
+
+  
+  epoch_number = 1.0+ float(i)/float(len(manager.im_names_val))
+
+  
+  """ Do validation error and generate Images """
+
+  # when finish epoch
+  if epoch_number>valiter:
+    print ' Validating'
+    summary_str_val_avg=0
+
+    for v in range(1, int(n_images_validation_dataset/(batch_size*10))):
+      
+
+      if v%(n_images_validation/batch_size) == 1:
+        dataset = manager.read_data_sets(n_images=0,n_images_validation=n_images_validation)
+
+      batch_val = dataset.validation.next_batch(batch_size)
+  
+
+      """Calculate the loss for the validation image and also print this image for further validation"""
+      
+      start_time = time.time()
+      summary_str_val,train_accuracy,result = sess.run([val, loss_validation,last_layer ], feed_dict={x: batch_val[0], y_: batch_val[1]})
+      duration = time.time() - start_time
+
+
+      if  train_accuracy < lowest_val:
+        lowest_val = train_accuracy
+        lowest_val_iter = v;
+
+      #if ckpt:
+      #  print("Validation step %d, images used %d, loss %g, lowest_error %g on %d"%((i + int(ckpt.model_checkpoint_path.split('-')[1]))/500, i*batch_size, train_accuracy, lowest_val,lowest_val_iter))
+      #else:
+      #print  int(summary_str_val)
+
+
+
+      if v%50 == 0:
+        num_examples_per_step = batch_size 
+        examples_per_sec = num_examples_per_step / duration
+        print("Validation step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(v, v*batch_size, train_accuracy, lowest_val,lowest_val_iter,examples_per_sec))
+        result = Image.fromarray((result[0,:,:,:] * 255).astype(np.uint8))
+        result.save(out_path +str(int(valiter)) + '/'+ str(v) + '.jpg')
+
+        
+        summary_writer.add_summary(summary_str_val, i+v)
+
+
+      #if ckpt:
+      #  summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
+      #else:
+
+      
+    valiter = valiter +1
+    # reload the other dataset.
+    dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
 
   """Read dataset images again not to waste CPU"""
-  if i%(n_images/batch_size) == 0:
-    dataset = manager.read_data_sets(n_images=n_images)
+  
+
+
+  if i%(n_images/batch_size) == 1:
+    dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
+  
   batch = dataset.train.next_batch(batch_size)
   
 
-  epoch_number = 1.0+ float(i)/float(len(manager.im_names_val))
-
-
-
-  """ Do validation error and generate Images """
-  if i%500 == 0:
-    batch_val = dataset.validation.next_batch(batch_size)
-
-    """Calculate the loss for the validation image and also print this image for further validation"""
-
-    # TODO: Change for the correct validation batch.
-    summary_str,train_accuracy,result = sess.run([val, loss_validation,last_layer ], feed_dict={x: batch_val[0], y_: batch_val[1]})
-    result = Image.fromarray((result[0,:,:,:] * 255).astype(np.uint8))
-    result.save(out_path + str(i) + '.jpg')
-
-
-    if  train_accuracy < lowest_val:
-      lowest_val = train_accuracy
-      lowest_val_iter = i/500;
-
-    if ckpt:
-      print("Validation step %d, images used %d, loss %g, lowest_error %g on %d"%((i + int(ckpt.model_checkpoint_path.split('-')[1]))/500, i*batch_size, train_accuracy, lowest_val,lowest_val_iter))
-    else:
-      print("Validation step %d, images used %d, loss %g, lowest_error %g on %d"%(i/500, i*batch_size, train_accuracy, lowest_val,lowest_val_iter))
   
-    if ckpt:
-      summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
-    else:
-      summary_writer.add_summary(summary_str, i)
 
 
 
@@ -246,12 +317,12 @@ for i in range(1, n_epochs*len(manager.im_names_val)):
 
   """Save the model every 300 iterations"""
   if i%300 == 0:
-    if ckpt:
-      saver.save(sess, models_path + 'model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
-      print 'Model saved.'
-    else:
-      saver.save(sess, models_path + 'model.ckpt', global_step=i)
-      print 'Model saved.'
+    # if ckpt:
+    #   saver.save(sess, models_path + 'model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
+    #   print 'Model saved.'
+    # else:
+    saver.save(sess, models_path + 'model.ckpt', global_step=i)
+    print 'Model saved.'
 
 
   start_time = time.time()
@@ -261,7 +332,7 @@ for i in range(1, n_epochs*len(manager.im_names_val)):
   """Run training and write the summaries"""
   #train_step.run(feed_dict={x: batch[0], y_: batch[1]})
 
-  summary_str,train_accuracy,_ = sess.run([summary_op, loss_function, train_step], feed_dict={x: batch[0], y_: batch[1]})
+  train_accuracy,_ = sess.run([loss_function, train_step], feed_dict={x: batch[0], y_: batch[1]})
   duration = time.time() - start_time
   if  train_accuracy < lowest_error:
     lowest_error = train_accuracy
@@ -272,16 +343,17 @@ for i in range(1, n_epochs*len(manager.im_names_val)):
     num_examples_per_step = batch_size 
     examples_per_sec = num_examples_per_step / duration
     train_accuracy
-    if ckpt:
-      print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d ,examples per second %f"%(epoch_number, i + int(ckpt.model_checkpoint_path.split('-')[1]), i*batch_size, train_accuracy, lowest_error, lowest_iter, examples_per_sec))
-    else:
-      print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
+    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
   
 
-  if ckpt:
-    summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
-  else:
-    summary_writer.add_summary(summary_str, i)
+  #if ckpt:
+  #  summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
+  #else:
+  """ Writing summary, not at every iterations """
+  if i%50 == 0:
+    summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
+    summary_writer.add_summary(summary_str, i+ int(n_images_validation_dataset/(batch_size)*(valiter-1)))
+
 
 # image =h_noise3.eval()[0]
 # sumImage = image[:,:,0]

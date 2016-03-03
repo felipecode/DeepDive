@@ -38,6 +38,8 @@ class DataSet(object):
     # Convert shape from [num examples, rows, columns, depth]
     # to [num examples, rows*columns] (assuming depth == 1)
     #assert images.shape[3] == 1
+    #print 'shapes'
+    #print images.shape
     images = images.reshape(images.shape[0],
                             images.shape[1] * images.shape[2] * images.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
@@ -120,8 +122,8 @@ class DataSetManager(object):
       self.im_names = self.im_names + im_names_fold
       self.im_names_val = self.im_names_val + im_names_fold_val
       
-    #random.shuffle(self.im_names)
-
+    random.shuffle(self.im_names)
+    #random.shuffle(self.im_names_val)
 
 
   def extract_dataset(self, n_images):
@@ -172,7 +174,7 @@ class DataSetManager(object):
 
     return np.array(images), np.array(labels)
 
-  def extract_dataset_prop(self, n_images):
+  def extract_dataset_prop(self, n_images,n_images_validation):
     """Loads images of input and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
     print 'Loading images...'
     images = []
@@ -226,8 +228,8 @@ class DataSetManager(object):
     im_loaded = 0
     """Extract the validation images"""
 
-    # todo: DO THIS BETTER
-    while im_loaded < n_images/3:
+
+    while im_loaded < n_images_validation:
 
 
       """End of an epoch"""
@@ -270,7 +272,7 @@ class DataSetManager(object):
     return np.array(images), np.array(labels), np.array(val_images), np.array(val_labels)
 
 
-  def read_data_sets(self, n_images):
+  def read_data_sets(self, n_images,n_images_validation):
     
     class DataSets(object):
       pass
@@ -280,24 +282,29 @@ class DataSetManager(object):
     TEST_SIZE = 0
     VALIDATION_SIZE = 100
 
-    train_images, train_labels, valid_images, valid_labels = self.extract_dataset_prop(n_images)
+    train_images, train_labels, valid_images, valid_labels = self.extract_dataset_prop(n_images,n_images_validation)
 
     """shuffling inputs"""
-    shuffler = list(zip(train_images, train_labels))
-    random.shuffle(shuffler)
-    train_images, train_labels = zip(*shuffler)
+    if n_images >0:
+      shuffler = list(zip(train_images, train_labels))
+      random.shuffle(shuffler)
+      train_images, train_labels = zip(*shuffler)
 
     # test_images = np.array(train_images[:TEST_SIZE])
     # test_labels = np.array(train_labels[:TEST_SIZE])
 
-    valid_images = np.array(valid_images[TEST_SIZE+VALIDATION_SIZE:])
-    valid_labels = np.array(valid_labels[TEST_SIZE+VALIDATION_SIZE:])
+    valid_images = np.array(valid_images[:])
+    valid_labels = np.array(valid_labels[:])
 
-    train_images = np.array(train_images[TEST_SIZE+VALIDATION_SIZE:])
-    train_labels = np.array(train_labels[TEST_SIZE+VALIDATION_SIZE:])
+    train_images = np.array(train_images[:])
+    train_labels = np.array(train_labels[:])
 
-    data_sets.train = DataSet(train_images, train_labels)
-    data_sets.validation = DataSet(valid_images, valid_labels)
+
+    """ TODO: take care when the dataset is not valid (no images) """
+    if n_images >0:
+      data_sets.train = DataSet(train_images, train_labels)
+    if n_images_validation >0:
+      data_sets.validation = DataSet(valid_images, valid_labels)
     # data_sets.test  = DataSet(test_images, test_labels)
 
     return data_sets

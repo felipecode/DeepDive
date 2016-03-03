@@ -28,12 +28,14 @@ import glob
 overlap_size = (12, 12)
 
 
-path = '/home/nautec/DeepDive/Simulator/Dataset1_2R1/Evaluation/'
-out_path ='/home/nautec/DeepDive/Simulator/Dataset1_2R1/EvaluationResults/'
+path = '/home/nautec/DeepDive/Local_results/RealImages/'
+out_path ='/home/nautec/DeepDive/Local_results/RealImagesResults/'
 im_names =  glob.glob(path + "*.jpg")
 im_names = im_names + glob.glob(path + "*.png")
 
+print path
 print im_names
+
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
 
