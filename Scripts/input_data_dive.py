@@ -19,7 +19,7 @@ from __future__ import division
 import gzip
 import os
 import numpy as np
-import Image
+import Image, colorsys
 from scipy import misc
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -27,6 +27,30 @@ import random
 import glob
 
 import matplotlib.pyplot as plt
+
+
+def HSVColor(img):
+  if isinstance(img,Image.Image):
+      r,g,b = img.split()
+      Hdat = []
+      Sdat = []
+      Vdat = [] 
+      for rd,gn,bl in zip(r.getdata(),g.getdata(),b.getdata()) :
+          h,s,v = colorsys.rgb_to_hsv(rd/255.,gn/255.,bl/255.)
+          Hdat.append(int(h*255.))
+          Sdat.append(int(s*255.))
+          Vdat.append(int(v*255.))
+      r.putdata(Hdat)
+      g.putdata(Sdat)
+      b.putdata(Vdat)
+      return Image.merge('RGB',(r,g,b))
+  else:
+      return None
+
+
+
+
+
 
 class DataSet(object):
   def __init__(self, images, labels):
@@ -206,6 +230,8 @@ class DataSetManager(object):
       name = reduce(lambda a, kv: a.replace(*kv), repls, name)
         
       lb = Image.open(name) 
+      #im = HSVColor(im)
+      #lb = HSVColor(lb)
 
       im = np.asarray(im)
       lb = np.asarray(lb)
@@ -246,7 +272,8 @@ class DataSetManager(object):
       name = reduce(lambda a, kv: a.replace(*kv), repls, name)
         
       lb = Image.open(name) 
-
+      #im = HSVColor(im)
+      #lb = HSVColor(lb)
 
 
       im = np.asarray(im)

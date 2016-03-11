@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from deep_dive_test_structure import create_structure
+from depth_map_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -238,7 +238,7 @@ if ckpt:
 else:
   initialIteration = 1
 
-valiter=3;
+valiter=6;
 for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
 
   
@@ -252,7 +252,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
     print ' Validating'
     summary_str_val_avg=0
 
-    for v in range(1, int(n_images_validation_dataset/(batch_size*10))):
+    for v in range(1, int(n_images_validation_dataset/(batch_size))):
       
 
       if v%(n_images_validation/batch_size) == 1:

@@ -9,7 +9,7 @@ input_size = (128, 128, 3)
 output_size = (128, 128, 3)
 path = '/home/nautec/DeepDive/Simulator/Dataset2_0/Training/'
 val_path = '/home/nautec/DeepDive/Simulator/Dataset2_0/Validation/'
-n_images = 1500  			#Number of images to be generated at each time in memory
+n_images = 100  			#Number of images to be generated at each time in memory
 n_images_dataset = 500000	#Number of images in the whole dataset
 n_images_validation = 1500
 n_images_validation_dataset = 20036
@@ -21,7 +21,7 @@ n_epochs = 40   # the number of epochs that we are going to run
 """Saving Configuration"""
 models_path = 'inceptionsval_d2.0_mar_1/'
 # path = '/home/nautec/Framework-UFOG/CPP/ancuti4.png'
-summary_path = '/tmp/dataset1_4_first_test40'
+summary_path = '/tmp/dataset1_4_first_test45'
 out_path = '/home/nautec/DeepDive/Simulator/Dataset2_0/ValidationResults/'
 
 """Execution Configuration"""	
