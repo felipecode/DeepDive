@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from deep_dive_test_structure import create_structure
+from depth_map_structure import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -52,9 +52,14 @@ saver = tf.train.Saver(tf.all_variables())
 if not os.path.exists(models_path):
   os.mkdir(models_path)
 ckpt = tf.train.get_checkpoint_state(models_path)
-if ckpt and ckpt.model_checkpoint_path and restore:
+
+print ckpt
+
+if ckpt.model_checkpoint_path:
   print 'Restoring from ', ckpt.model_checkpoint_path  
-  saver.restore(sess, models_path + ckpt.model_checkpoint_path)
+  saver.restore(sess,ckpt.model_checkpoint_path)
+else:
+  ckpt = 0
 
 count =0
 for i in im_names:

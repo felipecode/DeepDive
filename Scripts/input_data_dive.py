@@ -195,8 +195,11 @@ class DataSetManager(object):
       #     im_generated += 1
 
       self.tracker += 1
-
-    return np.array(images), np.array(labels)
+#################################################################
+#acho que e assim e mais rapido, tem que testar se funciona mesmo
+#################################################################
+    return images, labels
+#    return np.array(images), np.array(labels)
 
   def extract_dataset_prop(self, n_images,n_images_validation):
     """Loads images of input and its respective labels and returns them into two 4D uint8 numpy array [index, y, x, depth]."""
@@ -295,9 +298,11 @@ class DataSetManager(object):
         print 'Loaded ' + str(im_loaded) + ' validation images.'
 
 
-
-    return np.array(images), np.array(labels), np.array(val_images), np.array(val_labels)
-
+#################################################################
+#acho que e assim e mais rapido, tem que testar se funciona mesmo
+#################################################################
+    return images, labels, val_images, val_labels
+#   return np.array(images), np.array(labels), np.array(val_images), np.array(val_labels)
 
   def read_data_sets(self, n_images,n_images_validation):
     

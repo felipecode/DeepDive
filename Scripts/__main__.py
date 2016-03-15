@@ -74,12 +74,23 @@ if restore not in (True, False):
 manager = DataSetManager(path,val_path, input_size, proportions, n_images_dataset)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
+
+patch_input_size = (patch_size, patch_size, input_size[2])
+patch_output_size = (patch_size, patch_size, output_size[2])
+
+
+
+
+mask = [[[1.0*((i>=max_kernel_size//2) and (i<patch_size-max_kernel_size//2) and (j>=max_kernel_size//2) and (j<patch_size-max_kernel_size//2)) for k in range(3)] for j in range(patch_size)] for i in range(patch_size)]
+
+
+
 if not evaluation:
   dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
-
+tf_mask=tf.Variable(initial_value=mask, trainable=False, name="mask")
 
 #initial = tf.constant(0,dtype='float32')
 #loss_average_var = tf.Variable(initial, name="total_loss")
@@ -95,7 +106,8 @@ last_layer, l2_reg = create_structure(tf, x,input_size)
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
 #loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
-loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Training')
+
+loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.mul(tf.sub(last_layer, y_image),tf_mask),2)),name='Training')
 
 # using the same function with a different name
 loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
@@ -158,69 +170,22 @@ summary_writer = tf.train.SummaryWriter(summary_path,
 # subprocess.Popen(['gnome-terminal', '-e', 'tensorboard --logdir ' + summary_path], shell=True)
   
 """Load a previous model if restore is set to True"""
+
 if not os.path.exists(models_path):
   os.mkdir(models_path)
 ckpt = tf.train.get_checkpoint_state(models_path)
-if ckpt and ckpt.model_checkpoint_path and restore:
-  print 'Restoring from ', ckpt.model_checkpoint_path  
-  saver.restore(sess, models_path + ckpt.model_checkpoint_path)
+
+print ckpt
+if restore:
+  if ckpt.model_checkpoint_path:
+    print 'Restoring from ', ckpt.model_checkpoint_path  
+    saver.restore(sess,ckpt.model_checkpoint_path)
 else:
   ckpt = 0
 
+
 print 'Logging into ' + summary_path
 
-"""Evaluation"""
-# if evaluation:
-
-#   overlap_size = (12, 12)
-
-#   path = path
-  
-#   im = Image.open(path).convert('RGB')
-#   im = np.array(im, dtype=np.float32)
-#   visualizer = im
-
-#   im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
-
-#   original = im
-#   original = original.astype(np.float32)
-#   original = np.multiply(original, 1.0 / 255.0)
-
-#   height, width = im.shape[0], im.shape[1]
-
-#   united_images = np.zeros((im.shape[0]+input_size[0], im.shape[1]+input_size[1], 3), dtype=np.float32)
-#   out = np.zeros([output_size[0], output_size[1], output_size[2]]).reshape([1, np.prod(np.array(output_size))])
-
-#   """Separating the image in chunks"""
-#   for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
-#     for w in range(0, width, input_size[1]-(overlap_size[1]*2)):
-#       h_end = h + input_size[0]
-#       w_end = w + input_size[1]
-
-#       chunk = original[h:h_end, w:w_end]
-#       if chunk.shape != input_size:
-#         chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
-
-#       im = chunk.reshape([1, np.prod(np.array(input_size))])
-
-#       result = sess.run(last_layer, feed_dict={x: im, y_: out})
-#       summary_str = sess.run(summary_op, feed_dict={x: im, y_: out})
-#       summary_writer.add_summary(summary_str, 1)
-
-#       united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = result[0][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
-
-#   jump = (input_size[0]-(2*overlap_size[0]), input_size[1]-(2*overlap_size[1]))
-#   united_images = united_images[jump[0]:visualizer.shape[0]+jump[0], jump[1]:visualizer.shape[1]+jump[1], :]
-
-#   fig = plt.figure()
-#   fig.add_subplot(1,2,1)
-#   plt.imshow(np.array(visualizer, dtype=np.uint8))
-#   fig.add_subplot(1,2,2)
-
-#   plt.imshow(united_images)
-#   plt.show()
-
-#   sys.exit()
 
 
 """Training"""
@@ -238,11 +203,11 @@ if ckpt:
 else:
   initialIteration = 1
 
-valiter=6;
+valiter=17;
 for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
 
   
-  epoch_number = 1.0+ float(i)/float(len(manager.im_names_val))
+  epoch_number = 1.0+ float(i)*batch_size/float(len(manager.im_names_val))
 
   
   """ Do validation error and generate Images """
@@ -303,7 +268,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
   
 
 
-  if i%(n_images/batch_size) == 1:
+  if i%(n_images/batch_size) == 0:
     dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
   
   batch = dataset.train.next_batch(batch_size)
@@ -350,7 +315,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
   #  summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
   #else:
   """ Writing summary, not at every iterations """
-  if i%50 == 0:
+  if i%30 == 0:
     summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
     summary_writer.add_summary(summary_str, i+ int(n_images_validation_dataset/(batch_size)*(valiter-1)))
 
