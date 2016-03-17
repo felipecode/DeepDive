@@ -9,10 +9,10 @@ patch_size = 128
 """Dataset Configuration"""
 input_size = (128, 128, 3)
 output_size = (128, 128, 3)
-path = '/home/nautec/DeepDive/Dataset2_0/Training/'
-val_path = '/home/nautec/DeepDive/Dataset2_0/Validation/'
-n_images = 3000  			#Number of images to be generated at each time in memory
-n_images_dataset = 200000	#Number of images in the whole dataset
+path = '/home/nautec/DeepDive/Dataset2_1/Training/'
+val_path = '/home/nautec/DeepDive/Dataset2_1/Validation/'
+n_images = 12000 			#Number of images to be generated at each time in memory
+n_images_dataset = 159761	#Number of images in the whole dataset
 n_images_validation = 10018
 n_images_validation_dataset = 20036
 
@@ -21,10 +21,10 @@ proportions = [1, 1, 1, 1, 1, 1,1]
 n_epochs = 40   # the number of epochs that we are going to run
 
 """Saving Configuration"""
-models_path = 'inceptionfcn2_d2.0_mar_11_mgpu/'
+models_path = 'deepdivearch2_d2.1_mar_18/'
 # path = '/home/nautec/Framework-UFOG/CPP/ancuti4.png'
-summary_path = '/tmp/dataset1_4_first_test6_mgpu'
-out_path = '/home/nautec/DeepDive/Dataset2_0/ValidationResults/'
+summary_path = '/tmp/dataset2_1_dropout4'
+out_path = '/home/nautec/DeepDive/Dataset2_1/ValidationResults/'
 
 """Execution Configuration"""	
 restore = False
@@ -34,3 +34,12 @@ num_gpus = 2
 
 if evaluation:
 	batch_size = 1
+
+
+""" When using dropout this is useful """
+dropout = []
+dropout.append(0.8)
+dropout.append(0.8)
+dropout.append(0.8)
+dropout.append(0.5) 
+

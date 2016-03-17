@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from depth_map_structure import create_structure
+from depth_map_structure_dropout import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -90,6 +90,11 @@ if not evaluation:
 
 x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
+dout1 = tf.placeholder("float")
+dout2 = tf.placeholder("float")
+dout3 = tf.placeholder("float")
+dout4 = tf.placeholder("float")
+
 tf_mask=tf.Variable(initial_value=mask, trainable=False, name="mask")
 
 #initial = tf.constant(0,dtype='float32')
@@ -101,7 +106,7 @@ tf_mask=tf.Variable(initial_value=mask, trainable=False, name="mask")
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
 
-last_layer, l2_reg = create_structure(tf, x,input_size)
+last_layer, l2_reg = create_structure(tf, x,input_size,[dout1,dout2,dout3,dout4])
 
 y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 
@@ -203,11 +208,11 @@ if ckpt:
 else:
   initialIteration = 1
 
-valiter=17;
-for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
+valiter=1.3;
+for i in range(initialIteration, n_epochs*n_images_dataset):
 
   
-  epoch_number = 1.0+ float(i)*batch_size/float(len(manager.im_names_val))
+  epoch_number = 1.0+ (float(i)*float(batch_size))/float(n_images_dataset)
 
   
   """ Do validation error and generate Images """
@@ -229,7 +234,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
       """Calculate the loss for the validation image and also print this image for further validation"""
       
       start_time = time.time()
-      summary_str_val,train_accuracy,result = sess.run([val, loss_validation,last_layer ], feed_dict={x: batch_val[0], y_: batch_val[1]})
+      summary_str_val,train_accuracy,result = sess.run([val, loss_validation,last_layer ], feed_dict={x: batch_val[0], y_: batch_val[1],dout1:1,dout2:1,dout3:1,dout4:1})
       duration = time.time() - start_time
 
 
@@ -249,7 +254,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
         examples_per_sec = num_examples_per_step / duration
         print("Validation step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(v, v*batch_size, train_accuracy, lowest_val,lowest_val_iter,examples_per_sec))
         result = Image.fromarray((result[0,:,:,:] * 255).astype(np.uint8))
-        result.save(out_path +str(int(valiter)) + '/'+ str(v) + '.jpg')
+        result.save(out_path +str(int((valiter-1)*3.4)) + '/'+ str(v) + '.jpg')
 
         
         summary_writer.add_summary(summary_str_val, i+v)
@@ -260,7 +265,7 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
       #else:
 
       
-    valiter = valiter +1
+    valiter = valiter +0.3
     # reload the other dataset.
     dataset = manager.read_data_sets(n_images=n_images,n_images_validation=0)
 
@@ -297,17 +302,19 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
   """Run training and write the summaries"""
   #train_step.run(feed_dict={x: batch[0], y_: batch[1]})
 
-  train_accuracy,_ = sess.run([loss_function, train_step], feed_dict={x: batch[0], y_: batch[1]})
+  sess.run(train_step, feed_dict={x: batch[0], y_: batch[1],dout1:dropout[0],dout2:dropout[1],dout3:dropout[2],dout4:dropout[3]})
+  
+
+
   duration = time.time() - start_time
-  if  train_accuracy < lowest_error:
-    lowest_error = train_accuracy
-    lowest_iter = i
 
-
-  if i%10 == 0:
+  if i%20 == 0:
     num_examples_per_step = batch_size 
     examples_per_sec = num_examples_per_step / duration
-    train_accuracy
+    train_accuracy = sess.run(loss_function, feed_dict={x: batch[0], y_: batch[1],dout1:1,dout2:1,dout3:1,dout4:1})
+    if  train_accuracy < lowest_error:
+      lowest_error = train_accuracy
+      lowest_iter = i
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
   
 
@@ -316,8 +323,10 @@ for i in range(initialIteration, n_epochs*len(manager.im_names_val)):
   #else:
   """ Writing summary, not at every iterations """
   if i%30 == 0:
-    summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1]})
+    summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1],dout1:1,dout2:1,dout3:1,dout4:1})
     summary_writer.add_summary(summary_str, i+ int(n_images_validation_dataset/(batch_size)*(valiter-1)))
+
+
 
 
 # image =h_noise3.eval()[0]
