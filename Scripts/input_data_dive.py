@@ -64,15 +64,21 @@ class DataSet(object):
     #assert images.shape[3] == 1
     #print 'shapes'
     #print images.shape
-    images = images.reshape(images.shape[0],
-                            images.shape[1] * images.shape[2] * images.shape[3])
+    #images = images.reshape(images.shape[0],
+    #                        images.shape[1] * images.shape[2] * images.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
+    
+
+    #images = images.reshape( [-1, images.shape[0]])
+
+    print images.shape
     images = images.astype(np.float32)
     images = np.multiply(images, 1.0 / 255.0)
-
-    labels = labels.reshape(labels.shape[0],
-                            labels.shape[1] * labels.shape[2] * labels.shape[3])
+    
+    #labels = labels.reshape(labels.shape[0],
+    #                        labels.shape[1] * labels.shape[2] * labels.shape[3])
     # Convert from [0, 255] -> [0.0, 1.0].
+    #labels = labels.reshape( [-1, labels.shape[0]])
     labels = labels.astype(np.float32)
     labels = np.multiply(labels, 1.0 / 255.0)
 
@@ -167,11 +173,14 @@ class DataSetManager(object):
       #print 'Opening image: ', name
 
       im = Image.open(name)
+      im = im.resize((500, 500,3), PIL.Image.ANTIALIAS)
 
       repls = ('Training', 'GroundTruth'), ('', '')
       name = reduce(lambda a, kv: a.replace(*kv), repls, name)
         
       lb = Image.open(name) 
+
+      lb = lb.resize((500, 500,3), PIL.Image.ANTIALIAS)
 
       im = np.asarray(im)
       lb = np.asarray(lb)
@@ -236,9 +245,14 @@ class DataSetManager(object):
       #im = HSVColor(im)
       #lb = HSVColor(lb)
 
-      im = np.asarray(im)
-      lb = np.asarray(lb)
+      im = im.resize((512, 512), Image.NEAREST)
+      lb = lb.resize((512, 512), Image.NEAREST)
+
+      im = np.asarray(im,dtype=np.float32)
+      lb = np.asarray(lb,dtype=np.float32)
       #assert im.shape == lb.shape
+
+      #print im.dtype
 
       # CUT in patches based on parameters
 
@@ -277,7 +291,8 @@ class DataSetManager(object):
       lb = Image.open(name) 
       #im = HSVColor(im)
       #lb = HSVColor(lb)
-
+      im = im.resize((512, 512), Image.NEAREST)
+      lb = lb.resize((512, 512), Image.NEAREST)
 
       im = np.asarray(im)
       lb = np.asarray(lb)
@@ -325,11 +340,12 @@ class DataSetManager(object):
     # test_images = np.array(train_images[:TEST_SIZE])
     # test_labels = np.array(train_labels[:TEST_SIZE])
 
-    valid_images = np.array(valid_images[:])
-    valid_labels = np.array(valid_labels[:])
 
-    train_images = np.array(train_images[:])
-    train_labels = np.array(train_labels[:])
+    valid_images = np.array(valid_images)
+    valid_labels = np.array(valid_labels)
+
+    train_images = np.array(train_images)
+    train_labels = np.array(train_labels)
 
 
     """ TODO: take care when the dataset is not valid (no images) """
