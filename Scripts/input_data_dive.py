@@ -126,31 +126,31 @@ class DataSetManager(object):
     self.im_names_val = []
     self.tracker = 0
     self.tracker_val = 0
-    n_images_dataset_val = int(n_images_dataset*0.1)
+    #n_images_dataset_val = int(n_images_dataset*0.1)
 
     """ First thing we do is to elect a folder number based on the proportions vec """
     #proportions
-    for i in range(0,len(proportions)):
-      n_images_fold = int(proportions[i]*n_images_dataset)
-      n_images_fold_val = int(proportions[i]*n_images_dataset_val)
+    
+    #n_images_fold = int(proportions[i]*n_images_dataset)
+    #n_images_fold_val = int(proportions[i]*n_images_dataset_val)
 
-      path_folder = path + '/' + str(i+1)
-      path_folder_val = path_val + '/' + str(i+1)
+    #path_folder = path + '/' + str(i+1)
+    #path_folder_val = path_val + '/' + str(i+1)
 
-      """Replace possible // for /"""
-      repls = ('//', '/'), ('', '')
-      path_folder = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
-      path_folder_val = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
+    """Replace possible // for /"""
+    #repls = ('//', '/'), ('', '')
+    #path_folder = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
+    #path_folder_val = reduce(lambda a, kv: a.replace(*kv), repls, path_folder)
 
-      im_names_fold = glob.glob(path_folder + "/*.jpg")
-      im_names_fold_val = glob.glob(path_folder_val + "/*.jpg")
+    self.im_names  = glob.glob(path + "/*.jpg")
+    self.im_names_val = glob.glob(path_val + "/*.jpg")
 
-      #random.shuffle(im_names_fold)
-      im_names_fold = im_names_fold[0:n_images_fold]
-      im_names_fold_val = im_names_fold_val[0:n_images_fold_val]
+    #random.shuffle(im_names_fold)
+    #im_names_fold = im_names_fold[0:n_images_fold]
+    #im_names_fold_val = im_names_fold_val[0:n_images_fold_val]
 
-      self.im_names = self.im_names + im_names_fold
-      self.im_names_val = self.im_names_val + im_names_fold_val
+    #self.im_names = self.im_names + im_names_fold
+    #self.im_names_val = self.im_names_val + im_names_fold_val
       
     random.shuffle(self.im_names)
     #random.shuffle(self.im_names_val)
@@ -245,8 +245,6 @@ class DataSetManager(object):
       #im = HSVColor(im)
       #lb = HSVColor(lb)
 
-      im = im.resize((512, 512), Image.NEAREST)
-      lb = lb.resize((512, 512), Image.NEAREST)
 
       im = np.asarray(im,dtype=np.float32)
       lb = np.asarray(lb,dtype=np.float32)
@@ -291,8 +289,7 @@ class DataSetManager(object):
       lb = Image.open(name) 
       #im = HSVColor(im)
       #lb = HSVColor(lb)
-      im = im.resize((512, 512), Image.NEAREST)
-      lb = lb.resize((512, 512), Image.NEAREST)
+
 
       im = np.asarray(im)
       lb = np.asarray(lb)

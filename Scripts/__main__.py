@@ -272,9 +272,11 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
   #  summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
   #else:
   """ Writing summary, not at every iterations """
-  if i%30 == 0:
-    summary_str,summary_str_val,result = sess.run([summary_op,val,last_layer], feed_dict={x: batch[0], y_: batch[1],dout1:1,dout2:1,dout3:1,dout4:1})
-    summary_writer.add_summary(summary_writer,i)
+  if i%20 == 0:
+    summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1],dout1:1,dout2:1,dout3:1,dout4:1})
+    summary_str_val,result= sess.run([val,last_layer], feed_dict={x: batch_val[0], y_: batch_val[1],dout1:1,dout2:1,dout3:1,dout4:1})
+    summary_writer.add_summary(summary_str,i)
+
     result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
     result.save(out_path + str('/'+str(i)+ '.jpg'))
     summary_writer.add_summary(summary_str_val,i)

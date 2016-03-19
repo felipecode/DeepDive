@@ -37,8 +37,8 @@ im_names = im_names + glob.glob(path + "*.png")
 print path
 print im_names
 
-x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
-y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
+x = tf.placeholder("float", name="input_image")
+y_ = tf.placeholder("float", name="output_image")
 dout1 = tf.placeholder("float")
 dout2 = tf.placeholder("float")
 dout3 = tf.placeholder("float")
@@ -108,6 +108,8 @@ for i in im_names:
       if chunk.shape != input_size:
         chunk = np.lib.pad(chunk, ((0, input_size[0]-chunk.shape[0]), (0, input_size[1]-chunk.shape[1]), (0,0)), mode='constant', constant_values=1)
 
+      print chunk.shape
+
       chunk = chunk.reshape([np.prod(np.array(input_size))])
       #print chunk.shape
       im_vec.append(chunk.reshape([1, np.prod(np.array(input_size))]))
@@ -115,9 +117,12 @@ for i in im_names:
       """ Check if the number of read images is equal to the batch size """
       if cont%batch_size == 0 or cont == nValues:
 
+
         im_vec = np.array(im_vec[:])
-        im_vec = im_vec.reshape(im_vec.shape[0],im_vec.shape[2])
-        #print im_vec.shape
+        print im_vec.shape
+        im_vec = im_vec.reshape((im_vec.shape[0],input_size[0],input_size[1],input_size[2]))
+
+        print im_vec.shape
 
         output = sess.run(h_conv3, feed_dict={x: im_vec,dout1:1,dout2:1,dout3:1,dout4:1})
        

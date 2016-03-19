@@ -14,9 +14,11 @@ def create_structure(tf, x, input_size,dropout):
 
   """Reshaping images"""
   # with tf.device('/gpu:2'):
-  x_image = tf.reshape(x, [-1, input_size[0], input_size[1], 3], "unflattening_reshape")
 
 
+  #x_image = tf.reshape(x, [-1, input_size[0], input_size[1], 3], "unflattening_reshape")
+
+  x_image =x
   """ Scale 1 """
 
 
