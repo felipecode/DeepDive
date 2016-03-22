@@ -65,6 +65,58 @@ from ssim_tf import ssim_tf
 
 # (options, args) = parser.parse_args()
 
+
+def put_kernels_on_grid (kernel, (grid_Y, grid_X), pad=1):
+    '''Visualize conv. features as an image (mostly for the 1st layer).
+    Place kernel into a grid, with some paddings between adjacent filters.
+    Args:
+      kernel:            tensor of shape [Y, X, NumChannels, NumKernels]
+      (grid_Y, grid_X):  shape of the grid. Require: NumKernels == grid_Y * grid_X
+                           User is responsible of how to break into two multiples.
+      pad:               number of black pixels around each filter (between them)
+    
+    Return:
+      Tensor of shape [(Y+pad)*grid_Y, (X+pad)*grid_X, NumChannels, 1].
+    '''
+    # pad X and Y
+    x1 = tf.pad(kernel, tf.constant( [[pad,0],[pad,0],[0,0],[0,0]] ))
+
+    # X and Y dimensions, w.r.t. padding
+    Y = kernel.get_shape()[0] + pad
+    X = kernel.get_shape()[1] + pad
+
+    # put NumKernels to the 1st dimension
+    x2 = tf.transpose(x1, (3, 0, 1, 2))
+    # organize grid on Y axis
+    x3 = tf.reshape(x2, tf.pack([grid_X, Y * grid_Y, X, 3]))
+    
+    # switch X and Y axes
+    x4 = tf.transpose(x3, (0, 2, 1, 3))
+    # organize grid on X axis
+    x5 = tf.reshape(x4, tf.pack([1, X * grid_X, Y * grid_Y, 3]))
+    
+    # back to normal order (not combining with the next step for clarity)
+    x6 = tf.transpose(x5, (2, 1, 3, 0))
+
+    # to tf.image_summary order [batch_size, height, width, channels],
+    #   where in this case batch_size == 1
+    x7 = tf.transpose(x6, (3, 0, 1, 2))
+
+    # scale to [0, 1]
+    x_min = tf.reduce_min(x7)
+    x_max = tf.reduce_max(x7)
+    x8 = (x7 - x_min) / (x_max - x_min)
+
+    # scale to [0, 255] and convert to uint8
+    return tf.image.convert_image_dtype(x8, dtype=tf.uint8)
+
+
+
+
+
+
+
+
 """Verifying options integrity"""
 if evaluation not in (True, False):
   raise Exception('Wrong eval option. (True or False)')
@@ -86,7 +138,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
 if not evaluation:
-  dataset = manager.read_data_sets(n_images=n_images,n_images_validation=n_images_validation)
+  dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
 
 #x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 #y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
@@ -161,7 +213,18 @@ tf.scalar_summary('L2_loss', l2_reg)
 
 #val = tf.scalar_summary('Loss_Average', loss_average)
 
+with tf.variable_scope('scale_1') as scope_conv:
+  
+  scope_conv.reuse_variables()
+  weights = tf.get_variable('W_S1_conv1')
+  
+  #features = tf.get_variable('feature1_vis')
 
+  grid_x = grid_y = 8   # to get a square grid for 64 conv1 features
+  gridw = put_kernels_on_grid (weights, (grid_y, grid_x))
+  #gridf = put_kernels_on_grid (features, (grid_y, grid_x))
+  tf.image_summary('conv1/kernels', gridw, max_images=1)
+  #tf.image_summary('conv1/Features', gridf, max_images=1)
 
 
 
@@ -226,7 +289,7 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
   
   """ Do validation error and generate Images """
   if i%(n_images/batch_size) == 1:
-    dataset = manager.read_data_sets(n_images=n_images,n_images_validation=n_images_validation)
+    dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
   
   batch = dataset.train.next_batch(batch_size)
   batch_val = dataset.validation.next_batch(batch_size)
@@ -277,8 +340,11 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
     summary_str_val,result= sess.run([val,last_layer], feed_dict={x: batch_val[0], y_: batch_val[1],dout1:1,dout2:1,dout3:1,dout4:1})
     summary_writer.add_summary(summary_str,i)
 
+    """ Check here the weights """
+
+
     result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-    result.save(out_path + str('/'+str(i)+ '.jpg'))
+    result.save(out_path + str(str(i)+ '.jpg'))
     summary_writer.add_summary(summary_str_val,i)
   
 

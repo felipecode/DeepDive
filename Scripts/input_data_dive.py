@@ -27,7 +27,8 @@ import random
 import glob
 
 import matplotlib.pyplot as plt
-
+from config import array_path
+from config import n_images_validation_dataset
 
 def HSVColor(img):
   if isinstance(img,Image.Image):
@@ -58,6 +59,9 @@ class DataSet(object):
     assert images.shape[0] == labels.shape[0], (
         'images.shape: %s labels.shape: %s' % (images.shape,
                                                labels.shape))
+
+    print 'shape'
+    print images.shape
     self._num_examples = images.shape[0]
     # Convert shape from [num examples, rows, columns, depth]
     # to [num examples, rows*columns] (assuming depth == 1)
@@ -126,6 +130,9 @@ class DataSetManager(object):
     self.im_names_val = []
     self.tracker = 0
     self.tracker_val = 0
+    self.count=1
+    self.count_val=1
+    self.n_img_dataset=n_images_dataset
     #n_images_dataset_val = int(n_images_dataset*0.1)
 
     """ First thing we do is to elect a folder number based on the proportions vec """
@@ -245,6 +252,8 @@ class DataSetManager(object):
       #im = HSVColor(im)
       #lb = HSVColor(lb)
 
+      im = im.resize((512, 512), Image.NEAREST)
+      lb = lb.resize((512, 512), Image.NEAREST)
 
       im = np.asarray(im,dtype=np.float32)
       lb = np.asarray(lb,dtype=np.float32)
@@ -289,7 +298,8 @@ class DataSetManager(object):
       lb = Image.open(name) 
       #im = HSVColor(im)
       #lb = HSVColor(lb)
-
+      im = im.resize((512, 512), Image.NEAREST)
+      lb = lb.resize((512, 512), Image.NEAREST)
 
       im = np.asarray(im)
       lb = np.asarray(lb)
@@ -315,6 +325,99 @@ class DataSetManager(object):
 #################################################################
     return images, labels, val_images, val_labels
 #   return np.array(images), np.array(labels), np.array(val_images), np.array(val_labels)
+
+  def read_data_sets2(self, n_images,n_images_validation):
+    
+    class DataSets(object):
+      pass
+
+    data_sets = DataSets()
+
+    TEST_SIZE = 0
+    VALIDATION_SIZE = 100
+
+    #train_images, train_labels, valid_images, valid_labels = self.extract_dataset_prop(n_images,n_images_validation)
+
+    #"""shuffling inputs"""
+    #if n_images >0:
+    #  shuffler = list(zip(train_images, train_labels))
+    #  random.shuffle(shuffler)
+    #  train_images, train_labels = zip(*shuffler)
+
+    # test_images = np.array(train_images[:TEST_SIZE])
+    # test_labels = np.array(train_labels[:TEST_SIZE])
+
+    #valid_images = np.array(valid_images[:])
+    #valid_labels = np.array(valid_labels[:])
+
+    #train_images = np.array(train_images[:])
+    #train_labels = np.array(train_labels[:])
+    print 'carregando'
+
+    images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+    labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+    train_images=np.load(images_file)
+    train_labels=np.load(labels_file)
+    images_file.close()
+    labels_file.close()
+
+    if(self.count==int(self.n_img_dataset/n_images)):
+     self.count=1
+    else:
+     self.count+=1
+
+     # TODO PUT A TRACKER 
+
+    #print 'n images'
+    #print n_images
+    #for i in range(1, n_images):
+      #images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+      #labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+      #train_images = np.append(train_images,np.load(images_file), axis=0)
+      #train_labels=  np.append(train_labels,np.load(labels_file), axis=0)
+      #print train_images.shape
+      #images_file.close()
+      #labels_file.close()
+      #if(self.count==self.n_img_dataset):
+        #self.count=1
+      #else:
+        #self.count+=1
+      #self.tracker += 1
+
+    val_images_file = open(array_path+"val_images_"+str(1)+".npy", "rb")
+    val_labels_file = open(array_path+"val_labels_"+str(1)+".npy", "rb")
+    valid_images=np.load(val_images_file)
+    valid_labels=np.load(val_labels_file)
+    val_images_file.close()
+    val_labels_file.close()
+    if(self.count==int(n_images_validation_dataset/n_images_validation)):
+     self.count_val=1
+    else:
+     self.count_val+=1
+    
+    #val_count=2
+
+    #for i in range(1, n_images_validation):
+      #val_images_file = open(array_path+"val_images_"+str(val_count)+".npy", "rb")
+      #val_labels_file = open(array_path+"val_labels_"+str(val_count)+".npy", "rb")
+      #valid_images= np.append(valid_images,np.load(val_images_file))
+      #valid_labels= np.append(valid_labels,np.load(val_labels_file))
+      #val_images_file.close()
+      #val_labels_file.close()
+      #val_count+=1
+      #self.tracker += 1
+
+    print 'carregou'
+    print train_images.shape
+    """ TODO: take care when the dataset is not valid (no images) """
+    if n_images >0:
+      data_sets.train = DataSet(train_images, train_labels)
+    if n_images_validation >0:
+      data_sets.validation = DataSet(valid_images, valid_labels)
+    # data_sets.test  = DataSet(test_images, test_labels)
+
+    return data_sets
+
 
   def read_data_sets(self, n_images,n_images_validation):
     
@@ -354,4 +457,3 @@ class DataSetManager(object):
 
     return data_sets
 
-    
