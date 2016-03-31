@@ -8,12 +8,12 @@ max_kernel_size = 15
 #patch_size = 128
 
 """Dataset Configuration"""
-array_path = '/home/nautec/DeepDive/Dataset2_2F/Arrays/'
+array_path = '../datasets/Dataset2_2F/Arrays/'
 input_size = (512, 512, 3)
 output_size = (512, 512, 3)
-path = '/home/nautec/DeepDive/Dataset2_2F/Training/'
-val_path = '/home/nautec/DeepDive/Dataset2_2F/Validation/'
-n_images = 400			#Number of images to be generated at each time in memory
+path = '../datasets/Dataset2_2F/Training/'
+val_path = '../datasets/Dataset2_2F/Validation/'
+n_images = 200			#Number of images to be generated at each time in memory
 n_images_dataset = 28851	#Number of images in the whole dataset
 n_images_validation = 20
 n_images_validation_dataset = 3507
@@ -26,13 +26,13 @@ n_epochs = 40   # the number of epochs that we are going to run
 models_path = 'deepdivearch0.2s_d2.2F_mar_21/'
 # path = '/home/nautec/Framework-UFOG/CPP/ancuti4.png'
 summary_path = '/tmp/dataset3_0_12'
-out_path = '/home/nautec/DeepDive/Dataset2_2F/ValidationResults/'
+out_path = '../datasets/Dataset2_2F/ValidationResults/'
 
 """Execution Configuration"""	
-restore = True
+restore = False
 evaluation = False
 
-num_gpus = 2
+num_gpus = 1
 
 if evaluation:
 	batch_size = 1

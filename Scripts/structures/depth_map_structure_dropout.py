@@ -101,10 +101,7 @@ def create_structure(tf, x, input_size,dropout):
     b_S1_incep2_3_3 = deep_dive.bias_variable([96])
     b_S1_incep2_5_5r = deep_dive.bias_variable([64])
     b_S1_incep2_5_5 = deep_dive.bias_variable([64])
-
-
-   
-
+    
 
     S1_incep2_1_1 = tf.nn.relu(deep_dive.conv2d(S1_incep1, W_S1_incep2_1_1, padding='SAME') + b_S1_incep2_1_1, name="S1_incep2_1_1")
     S1_incep2_3_3r = tf.nn.relu(deep_dive.conv2d(S1_incep1, W_S1_incep2_3_3r, padding='SAME') + b_S1_incep2_3_3r, name="S1_incep2_3_3r")

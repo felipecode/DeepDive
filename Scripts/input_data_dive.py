@@ -29,6 +29,7 @@ import glob
 import matplotlib.pyplot as plt
 from config import array_path
 from config import n_images_validation_dataset
+from config import input_size
 
 def HSVColor(img):
   if isinstance(img,Image.Image):
@@ -61,7 +62,7 @@ class DataSet(object):
                                                labels.shape))
 
     print 'shape'
-    print images.shape
+    #print images.shape
     self._num_examples = images.shape[0]
     # Convert shape from [num examples, rows, columns, depth]
     # to [num examples, rows*columns] (assuming depth == 1)
@@ -121,6 +122,48 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
+
+  def next_batch2(self, batch_size):
+
+    print 'carregando'
+
+    train_images=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    train_labels=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    for i in range(0, batch_size):
+      images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+      labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+      train_images[i]=np.load(images_file)
+      train_labels[i]=np.load(labels_file)
+      images_file.close()
+      labels_file.close()
+      if(self.count==self.n_img_dataset):
+        self.count=1
+      else:
+        self.count+=1
+      #self.tracker += 1
+
+    return train_images, train_labels
+
+  def next_batch_val2(self, batch_size):
+
+    print 'carregando'
+
+    train_images=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    train_labels=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    for i in range(0, batch_size):
+      images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+      labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+      train_images[i]=np.load(images_file)
+      train_labels[i]=np.load(labels_file)
+      images_file.close()
+      labels_file.close()
+      if(self.count==self.n_img_dataset):
+        self.count=1
+      else:
+        self.count+=1
+      #self.tracker += 1
+
+    return train_images, train_labels
 
 class DataSetManager(object):
 
@@ -354,61 +397,58 @@ class DataSetManager(object):
     #train_labels = np.array(train_labels[:])
     print 'carregando'
 
-    images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
-    labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
-    train_images=np.load(images_file)
-    train_labels=np.load(labels_file)
-    images_file.close()
-    labels_file.close()
+    train_images=np.empty([n_images, input_size[0], input_size[1], input_size[2]])
+    train_labels=np.empty([n_images, input_size[0], input_size[1], input_size[2]])
+    #images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+    #labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+    #train_images=np.load(images_file)
+    #train_labels=np.load(labels_file)
+    #images_file.close()
+    #labels_file.close()
 
-    if(self.count==int(self.n_img_dataset/n_images)):
-     self.count=1
-    else:
-     self.count+=1
+    #if(self.count==self.n_img_dataset):
+     #self.count=1
+    #else:
+     #self.count+=1
 
      # TODO PUT A TRACKER 
 
     #print 'n images'
     #print n_images
-    #for i in range(1, n_images):
-      #images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
-      #labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
-      #train_images = np.append(train_images,np.load(images_file), axis=0)
-      #train_labels=  np.append(train_labels,np.load(labels_file), axis=0)
+    for i in range(0, n_images):
+      images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+      labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+      train_images[i]=np.load(images_file)
+      train_labels[i]=np.load(labels_file)
       #print train_images.shape
-      #images_file.close()
-      #labels_file.close()
-      #if(self.count==self.n_img_dataset):
-        #self.count=1
-      #else:
-        #self.count+=1
+      images_file.close()
+      labels_file.close()
+      if(self.count==self.n_img_dataset):
+        self.count=1
+      else:
+        self.count+=1
       #self.tracker += 1
 
-    val_images_file = open(array_path+"val_images_"+str(1)+".npy", "rb")
-    val_labels_file = open(array_path+"val_labels_"+str(1)+".npy", "rb")
-    valid_images=np.load(val_images_file)
-    valid_labels=np.load(val_labels_file)
-    val_images_file.close()
-    val_labels_file.close()
-    if(self.count==int(n_images_validation_dataset/n_images_validation)):
-     self.count_val=1
-    else:
-     self.count_val+=1
+    valid_images=np.empty([n_images_validation, input_size[0], input_size[1], input_size[2]])
+    valid_labels=np.empty([n_images_validation, input_size[0], input_size[1], input_size[2]])
     
     #val_count=2
 
-    #for i in range(1, n_images_validation):
-      #val_images_file = open(array_path+"val_images_"+str(val_count)+".npy", "rb")
-      #val_labels_file = open(array_path+"val_labels_"+str(val_count)+".npy", "rb")
-      #valid_images= np.append(valid_images,np.load(val_images_file))
-      #valid_labels= np.append(valid_labels,np.load(val_labels_file))
-      #val_images_file.close()
-      #val_labels_file.close()
-      #val_count+=1
+    for i in range(0, n_images_validation):
+      val_images_file = open(array_path+"val_images_"+str(self.count_val)+".npy", "rb")
+      val_labels_file = open(array_path+"val_labels_"+str(self.count_val)+".npy", "rb")
+      valid_images[i]=np.load(val_images_file)
+      valid_labels[i]=np.load(val_labels_file)
+      val_images_file.close()
+      val_labels_file.close()
+      if(self.count_val==n_images_validation_dataset):
+        self.count_val=1
+      else:
+        self.count_val+=1
       #self.tracker += 1
 
     print 'carregou'
-    print train_images.shape
+    #print train_images.shape
     """ TODO: take care when the dataset is not valid (no images) """
     if n_images >0:
       data_sets.train = DataSet(train_images, train_labels)
@@ -457,3 +497,41 @@ class DataSetManager(object):
 
     return data_sets
 
+  def next_batch2(self, batch_size):
+
+    train_images=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    train_labels=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    for i in range(0, batch_size):
+      images_file = open(array_path+"images_"+str(self.count)+".npy", "rb")
+      labels_file = open(array_path+"labels_"+str(self.count)+".npy", "rb")
+      train_images[i]=np.load(images_file)
+      train_labels[i]=np.load(labels_file)
+      images_file.close()
+      labels_file.close()
+      if(self.count==self.n_img_dataset):
+        self.count=1
+      else:
+        self.count+=1
+      #self.tracker += 1
+
+    return train_images, train_labels
+
+  def next_batch_val2(self, batch_size):
+
+    valid_images=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    valid_labels=np.empty([batch_size, input_size[0], input_size[1], input_size[2]])
+    #val_count=2
+
+    for i in range(0, batch_size):
+      val_images_file = open(array_path+"val_images_"+str(self.count_val)+".npy", "rb")
+      val_labels_file = open(array_path+"val_labels_"+str(self.count_val)+".npy", "rb")
+      valid_images[i]=np.load(val_images_file)
+      valid_labels[i]=np.load(val_labels_file)
+      val_images_file.close()
+      val_labels_file.close()
+      if(self.count_val==n_images_validation_dataset):
+        self.count_val=1
+      else:
+        self.count_val+=1
+
+    return valid_images, valid_labels
