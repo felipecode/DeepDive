@@ -123,6 +123,26 @@ class DataSet(object):
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
 
+  def next_batch_fast(self, batch_size):
+    """Return the next `batch_size` examples from this data set."""
+    start = self._index_in_epoch
+    self._index_in_epoch += batch_size
+    if self._index_in_epoch > self._num_examples:
+      # Finished epoch
+      self._epochs_completed += 1
+      # Shuffle the data
+      perm = np.arange(self._num_examples)
+      np.random.shuffle(perm)
+      self._images = self._images[perm]
+      self._labels = self._labels[perm]
+      # Start next epoch
+      start = 0
+      self._index_in_epoch = batch_size
+      assert batch_size <= self._num_examples
+    end = self._index_in_epoch
+    return self._images[start:end], self._labels[start:end]
+
+
   def next_batch2(self, batch_size):
 
     print 'carregando'

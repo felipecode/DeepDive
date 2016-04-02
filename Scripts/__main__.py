@@ -5,6 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
+sys.path.append('utils')
 from depth_map_structure_dropout import create_structure
 
 """Core libs"""
@@ -14,7 +15,7 @@ import numpy as np
 """Visualization libs"""
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from skimage.measure import structural_similarity as ssim
+
 
 """Python libs"""
 import os
@@ -24,46 +25,6 @@ import subprocess
 import time
 from ssim_tf import ssim_tf
 
-# """Options to add in terminal execution"""
-# parser = OptionParser()
-# parser.add_option("-l", "--logdir", dest="summary_path", default="/tmp/deep_dive",
-#                   help="write logdir (same you use in tensorboard)", metavar="FILE")
-# parser.add_option("-r", "--restore", dest="restore", default='False',
-#                   help="True if restoring to a previous model")
-# parser.add_option("-e", "--eval", dest="evaluation", default='False',
-#                   help="True if evaluating the model")
-# parser.add_option("-p", "--path", dest="path", default='/home/nautec/DeepDive/Simulator/Dataset1/Training/',
-#                   help="path to training set. if eval is true, path points to a single image to be evaluated")
-
-
-# def _add_loss_summaries(total_loss):
-#   """Add summaries for losses in CIFAR-10 model.
-
-#   Generates moving average for all losses and associated summaries for
-#   visualizing the performance of the network.
-
-#   Args:
-#     total_loss: Total loss from loss().
-#   Returns:
-#     loss_averages_op: op for generating moving averages of losses.
-#   """
-#   # Compute the moving average of all individual losses and the total loss.
-#   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
-#   losses = tf.get_collection('losses')
-#   loss_averages_op = loss_averages.apply(losses + [total_loss])
-
-#   # Attach a scalar summmary to all individual losses and the total loss; do the
-#   # same for the averaged version of the losses.
-#   for l in losses + [total_loss]:
-#     # Name each loss as '(raw)' and name the moving average version of the loss
-#     # as the original loss name.
-#     tf.scalar_summary(l.op.name +' (raw)', l)
-#     tf.scalar_summary(l.op.name, loss_averages.average(l))
-
-#   return loss_averages_op
-
-
-# (options, args) = parser.parse_args()
 
 
 def put_kernels_on_grid (kernel, (grid_Y, grid_X), pad=1):
@@ -118,8 +79,7 @@ def put_kernels_on_grid (kernel, (grid_Y, grid_X), pad=1):
 
 
 """Verifying options integrity"""
-if evaluation not in (True, False):
-  raise Exception('Wrong eval option. (True or False)')
+
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
@@ -137,8 +97,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
 
-if not evaluation:
-  dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
+dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
 
 #x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 #y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")

@@ -2,7 +2,7 @@
 learning_rate = 5*1e-5
 init_std_dev = 0.1
 l2_reg_w     = 1e-4
-batch_size   = 4
+batch_size   = 10
 max_kernel_size = 15
 
 #patch_size = 128
@@ -13,9 +13,9 @@ input_size = (512, 512, 3)
 output_size = (512, 512, 3)
 path = '../datasets/Dataset2_2F/Training/'
 val_path = '../datasets/Dataset2_2F/Validation/'
-n_images = 200			#Number of images to be generated at each time in memory
+#n_images = 200			#Number of images to be generated at each time in memory
 n_images_dataset = 28851	#Number of images in the whole dataset
-n_images_validation = 20
+#n_images_validation = 20
 n_images_validation_dataset = 3507
 
 #proportions = [0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.05, 0.05]	#Proportion of each folder to be loaded
@@ -30,12 +30,11 @@ out_path = '../datasets/Dataset2_2F/ValidationResults/'
 
 """Execution Configuration"""	
 restore = False
-evaluation = False
+
 
 num_gpus = 1
 
-if evaluation:
-	batch_size = 1
+
 
 
 """ When using dropout, this is useful """
