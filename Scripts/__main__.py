@@ -1,5 +1,5 @@
 """Deep dive libs"""
-from input_data_dive import DataSetManager
+from input_data_dive_test import DataSetManager
 from config import *
 
 """Structure"""
@@ -83,7 +83,7 @@ def put_kernels_on_grid (kernel, (grid_Y, grid_X), pad=1):
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-manager = DataSetManager(path,val_path, input_size, proportions, n_images_dataset)
+dataset = DataSetManager(path,val_path, input_size, proportions)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
@@ -97,7 +97,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
 
-dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
+#dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
 
 #x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
 #y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
@@ -247,11 +247,10 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
 
   
   """ Do validation error and generate Images """
-  if i%(n_images/batch_size) == 1:
-    dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
+  #if i%(n_images/batch_size) == 1:
+  #  dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
   
   batch = dataset.train.next_batch(batch_size)
-  batch_val = dataset.validation.next_batch(batch_size)
   
 
 
@@ -272,7 +271,7 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
   #    x:batch[0], y_: batch[1]})
   """Run training and write the summaries"""
   #train_step.run(feed_dict={x: batch[0], y_: batch[1]})
-
+  
   sess.run(train_step, feed_dict={x: batch[0], y_: batch[1],dout1:dropout[0],dout2:dropout[1],dout3:dropout[2],dout4:dropout[3]})
   
 
@@ -295,6 +294,7 @@ for i in range(initialIteration, n_epochs*n_images_dataset):
   #else:
   """ Writing summary, not at every iterations """
   if i%20 == 0:
+    batch_val = dataset.validation.next_batch(batch_size)
     summary_str = sess.run(summary_op, feed_dict={x: batch[0], y_: batch[1],dout1:1,dout2:1,dout3:1,dout4:1})
     summary_str_val,result= sess.run([val,last_layer], feed_dict={x: batch_val[0], y_: batch_val[1],dout1:1,dout2:1,dout3:1,dout4:1})
     summary_writer.add_summary(summary_str,i)
