@@ -83,6 +83,13 @@ class DataSet(object):
       np.random.shuffle(perm)
       self._images_names = self._images_names[perm]
       self._labels_names = self._labels_names[perm]
+      
+      for n in range(start,end):
+        t0 = time()
+        images[n,:,:] = self.read_image(self._images_names[n])
+        print time() - t0
+        labels[n,:,:] = self.read_image(self._labels_names[n])
+
 
 
       # Start next epoch
@@ -91,13 +98,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
 
-    for n in range(start,end):
-      t0 = time()
-      images[n,:,:] = self.read_image(self._images_names[n])
-      print time() - t0
-      labels[n,:,:] = self.read_image(self._labels_names[n])
-
-
+    
 
     return images, labels
 
