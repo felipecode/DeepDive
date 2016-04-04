@@ -70,7 +70,14 @@ class DataSet(object):
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
+   
+    if batch_size >  (self._num_examples - self._index_in_epoch):
+
+      batch_size = self._num_examples - self._index_in_epoch
+
+
     self._index_in_epoch += batch_size
+    
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
     labels = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
 
@@ -84,12 +91,7 @@ class DataSet(object):
       self._images_names = self._images_names[perm]
       self._labels_names = self._labels_names[perm]
       
-      for n in range(start,end):
-        t0 = time()
-        images[n,:,:] = self.read_image(self._images_names[n])
-        print time() - t0
-        labels[n,:,:] = self.read_image(self._labels_names[n])
-
+      
 
 
       # Start next epoch
@@ -98,7 +100,13 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
 
-    
+
+    for n in range(0,batch_size):
+      t0 = time()
+      images[n,:,:] = self.read_image(self._images_names[n])
+      print time() - t0
+      labels[n,:,:] = self.read_image(self._labels_names[n])
+
 
     return images, labels
 
