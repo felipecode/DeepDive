@@ -65,7 +65,10 @@ class DataSet(object):
   def read_image(self,image_name):
     image =Image.open(image_name)
     image =  image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
-    return np.asarray(image)
+    image = np.asarray(image)
+    image = image.astype(np.float32)
+    image = np.multiply(image, 1.0 / 255.0)
+    return image
 
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
@@ -136,7 +139,6 @@ class DataSetManager(object):
     for n in range(0,len(self.im_names)):
       self.im_names[n] = self.im_names[perm[n]]
       self.im_names_labels[n] = self.im_names_labels[perm[n]]    
-
 
 
     self.im_names_val = glob.glob(path_val + "/*.jpg")
