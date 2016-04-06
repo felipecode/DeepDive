@@ -73,27 +73,20 @@ class DataSet(object):
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
-   
-    if batch_size >  (self._num_examples - self._index_in_epoch):
-
-      batch_size = self._num_examples - self._index_in_epoch
-
-
-    self._index_in_epoch += batch_size
-    
-    images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
-    labels = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
-
-
-    if self._index_in_epoch > self._num_examples:
+    if self._index_in_epoch >= self._num_examples:
       # Finished epoch
+      print 'end epoch'
       self._epochs_completed += 1
       # Shuffle the data
-      perm = np.arange(self._num_examples)
-      np.random.shuffle(perm)
-      self._images_names = self._images_names[perm]
-      self._labels_names = self._labels_names[perm]
       
+      """ Shufling all the Images with a single permutation """
+      perm = np.arange(len(self._images_names))
+      np.random.shuffle(perm)
+
+      for n in range(0,len(self._images_names)):
+        self._images_names[n] = self._images_names[perm[n]]
+        self._labels_names[n] = self._labels_names[perm[n]]    
+
       
 
 
@@ -101,13 +94,26 @@ class DataSet(object):
       start = 0
       self._index_in_epoch = batch_size
       assert batch_size <= self._num_examples
+    
+    
+    if batch_size >  (self._num_examples - self._index_in_epoch):
+
+      batch_size = self._num_examples - self._index_in_epoch
+
+      
+    self._index_in_epoch += batch_size
+    
+    images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
+    labels = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
+
+
+    
     end = self._index_in_epoch
 
-
     for n in range(0,batch_size):
-      t0 = time()
+      #t0 = time()
       images[n,:,:] = self.read_image(self._images_names[n])
-      print time() - t0
+      #print time() - t0
       labels[n,:,:] = self.read_image(self._labels_names[n])
 
 
