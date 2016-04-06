@@ -11,9 +11,9 @@ def create_structure(tf, x, input_size,dropout):
 
   """Reshaping images"""
 
-  x_image =x
+  x_image = x
 
-    # INPUT ARE PATCHES 16x16x3 Color
+  # INPUT ARE PATCHES 16x16x3 Color
  
   W_conv1_1 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_1')
   b_conv1_1 = deep_dive.bias_variable([4])
@@ -23,6 +23,7 @@ def create_structure(tf, x, input_size,dropout):
   b_conv1_3 = deep_dive.bias_variable([4])
   W_conv1_4 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_4')
   b_conv1_4 = deep_dive.bias_variable([4])
+
   """print  conv1"""
   conv1_1=deep_dive.conv2d(x_image, W_conv1_1,strides=[1, 1, 1, 1], padding='VALID') + b_conv1_1
   conv1_2=deep_dive.conv2d(x_image, W_conv1_2,strides=[1, 1, 1, 1], padding='VALID') + b_conv1_2
@@ -67,4 +68,4 @@ def create_structure(tf, x, input_size,dropout):
 
   # TODO : TRY MULTISCALE DEPATCHFICATION . INTERESTING STUFF FOR NEURAL NETWORKS 
 
-  return conv2,conv2
+  return conv2, conv2
