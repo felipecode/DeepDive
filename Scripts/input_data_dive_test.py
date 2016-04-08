@@ -112,9 +112,9 @@ class DataSet(object):
 
     for n in range(0,batch_size):
       #t0 = time()
-      images[n,:,:] = self.read_image(self._images_names[n])
+      images[n,:,:] = self.read_image(self._images_names[n+self._index_in_epoch])
       #print time() - t0
-      labels[n,:,:] = self.read_image(self._labels_names[n])
+      labels[n,:,:] = self.read_image(self._labels_names[n+self._index_in_epoch])
 
 
     return images, labels
