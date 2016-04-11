@@ -26,13 +26,15 @@ import time
 from ssim_tf import ssim_tf
 
 
-
-def put_features_on_grid (features, (iy, ix), (cy, cx), pad=1):
- channels=features.get_shape()[3]
- tf.pad(features, tf.constant( [[0,0],[pad,0],[pad,0],[0,0]]))
- features = tf.reshape(features,(-1,iy,ix,cy,cx))
+def put_features_on_grid (features, (cy, cx), pad=4):
+ iy=tf.shape(features)[1]
+ ix=tf.shape(features)[2]
+ features = tf.reshape(features,tf.pack([-1,iy,ix,cy,cx]))
+ features = tf.pad(features, tf.constant( [[0,0],[pad,0],[pad,0],[0,0],[0,0]]))
+ iy+=pad
+ ix+=pad
  features = tf.transpose(features,(0,3,1,4,2))
- return tf.reshape(features,(-1,cy*iy,cx*ix,1))
+ return tf.reshape(features,tf.pack([-1,cy*iy,cx*ix,1]))
 
 """Verifying options integrity"""
 
@@ -114,7 +116,7 @@ tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
 #tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
 tf.image_summary('GroundTruth', y_)
-tf.image_summary('Features_map', put_features_on_grid (S1_conv1, (256, 256),(8, 8)))
+tf.image_summary('Features_map', put_features_on_grid (S1_conv1, (8,8)))
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
 
