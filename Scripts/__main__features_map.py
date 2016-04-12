@@ -26,10 +26,12 @@ import time
 from ssim_tf import ssim_tf
 
 
-def put_features_on_grid (features, (cy, cx), pad=4):
+def put_features_on_grid (features, cx, pad=4):
  iy=tf.shape(features)[1]
  ix=tf.shape(features)[2]
- features = tf.reshape(features,tf.pack([-1,iy,ix,cy,cx]))
+ b_size=tf.shape(features)[0]
+ features = tf.reshape(features,tf.pack([b_size,iy,ix,-1,cx]))
+ cy=tf.shape(features)[3]
  features = tf.pad(features, tf.constant( [[0,0],[pad,0],[pad,0],[0,0],[0,0]]))
  iy+=pad
  ix+=pad
@@ -116,7 +118,11 @@ tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
 #tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
 tf.image_summary('GroundTruth', y_)
-tf.image_summary('Features_map', put_features_on_grid (S1_conv1, (8,8)))
+#with tf.variable_scope('scale_1') as scope_conv: 
+# tf.get_variable_scope().reuse_variables()
+# ft=tf.get_variable('W_S1_conv1')
+# tf.image_summary('Features_map', put_features_on_grid (ft, 8))
+tf.image_summary('Features_map', put_features_on_grid (S1_conv1, 8))
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
 
