@@ -32,7 +32,7 @@ from time import time
 
 
 class DataSet(object):
-  def __init__(self, images_names, labels_names,input_size):
+  def __init__(self, images_names, labels_names,input_size,output_size):
 
     #assert len(images_names) == len(labels_names), (
     #    'images.shape: %s labels.shape: %s' % (len(images_names),
@@ -47,6 +47,7 @@ class DataSet(object):
     self._epochs_completed = 0
     self._index_in_epoch = 0
     self._input_size= input_size
+    self._output_size=output_size
 
 
   @property
@@ -73,19 +74,23 @@ class DataSet(object):
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
+    self._index_in_epoch += batch_size
     if self._index_in_epoch >= self._num_examples:
       # Finished epoch
       print 'end epoch'
       self._epochs_completed += 1
       # Shuffle the data
-      
       """ Shufling all the Images with a single permutation """
       perm = np.arange(len(self._images_names))
       np.random.shuffle(perm)
-
+      copy_images_names=list(self._images_names)
+      copy_labels_names=list(self._labels_names)
       for n in range(0,len(self._images_names)):
-        self._images_names[n] = self._images_names[perm[n]]
-        self._labels_names[n] = self._labels_names[perm[n]]    
+        copy_images_names[n] = self._images_names[perm[n]]
+        copy_labels_names[n] = self._labels_names[perm[n]]
+      for n in range(0,len(self._images_names)):
+        self._images_names[n] = copy_images_names[perm[n]]
+        self._labels_names[n] = copy_labels_names[perm[n]]
 
       
 
@@ -101,20 +106,23 @@ class DataSet(object):
       batch_size = self._num_examples - self._index_in_epoch
 
       
-    self._index_in_epoch += batch_size
-    
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
-    labels = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
+    if len(self._output_size) > 2:
+      labels = np.empty((batch_size, self._output_size[0], self._output_size[1],self._output_size[2]))
+    else:
+      labels = np.empty((batch_size, self._output_size[0], self._output_size[1]))
 
-
-    
-    end = self._index_in_epoch
-
-    for n in range(0,batch_size):
+    for n in range(batch_size):
       #t0 = time()
+<<<<<<< HEAD
+      images[n,:,:] = self.read_image(self._images_names[start+n])
+      #print time() - t0
+      labels[n,:,:] = self.read_image(self._labels_names[start+n])
+=======
       images[n,:,:] = self.read_image(self._images_names[n+self._index_in_epoch])
       #print time() - t0
       labels[n,:,:] = self.read_image(self._labels_names[n+self._index_in_epoch])
+>>>>>>> 2a7466ba46111570ab57eb415f56b4a09100c168
 
 
     return images, labels
@@ -126,17 +134,13 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-
-  def __init__(self, path, path_val, input_size, proportions):
+  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size, proportions):
     self.input_size = input_size
+    self.output_size =output_size
 
     """ Get all the image names for training images on a path folder """
     self.im_names  = glob.glob(path + "/*.jpg")
-
-    """ Change Traing to Ground Truth on the path and get all names again """
-    repls = ('Training', 'GroundTruth'), ('', '')
-    path = reduce(lambda a, kv: a.replace(*kv), repls, path)
-    self.im_names_labels = glob.glob(path + "/*.jpg")
+    self.im_names_labels = glob.glob(path_truth + "/*.jpg")
 
     """ Shufling all the Images with a single permutation """
     perm = np.arange(len(self.im_names))
@@ -148,16 +152,13 @@ class DataSetManager(object):
 
 
     self.im_names_val = glob.glob(path_val + "/*.jpg")
-    """ Change Validation to Validation Ground Truth on the path and get all names again """
-    repls = ('Validation', 'ValidationGroundTruth'), ('', '')
-    path_val = reduce(lambda a, kv: a.replace(*kv), repls, path_val)
-    self.im_names_val_labels = glob.glob(path_val + "/*.jpg")
+    self.im_names_val_labels = glob.glob(path_val_truth + "/*.jpg")
 
       
 
     #random.shuffle(self.im_names_val)
 
-    self.train = DataSet(self.im_names, self.im_names_labels,input_size)
-    self.validation = DataSet(self.im_names_val, self.im_names_val_labels,input_size)
+    self.train = DataSet(self.im_names, self.im_names_labels,input_size,output_size)
+    self.validation = DataSet(self.im_names_val, self.im_names_val_labels,input_size,output_size)
 
  
