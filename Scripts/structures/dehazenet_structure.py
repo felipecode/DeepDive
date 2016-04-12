@@ -13,8 +13,8 @@ def create_structure(tf, x, input_size,dropout):
 
   x_image = x
 
-  # INPUT ARE PATCHES 16x16x3 Color
- 
+    # INPUT ARE PATCHES 16x16x3 Color
+  print x
   W_conv1_1 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_1')
   b_conv1_1 = deep_dive.bias_variable([4])
   W_conv1_2 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_2')
@@ -36,7 +36,9 @@ def create_structure(tf, x, input_size,dropout):
   pool1_3 = tf.reduce_max(conv1_3, reduction_indices=[3], keep_dims=True, name='first_Pool_3')
   pool1_4 = tf.reduce_max(conv1_4, reduction_indices=[3], keep_dims=True, name='first_Pool_4')
   pool1=tf.concat(3, [pool1_1,pool1_2,pool1_3,pool1_4])
+
   print pool1
+  
   """Inception 1 """
   """ TODO: , padding with variable size """
   W_incep1_3_3 = deep_dive.weight_variable_scaling([3,3,4,16], name='W_incep1_3_3')
@@ -62,10 +64,7 @@ def create_structure(tf, x, input_size,dropout):
   W_conv2 = deep_dive.weight_variable_scaling([4,4,48,1], name='W_conv2')
   b_conv2 = deep_dive.bias_variable([1])
   one_constant = tf.constant(1)
-  conv2 = tf.minimum(tf.to_float(one_constant),tf.nn.relu(deep_dive.conv2d(pool2, W_conv2, padding='SAME') + b_conv2, name="second_relu"))
-
-  print conv2
-
-  # TODO : TRY MULTISCALE DEPATCHFICATION . INTERESTING STUFF FOR NEURAL NETWORKS 
-
-  return conv2, conv2
+  brelu = tf.minimum(tf.to_float(one_constant),tf.nn.relu(deep_dive.conv2d(pool2, W_conv2, padding='SAME') + b_conv2, name="second_relu"),name='brelu')
+  print brelu
+ 
+  return brelu,brelu
