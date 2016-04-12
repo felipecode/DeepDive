@@ -40,8 +40,6 @@ class DataSet(object):
 
 
     self._num_examples = len(images_names)
-
-
     self._images_names = images_names
     self._labels_names = labels_names
     self._epochs_completed = 0
@@ -114,15 +112,9 @@ class DataSet(object):
 
     for n in range(batch_size):
       #t0 = time()
-<<<<<<< HEAD
       images[n,:,:] = self.read_image(self._images_names[start+n])
       #print time() - t0
       labels[n,:,:] = self.read_image(self._labels_names[start+n])
-=======
-      images[n,:,:] = self.read_image(self._images_names[n+self._index_in_epoch])
-      #print time() - t0
-      labels[n,:,:] = self.read_image(self._labels_names[n+self._index_in_epoch])
->>>>>>> 2a7466ba46111570ab57eb415f56b4a09100c168
 
 
     return images, labels
