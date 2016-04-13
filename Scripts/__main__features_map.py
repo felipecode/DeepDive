@@ -43,7 +43,7 @@ def put_features_on_grid (features, cx, pad=4):
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-dataset = DataSetManager(path,val_path, input_size, proportions)
+dataset = DataSetManager(path, val_path, pathGroundTruth, out_path, input_size, output_size, proportions)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
