@@ -24,18 +24,25 @@ import time
 import glob
 
 
-# Set path as folder 
+# Set path as folder
+# Set overlap always rounded down.
 
 overlap_size = (12, 12)
-
+""" Configuration, set all the variables , including getting all the files that are going to be evaluated. """
 
 path = '/home/nautec/DeepDive/Local_results/RealImages/'
 out_path ='/home/nautec/DeepDive/Local_results/RealImagesResults/'
 im_names =  glob.glob(path + "*.jpg")
 im_names = im_names + glob.glob(path + "*.png")
 
+
+
+
 print path
 print im_names
+
+
+""" Declare the placeholders variables """
 
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
@@ -46,13 +53,13 @@ dout4 = tf.placeholder("float")
 
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
-
-
-
 h_conv3 = create_structure(tf, x, input_size,[dout1,dout2,dout3,dout4])
 
 sess.run(tf.initialize_all_variables())
 saver = tf.train.Saver(tf.all_variables())
+
+
+""" Recover the previous state of the models. """
 
 if not os.path.exists(models_path):
   os.mkdir(models_path)
@@ -66,6 +73,9 @@ if ckpt.model_checkpoint_path:
 else:
   ckpt = 0
 
+
+
+
 count =0
 for i in im_names:
 
@@ -74,7 +84,11 @@ for i in im_names:
   im = np.array(im, dtype=np.float32)
   visualizer = im
 
+  """ Open one image and add some padding to it """
+
   im = np.lib.pad(im, ((input_size[0]-overlap_size[0], 0), (input_size[1]-overlap_size[1], 0), (0,0)), mode='constant', constant_values=1)
+
+  """ Initiate all the variables """ 
 
   original = im
   original = original.astype(np.float32)
@@ -113,6 +127,7 @@ for i in im_names:
       chunk = chunk.reshape([np.prod(np.array(input_size))])
       #print chunk.shape
       im_vec.append(chunk.reshape([1, np.prod(np.array(input_size))]))
+      """ After cutting the image into inputsizes we run the model, the model is run when we extracted enough patches to fill the batch """
 
       """ Check if the number of read images is equal to the batch size """
       if cont%batch_size == 0 or cont == nValues:
@@ -142,11 +157,12 @@ for i in im_names:
       
 
   cont =0
-  for h in range(0, height, input_size[0]-(overlap_size[0]*2)):
-    for w in range(0, width, input_size[1]-(overlap_size[1]*2)):     
+  """ Rebuild the images"""
+  for h in range(0, height, input_size[0]-(overlap_size[0]*2 +1)):
+    for w in range(0, width, input_size[1]-(overlap_size[1]*2) +1):     
      
       
-      united_images[h:h+input_size[0]-(overlap_size[0]*2), w:w+input_size[1]-(overlap_size[1]*2), :] = res_vec[cont][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
+      united_images[h:h+input_size[0]-(overlap_size[0]*2 +1), w:w+input_size[1]-(overlap_size[1]*2 +1), :] = res_vec[cont][overlap_size[0]:input_size[0]-overlap_size[0], overlap_size[1]:input_size[1]-overlap_size[1]]
       cont = cont +1
       
       #print im.shape
@@ -155,7 +171,9 @@ for i in im_names:
       
       #print result[0][0].shape
 
-      
+
+
+  """ THe invalid Part """      
   jump = (input_size[0]-(2.25*overlap_size[0]), input_size[1]-(2.25*overlap_size[1]))
   united_images = united_images[jump[0]+overlap_size[0]:visualizer.shape[0]+jump[0]-overlap_size[0], jump[1]+overlap_size[1]:visualizer.shape[1]+jump[1]-overlap_size[0], :]
 
