@@ -2,6 +2,8 @@
 Returns the last tensor of the network's structure.
 Input is tensorflow class and an input placeholder.  
 """
+from features_on_grid import put_features_on_grid
+
 def create_structure(tf, x, input_size,dropout):
  
   """Deep dive libs"""
@@ -21,7 +23,7 @@ def create_structure(tf, x, input_size,dropout):
   x_image =x
   """ Scale 1 """
 
-
+  features={}
 
   with tf.variable_scope("scale_1") as scope:
 
@@ -35,6 +37,7 @@ def create_structure(tf, x, input_size,dropout):
     #S1_conv1Vis.assign(S1_conv1)
 
     print S1_conv1
+    features["S1_conv1"]=put_features_on_grid(S1_conv1, 8)
     #print S1_conv1Vis.name
 
     """ Max Pool 1 """
@@ -43,7 +46,7 @@ def create_structure(tf, x, input_size,dropout):
     S1_pool1 = tf.nn.max_pool(S1_conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='Scale1_first_Pool')
 
     print S1_pool1
-
+    features["S1_pool1"]=put_features_on_grid(S1_pool1, 8)
     """Conv 2 """
     W_S1_conv2 = deep_dive.weight_variable_scaling([3,3,64,96], name='w_conv2_1')
     b_S1_conv2 = deep_dive.bias_variable([96])
@@ -394,7 +397,7 @@ def create_structure(tf, x, input_size,dropout):
   # TODO : TRY MULTISCALE DEPATCHFICATION . INTERESTING STUFF FOR NEURAL NETWORKS 
 
 
-  return S3_conv1,regularizer,S1_conv1
+  return S3_conv1,regularizer,features
 
 
  # W_conv1_1_1 = deep_dive.weight_variable_scaling([1,1,3,32], name='w_conv1_1')

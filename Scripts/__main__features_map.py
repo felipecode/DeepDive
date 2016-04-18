@@ -25,19 +25,6 @@ import subprocess
 import time
 from ssim_tf import ssim_tf
 
-
-def put_features_on_grid (features, cx, pad=4):
- iy=tf.shape(features)[1]
- ix=tf.shape(features)[2]
- b_size=tf.shape(features)[0]
- features = tf.reshape(features,tf.pack([b_size,iy,ix,-1,cx]))
- cy=tf.shape(features)[3]
- features = tf.pad(features, tf.constant( [[0,0],[pad,0],[pad,0],[0,0],[0,0]]))
- iy+=pad
- ix+=pad
- features = tf.transpose(features,(0,3,1,4,2))
- return tf.reshape(features,tf.pack([-1,cy*iy,cx*ix,1]))
-
 """Verifying options integrity"""
 
 if restore not in (True, False):
@@ -81,7 +68,7 @@ dout4 = tf.placeholder("float")
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
 
-last_layer, l2_reg, S1_conv1 = create_structure(tf, x,input_size,[dout1,dout2,dout3,dout4])
+last_layer, l2_reg, feature_maps = create_structure(tf, x,input_size,[dout1,dout2,dout3,dout4])
 
 #y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 y_image = y_
@@ -120,9 +107,10 @@ tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_)
 #with tf.variable_scope('scale_1') as scope_conv: 
 # tf.get_variable_scope().reuse_variables()
-# ft=tf.get_variable('W_S1_conv1')
+# ft=tf.get_variable("Scale1_first_relu")
 # tf.image_summary('Features_map', put_features_on_grid (ft, 8))
-tf.image_summary('Features_map', put_features_on_grid (S1_conv1, 8))
+for key in feature_maps:
+ tf.image_summary('Features_map'+key, feature_maps[key])
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
 
