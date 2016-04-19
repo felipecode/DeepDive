@@ -68,7 +68,13 @@ class DataSet(object):
     image = image.astype(np.float32)
     image = np.multiply(image, 1.0 / 255.0)
     return image
-
+  def read_image_gray_scale(self,image_name):
+    image =Image.open(image_name).convert('L')
+    image =  image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
+    image = np.asarray(image)
+    image = image.astype(np.float32)
+    image = np.multiply(image, 1.0 / 255.0)
+    return image
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
@@ -114,7 +120,10 @@ class DataSet(object):
       #t0 = time()
       images[n] = self.read_image(self._images_names[start+n])
       #print time() - t0
-      labels[n] = self.read_image(self._labels_names[start+n])
+      if len(self._output_size) > 2:
+        labels[n] = self.read_image(self._labels_names[start+n])
+      else:
+        labels[n] = self.read_image_gray_scale(self._labels_names[start+n])
 
 
     return images, labels
@@ -137,10 +146,14 @@ class DataSetManager(object):
     """ Shufling all the Images with a single permutation """
     perm = np.arange(len(self.im_names))
     np.random.shuffle(perm)
-
+    copy_images_names=list(self.im_names)
+    copy_labels_names=list(self.im_names_labels)
     for n in range(0,len(self.im_names)):
-      self.im_names[n] = self.im_names[perm[n]]
-      self.im_names_labels[n] = self.im_names_labels[perm[n]]    
+      copy_images_names[n] = self.im_names[perm[n]]
+      copy_labels_names[n] = self.im_names_labels[perm[n]]
+    for n in range(0,len(self.im_names)):
+      self.im_names[n] = copy_images_names[perm[n]]
+      self.im_names_labels[n] = copy_labels_names[perm[n]]  
 
 
     self.im_names_val = glob.glob(path_val + "/*.jpg")
@@ -152,5 +165,10 @@ class DataSetManager(object):
 
     self.train = DataSet(self.im_names, self.im_names_labels,input_size,output_size)
     self.validation = DataSet(self.im_names_val, self.im_names_val_labels,input_size,output_size)
+  def getNImagesDataset(self):
+    return len(self.im_names)
+  def getNImagesValiton(self):
+    return len(self.im_names_val)
+
 
  
