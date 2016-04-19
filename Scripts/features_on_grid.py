@@ -1,11 +1,11 @@
 import tensorflow as tf
 
-def put_features_on_grid (features, cx, pad=4):
+def put_features_on_grid (features, cy=1, pad=4):
  iy=tf.shape(features)[1]
  ix=tf.shape(features)[2]
  b_size=tf.shape(features)[0]
- features = tf.reshape(features,tf.pack([b_size,iy,ix,-1,cx]))
- cy=tf.shape(features)[3]
+ features = tf.reshape(features,tf.pack([b_size,iy,ix,cy,-1]))
+ cx=tf.shape(features)[4]
  features = tf.pad(features, tf.constant( [[0,0],[pad,0],[pad,0],[0,0],[0,0]]))
  iy+=pad
  ix+=pad

@@ -24,8 +24,12 @@ from PIL import Image
 import subprocess
 import time
 from ssim_tf import ssim_tf
+from features_on_grid import put_features_on_grid
 
 """Verifying options integrity"""
+
+#depois a gente coloca isso no config
+features_list=["S1_conv1","S1_pool1","S1_pool2"]
 
 if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
@@ -109,8 +113,8 @@ tf.image_summary('GroundTruth', y_)
 # tf.get_variable_scope().reuse_variables()
 # ft=tf.get_variable("Scale1_first_relu")
 # tf.image_summary('Features_map', put_features_on_grid (ft, 8))
-for key in feature_maps:
- tf.image_summary('Features_map'+key, feature_maps[key])
+for n in range(len(features_list)):
+ tf.image_summary('Features_map_'+features_list[n], put_features_on_grid(feature_maps[features_list[n]], 8))
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
 
