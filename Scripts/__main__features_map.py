@@ -113,8 +113,8 @@ tf.image_summary('GroundTruth', y_)
 # tf.get_variable_scope().reuse_variables()
 # ft=tf.get_variable("Scale1_first_relu")
 # tf.image_summary('Features_map', put_features_on_grid (ft, 8))
-for n in range(len(features_list)):
- tf.image_summary('Features_map_'+features_list[n], put_features_on_grid(feature_maps[features_list[n]], 8))
+for key in features_list:
+ tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], 8))
 # tf.histogram_summary('InputHist', x)
 # tf.histogram_summary('OutputHist', last_layer)
 
