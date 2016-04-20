@@ -27,146 +27,58 @@ from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid
 
 """Verifying options integrity"""
+config= configMain()
 
-#depois a gente coloca isso no config
-features_list=["S1_conv1","S1_pool1","S1_pool2"]
-
-if restore not in (True, False):
+if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size, config.proportions)
+dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
-
-
-#patch_input_size = (patch_size, patch_size, input_size[2])
-#patch_output_size = (patch_size, patch_size, output_size[2])
-
-
-
-
-#mask = [[[1.0*((i>=max_kernel_size//2) and (i<patch_size-max_kernel_size//2) and (j>=max_kernel_size//2) and (j<patch_size-max_kernel_size//2)) for k in range(3)] for j in range(patch_size)] for i in range(patch_size)]
-
-
-
-#dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
-
-#x = tf.placeholder("float", shape=[None, np.prod(np.array(input_size))], name="input_image")
-#y_ = tf.placeholder("float", shape=[None, np.prod(np.array(output_size))], name="output_image")
 
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 
-dout1 = tf.placeholder("float")
-dout2 = tf.placeholder("float")
-dout3 = tf.placeholder("float")
-dout4 = tf.placeholder("float")
-
-#tf_mask=tf.Variable(initial_value=mask, trainable=False, name="mask")
-
-#initial = tf.constant(0,dtype='float32')
-#loss_average_var = tf.Variable(initial, name="total_loss")
-
-#count = tf.Variable(initial, name="count")
-
-
-# sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
 
-last_layer, l2_reg, feature_maps = create_structure(tf, x,config.input_size,[dout1,dout2,dout3,dout4])
+last_layer, dropoutDict, feature_maps,scalars = create_structure(tf, x,config.input_size,config.dropout)
 
-#y_image = tf.reshape(y_, [-1, output_size[0], output_size[1], output_size[2]])
 y_image = y_
 
-#loss_function = tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)) + l2_reg_w * l2_reg
 loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)))
-#loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.mul(tf.sub(last_layer, y_image),tf_mask),2)),name='Training')
-
 # using the same function with a different name
 loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
-
-
 loss_function_ssim = ssim_tf(tf,y_image,last_layer)
 
-#loss_average = tf.div(tf.add(loss_average_var, loss_validation),tf.add(count,1));
-
-#PSNR
-#loss_function_psnr = tf.constant(20.0) * (tf.log(tf.div(tf.constant(1.0), tf.sqrt(MSE))) / tf.constant(2.302585093))
-
-
-
 train_step = tf.train.AdamOptimizer(config.learning_rate).minimize(loss_function)
-#tf.add_to_collection('losses', loss_validation)
-
-
-
-
-#loss_averages_op = _add_loss_summaries(loss_validation)
 
 """Creating summaries"""
-#tf.image_summary('Input', tf.reshape(x, [batch_size, input_size[0], input_size[1], input_size[2]]))
-tf.image_summary('Input', x)
 
+tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
-#tf.image_summary('GroundTruth', tf.reshape(y_, [batch_size, output_size[0], output_size[1], output_size[2]]))
 tf.image_summary('GroundTruth', y_)
-#with tf.variable_scope('scale_1') as scope_conv: 
-# tf.get_variable_scope().reuse_variables()
-# ft=tf.get_variable("Scale1_first_relu")
-# tf.image_summary('Features_map', put_features_on_grid (ft, 8))
-for key in features_list:
+for key in feature_maps :
  tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], 8))
-# tf.histogram_summary('InputHist', x)
-# tf.histogram_summary('OutputHist', last_layer)
+for key in scalars :
+ tf.image_summary(key, scalars[key])
 
 tf.scalar_summary('Loss', loss_function)
-
 tf.scalar_summary('Loss_SSIM', loss_function_ssim)
-tf.scalar_summary('L2_loss', l2_reg)
-
-#tf.scalar_summary('Loss_PSNR', loss_function_psnr)
-# tf.scalar_summary('learning_rate', learning_rate)
-
-#val = tf.scalar_summary('Loss_Average', loss_average)
-
-#with tf.variable_scope('scale_1') as scope_conv:
-  
-#  scope_conv.reuse_variables()
-#  weights = tf.get_variable('W_S1_conv1')
-  
-  #features = tf.get_variable('feature1_vis')
-
-#  grid_x = grid_y = 8   # to get a square grid for 64 conv1 features
-#  gridw = put_kernels_on_grid (weights, (grid_y, grid_x))
-  #gridf = put_kernels_on_grid (features, (grid_y, grid_x))
-#  tf.image_summary('conv1/kernels', gridw, max_images=1)
-  #tf.image_summary('conv1/Features', gridf, max_images=1)
-
-
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
 
 val  =tf.scalar_summary('Loss_Validation', loss_validation)
 
-
 sess.run(tf.initialize_all_variables())
-
-
-
-
 
 summary_writer = tf.train.SummaryWriter(config.summary_path,
                                             graph_def=sess.graph_def)
 
-# """Open tensorboard"""
-# subprocess.Popen(['gnome-terminal', '-e', 'tensorboard --logdir ' + summary_path], shell=True)
-  
 """Load a previous model if restore is set to True"""
 
 if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
-
 print ckpt
 if config.restore:
   if ckpt.model_checkpoint_path:
@@ -175,10 +87,7 @@ if config.restore:
 else:
   ckpt = 0
 
-
 print 'Logging into ' + config.summary_path
-
-
 
 """Training"""
 
@@ -187,9 +96,7 @@ lowest_val  = 1.5;
 lowest_iter = 1;
 lowest_val_iter = 1;
 
-#i + int(ckpt.model_checkpoint_path.split('-')[1])
-
-
+feedDict=dropoutDict
 if ckpt:
   initialIteration = int(ckpt.model_checkpoint_path.split('-')[1])
 else:
@@ -203,36 +110,18 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 
   
   """ Do validation error and generate Images """
-  #if i%(n_images/batch_size) == 1:
-  #  dataset = manager.read_data_sets2(n_images=n_images,n_images_validation=n_images_validation)
-  
   batch = dataset.train.next_batch(config.batch_size)
   
-
-
-
   """Save the model every 300 iterations"""
   if i%300 == 0:
-    # if ckpt:
-    #   saver.save(sess, models_path + 'model.ckpt', global_step=i + int(ckpt.model_checkpoint_path.split('-')[1]))
-    #   print 'Model saved.'
-    # else:
     saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
     print 'Model saved.'
 
-
   start_time = time.time()
-  """Calculate the loss"""
-  #train_accuracy = loss_function.eval(feed_dict={
-  #    x:batch[0], y_: batch[1]})
-  """Run training and write the summaries"""
-  #train_step.run(feed_dict={x: batch[0], y_: batch[1]})
-  feedDict={x: batch[0], y_: batch[1] , dout1:1,dout2:1,dout3:1,dout4:1}
 
-  sess.run(train_step, feed_dict={x: batch[0], y_: batch[1],dout1:config.dropout[0],dout2:config.dropout[1],dout3:config.dropout[2],dout4:config.dropout[3]})
+  feedDict.update({x: batch[0], y_: batch[1]})
+  sess.run(train_step, feed_dict=feedDict)
   
-
-
   duration = time.time() - start_time
 
   if i%20 == 0:
@@ -243,12 +132,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       lowest_error = train_accuracy
       lowest_iter = i
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
-  
 
-
-  #if ckpt:
-  #  summary_writer.add_summary(summary_str, i + int(ckpt.model_checkpoint_path.split('-')[1]))
-  #else:
   """ Writing summary, not at every iterations """
   if i%20 == 0:
     batch_val = dataset.validation.next_batch(config.batch_size)
@@ -257,10 +141,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_writer.add_summary(summary_str,i)
 
     """ Check here the weights """
-
-
     result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
     result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
     summary_writer.add_summary(summary_str_val,i)
-  
-

@@ -10,11 +10,12 @@ def create_structure(tf, x, input_size,dropout):
   deep_dive = DeepDive()
 
   """Reshaping images"""
-
   x_image = x
-
-    # INPUT ARE PATCHES 16x16x3 Color
   print x
+  dropoutDict={}
+  features={}
+  scalars={}
+  # INPUT ARE PATCHES 16x16x3 Color
   W_conv1_1 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_1')
   b_conv1_1 = deep_dive.bias_variable([4])
   W_conv1_2 = deep_dive.weight_variable_scaling([5,5,3,4], name='W_conv1_2')
@@ -30,7 +31,7 @@ def create_structure(tf, x, input_size,dropout):
   conv1_3=deep_dive.conv2d(x_image, W_conv1_3,strides=[1, 1, 1, 1], padding='VALID') + b_conv1_3
   conv1_4=deep_dive.conv2d(x_image, W_conv1_4,strides=[1, 1, 1, 1], padding='VALID') + b_conv1_4
 
-  #pool1 = tf.nn.max_pool(conv1, ksize=[1, 1, 1, 4], strides=[1, 1, 1, 4], padding='SAME', name='first_Pool')
+  #apply reduction between the features, reducing from 16 to 4
   pool1_1 = tf.reduce_max(conv1_1, reduction_indices=[3], keep_dims=True, name='first_Pool_1')
   pool1_2 = tf.reduce_max(conv1_2, reduction_indices=[3], keep_dims=True, name='first_Pool_2')
   pool1_3 = tf.reduce_max(conv1_3, reduction_indices=[3], keep_dims=True, name='first_Pool_3')
@@ -67,4 +68,4 @@ def create_structure(tf, x, input_size,dropout):
   brelu = tf.minimum(tf.to_float(one_constant),tf.nn.relu(deep_dive.conv2d(pool2, W_conv2, padding='SAME') + b_conv2, name="second_relu"),name='brelu')
   print brelu
  
-  return brelu,brelu
+  return brelu,dropoutDict,features,scalars

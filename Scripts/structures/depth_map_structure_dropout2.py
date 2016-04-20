@@ -1,5 +1,6 @@
 """
-Returns the last tensor of the network's structure.
+Returns the last tensor of the network's structure
+followed dropout and features dictionaries to be summarised
 Input is tensorflow class and an input placeholder.  
 """
 
@@ -12,17 +13,19 @@ def create_structure(tf, x, input_size,dropout):
   deep_dive = DeepDive()
 
 
-
+  dout1 = tf.placeholder("float")
+  dout2 = tf.placeholder("float")
+  dout3 = tf.placeholder("float")
+  dout4 = tf.placeholder("float")
   """Reshaping images"""
-  # with tf.device('/gpu:2'):
 
-
-  #x_image = tf.reshape(x, [-1, input_size[0], input_size[1], 3], "unflattening_reshape")
+  dropoutDict={dout1:dropout[0],dout2:dropout[1],dout3:dropout[2],dout4:dropout[3]}
 
   x_image =x
   """ Scale 1 """
 
   features={}
+  scalars={}
 
   with tf.variable_scope("scale_1") as scope:
 
@@ -31,13 +34,8 @@ def create_structure(tf, x, input_size,dropout):
     W_S1_conv1 = deep_dive.weight_variable_scaling([7,7,3,64], name='W_S1_conv1')
     b_S1_conv1 = deep_dive.bias_variable([64])
     S1_conv1 = tf.nn.relu(deep_dive.conv2d(x_image, W_S1_conv1,strides=[1, 2, 2, 1], padding='SAME') + b_S1_conv1, name="Scale1_first_relu")
-    #initial = tf.truncated_normal([256,256,3,64], stddev=0.1)
-    #S1_conv1Vis = tf.Variable(initial, name='feature1_vis')
-    #S1_conv1Vis.assign(S1_conv1)
-
     print S1_conv1
     features["S1_conv1"]=S1_conv1
-    #print S1_conv1Vis.name
 
     """ Max Pool 1 """
 
@@ -167,7 +165,7 @@ def create_structure(tf, x, input_size,dropout):
 
     """ Dropout layer when you reach the smaller structure. """  
     
-    S1_pool3_up_drop = tf.nn.dropout(S1_pool3_up, dropout[0])
+    S1_pool3_up_drop = tf.nn.dropout(S1_pool3_up, dout1)
 
 
 
@@ -221,7 +219,7 @@ def create_structure(tf, x, input_size,dropout):
 
   """ Dropout layer for concatenating ( I DONT REALLY KNOW IF IT MAKES SENSE) """  
   
-  S1_up2_final_drop = tf.nn.dropout(S1_up2_final, dropout[1])
+  S1_up2_final_drop = tf.nn.dropout(S1_up2_final, dout2)
 
 
   W_S2_conv1 = deep_dive.weight_variable_scaling([7,7,3,64], name='W_S2_conv1')
@@ -317,7 +315,7 @@ def create_structure(tf, x, input_size,dropout):
 
 
   
-  S2_conv2_drop = tf.nn.dropout(S2_conv2, dropout[2])
+  S2_conv2_drop = tf.nn.dropout(S2_conv2, dout3)
 
 
 
@@ -399,7 +397,7 @@ def create_structure(tf, x, input_size,dropout):
   """ Do SOME FULLY CONECTED  """
 
 
-  S3_incep2_drop = tf.nn.dropout(S3_incep2, dropout[3])
+  S3_incep2_drop = tf.nn.dropout(S3_incep2, dout4)
 
 
 
@@ -416,7 +414,7 @@ def create_structure(tf, x, input_size,dropout):
   # TODO : TRY MULTISCALE DEPATCHFICATION . INTERESTING STUFF FOR NEURAL NETWORKS 
 
 
-  return S3_conv1,regularizer,features
+  return S3_conv1,dropoutDict,features,scalars
 
 
  # W_conv1_1_1 = deep_dive.weight_variable_scaling([1,1,3,32], name='w_conv1_1')
