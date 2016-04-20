@@ -29,7 +29,11 @@ from features_on_grid import put_features_on_grid
 """Verifying options integrity"""
 config= configMain()
 
-if config.restore not in (True, False):
+#depois a gente coloca isso no config
+#o segundo parametro e o numero de linhas pra mostrar
+features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
+
+if restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
 dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
@@ -56,11 +60,11 @@ train_step = tf.train.AdamOptimizer(config.learning_rate).minimize(loss_function
 tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_)
-for key in feature_maps :
- tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], 8))
-for key in scalars :
- tf.image_summary(key, scalars[key])
 
+for key, l in features_list:
+ tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
+for key in scalars:
+  tf.scalar_summary(key,scalars[key])
 tf.scalar_summary('Loss', loss_function)
 tf.scalar_summary('Loss_SSIM', loss_function_ssim)
 
