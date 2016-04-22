@@ -8,7 +8,7 @@ class configMain:
 		self.training_path = '../datasets/dataset2_2F/Training/'
 		self.training_path_ground_truth = '../datasets/dataset2_2F/GroundTruth'
 		self.validation_path = '../datasets/dataset2_2F/Validation/'
-		self.summary_path = '/tmp/dataset4_124'
+		self.summary_path = '/tmp/dataset4_12'
 		self.validation_path_ground_truth = '../datasets/dataset4_1/ValidationGroundTruth/'
 		self.models_path = 'models/deepdivearch0.2s_d2.2F_mar_21/'
 		self.input_size = (512, 512, 3)
@@ -16,6 +16,7 @@ class configMain:
 		self.ground_truth_size = (512, 512, 3)
 		self.restore = False
 		self.dropout = [1,1,1,1]
+		self.features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
 
 class configDehazeNet:
 	def __init__(self):
@@ -32,3 +33,7 @@ class configDehazeNet:
 		self.output_size = (16, 16)
 		self.ground_truth_size = (16,16)
 		self.restore = False
+		self.dropout = []
+		self.features_list=[]
+		self.evaluate_path = '/home/nautec/DeepDive/Local_results/RealImages/'
+		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'

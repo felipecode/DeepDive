@@ -66,7 +66,7 @@ class DataSet(object):
     return self._epochs_completed
 
   def read_image(self,image_name):
-    image =Image.open(image_name)
+    image =Image.open(image_name).convert('RGB')
     image =  image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
     image = np.asarray(image)
     image = image.astype(np.float32)

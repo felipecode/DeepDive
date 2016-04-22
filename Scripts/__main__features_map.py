@@ -31,23 +31,23 @@ config= configMain()
 
 #depois a gente coloca isso no config
 #o segundo parametro e o numero de linhas pra mostrar
-features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
 
-if restore not in (True, False):
+
+if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
 dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
+
+""" Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
-
 sess = tf.InteractiveSession()
-
 last_layer, dropoutDict, feature_maps,scalars = create_structure(tf, x,config.input_size,config.dropout)
 
+" Creating comparation metrics"
 y_image = y_
-
 loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)))
 # using the same function with a different name
 loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
@@ -61,7 +61,7 @@ tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_)
 
-for key, l in features_list:
+for key, l in config.features_list:
  tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
 for key in scalars:
   tf.scalar_summary(key,scalars[key])
