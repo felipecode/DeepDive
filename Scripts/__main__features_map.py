@@ -29,9 +29,6 @@ from features_on_grid import put_features_on_grid
 """Verifying options integrity"""
 config= configMain()
 
-#depois a gente coloca isso no config
-#o segundo parametro e o numero de linhas pra mostrar
-
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
@@ -61,6 +58,8 @@ tf.image_summary('Input', x)
 tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_)
 
+#test = tf.get_default_graph().get_tensor_by_name("scale_1/Scale1_first_relu:0")
+#tf.image_summary('Teste', put_features_on_grid(test, 8))
 for key, l in config.features_list:
  tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
 for key in scalars:
