@@ -75,16 +75,15 @@ val  =tf.scalar_summary('Loss_Validation', loss_validation)
 sess.run(tf.initialize_all_variables())
 
 summary_writer = tf.train.SummaryWriter(config.summary_path,
-                                            graph_def=sess.graph_def)
+                                            graph=sess.graph)
 
 """Load a previous model if restore is set to True"""
 
 if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
-print ckpt
 if config.restore:
-  if ckpt.model_checkpoint_path:
+  if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path  
     saver.restore(sess,ckpt.model_checkpoint_path)
 else:
