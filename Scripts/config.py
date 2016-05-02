@@ -3,7 +3,7 @@
 class configMain:
 	def __init__(self):
 		self.learning_rate = 5*1e-3
-		self.batch_size = 1
+		self.batch_size = 4
 		self.n_epochs = 40   # the number of epochs that we are going to run
 		self.training_path = '../datasets/dataset2_2F/Training/'
 		self.training_path_ground_truth = '../datasets/dataset2_2F/GroundTruth'
@@ -20,7 +20,7 @@ class configMain:
 
 class configOptimization:
 	def __init__(self):
-		self.opt_step = 5*1e-1
+		self.opt_step = 5*1e-3
 		self.opt_iter_n = 2000
 		self.models_path = 'models/deepdivearch0.2s_d2.2F_mar_21/'
 		self.summary_path = '/tmp/dataset4_12'
@@ -35,6 +35,10 @@ class configOptimization:
 		self.gaussian_blur=True
 		self.blur_iter=500
 		self.blur_width=1
+		self.clip_norm=False
+		self.norm_pct_thrshld=0.5
+		self.clip_contrib=False
+		self.contrib_pct_thrshld=0.5
 
 class configDehazeNet:
 	def __init__(self):

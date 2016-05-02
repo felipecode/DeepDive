@@ -128,6 +128,15 @@ for key, channel in config.features_opt_list:
   if config.gaussian_blur:
    if i%config.blur_iter==0:
     images[0] = gaussian_filter(images[0], sigma=config.blur_width)
+  if config.clip_norm:
+   norms=np.linalg.norm(images[0], axis=2, keepdims=True)
+   n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
+   images[0]=images[0]*(norms>n_thrshld)
+  if config.clip_contrib:
+   contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
+   c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
+   images[0]=images[0]*(contribs>c_thrshld)
+   
   if i%100 == 0:
     print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
     summary_opt_str, summary_str = sess.run([optm_summary, summary_op], feed_dict=feedDict)
