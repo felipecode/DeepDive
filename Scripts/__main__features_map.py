@@ -122,7 +122,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     print 'Model saved.'
 
   start_time = time.time()
-
+  print batch[0].shape
   feedDict.update({x: batch[0], y_: batch[1]})
   sess.run(train_step, feed_dict=feedDict)
   
