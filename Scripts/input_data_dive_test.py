@@ -79,6 +79,7 @@ class DataSet(object):
     image = np.asarray(image)
     image = image.astype(np.float32)
     image = np.multiply(image, 1.0 / 255.0)
+    image = np.mean(image)
     return image
 
   def next_batch(self, batch_size):
@@ -97,19 +98,19 @@ class DataSet(object):
       self._index_in_epoch = batch_size
       assert batch_size <= self._num_examples
     if batch_size >  (self._num_examples - self._index_in_epoch):
-
       batch_size = self._num_examples - self._index_in_epoch
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
     if len(self._output_size) > 2:
       labels = np.empty((batch_size, self._output_size[0], self._output_size[1],self._output_size[2]))
     else:
-      labels = np.empty((batch_size, self._output_size[0], self._output_size[1]))
+      labels = np.empty((batch_size, self._output_size[0], self._output_size[1],1))
     for n in range(batch_size):
       images[n] = self.read_image(self._images_names[start+n])
       if len(self._output_size) > 2:
         labels[n] = self.read_image(self._labels_names[start+n])
       else:
         labels[n] = self.read_image_gray_scale(self._labels_names[start+n])
+    
     return images, labels
 
 
@@ -123,6 +124,7 @@ class DataSetManager(object):
     self.im_names_labels = glob.glob(path_truth + "/*.jpg")
     """ Shufling all the Images with a single permutation"""
     shufle(self.im_names,self.im_names_labels)
+
     self.im_names_val = glob.glob(path_val + "/*.jpg")
     self.im_names_val_labels = glob.glob(path_val_truth + "/*.jpg")
     self.train = DataSet(self.im_names, self.im_names_labels,input_size,output_size)
