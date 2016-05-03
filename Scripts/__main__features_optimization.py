@@ -136,53 +136,13 @@ for key, channel in config.features_opt_list:
    contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
    c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
    images[0]=images[0]*(contribs>c_thrshld)
-   
+  images[0]=np.minimum(1,images[0])
+  images[0]=np.maximum(0,images[0])
+#  images[0]-=min(0,np.amin(images[0]))
+#  images[0]=images[0]/(max(1,np.amax(images[0])-min(0,np.amin(images[0]))))
+
   if i%100 == 0:
     print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
     summary_opt_str, summary_str = sess.run([optm_summary, summary_op], feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
     summary_writer.add_summary(summary_opt_str,i)
-
-
-#for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
-
-  
-#  epoch_number = 1.0+ (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
-
-
-  
-#  """ Do validation error and generate Images """
-#  batch = dataset.train.next_batch(config.batch_size)
-  
-#  """Save the model every 300 iterations"""
-#  if i%300 == 0:
-#    saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
-#    print 'Model saved.'
-
-#  start_time = time.time()
-
-#  feedDict.update({x: batch[0], y_: batch[1]})
-#  sess.run(train_step, feed_dict=feedDict)
-  
-#  duration = time.time() - start_time
-
-#  if i%20 == 0:
-#    num_examples_per_step = config.batch_size 
-#    examples_per_sec = num_examples_per_step / duration
-#    train_accuracy = sess.run(loss_function, feed_dict=feedDict)
-#    if  train_accuracy < lowest_error:
-#      lowest_error = train_accuracy
-#      lowest_iter = i
-#    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
-
-#  """ Writing summary, not at every iterations """
-#  if i%20 == 0:
-#    batch_val = dataset.validation.next_batch(config.batch_size)
-#    summary_str = sess.run(summary_op, feed_dict=feedDict)
-#    summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
-#    summary_writer.add_summary(summary_str,i)
-
-#    """ Check here the weights """
-#    result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-#    result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-#    summary_writer.add_summary(summary_str_val,i)
