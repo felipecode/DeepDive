@@ -28,7 +28,6 @@ class configOptimization:
 		self.output_size = (512, 512, 3)
 		self.restore = True
 		self.dropout = [1,1,1,1]
-		self.features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
 	        self.features_opt_list=[["S1_conv1", 8],["S1_conv1", 7],["S1_conv1", 36]]
                 self.l2_decay=False
 		self.decay=0.001
