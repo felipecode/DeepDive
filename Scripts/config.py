@@ -20,8 +20,8 @@ class configMain:
 
 class configOptimization:
 	def __init__(self):
-		self.opt_step = 5*1e-3
-		self.opt_iter_n = 2000
+		self.opt_step = 1
+		self.opt_iter_n = 100
 		self.models_path = 'models/deepdivearch0.2s_d2.2F_mar_21/'
 		self.summary_path = '/tmp/dataset4_12'
 		self.input_size = (512, 512, 3)
@@ -30,10 +30,10 @@ class configOptimization:
 		self.dropout = [1,1,1,1]
 		self.features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
 	        self.features_opt_list=[["S1_conv1", 8],["S1_conv1", 7],["S1_conv1", 36]]
-                self.l2_decay=True
+                self.l2_decay=False
 		self.decay=0.001
-		self.gaussian_blur=True
-		self.blur_iter=500
+		self.gaussian_blur=False
+		self.blur_iter=10
 		self.blur_width=1
 		self.clip_norm=False
 		self.norm_pct_thrshld=0.5
