@@ -28,9 +28,36 @@ from scipy.ndimage.filters import gaussian_filter
 
 from features_on_grid import put_features_on_grid
 
+def normalize_std(img, eps=1e-10):
+    '''Normalize image by making its standard deviation = 1.0'''
+    std = tf.sqrt(tf.reduce_mean(tf.square(img)))
+    return img/tf.maximum(std, eps)
+
+def lap_normalize(img, scale_n=4):
+    '''Perform the Laplacian pyramid normalization.'''
+    k = np.float32([1,4,6,4,1])
+    k = np.outer(k, k)
+    k5x5 = k[:,:,None,None]/k.sum()*np.eye(3, dtype=np.float32)
+    img = tf.expand_dims(img,0)
+
+    levels = []
+    for i in xrange(scale_n):
+        lo = tf.nn.conv2d(img, k5x5, [1,2,2,1], 'SAME')
+        lo2 = tf.nn.conv2d_transpose(lo, k5x5*4, tf.shape(img), [1,2,2,1])
+        hi = img-lo2
+        levels.append(hi)
+	img=lo
+    levels.append(img)
+    tlevels=levels[::-1]
+    tlevels = map(normalize_std, tlevels)
+
+    img = tlevels[0]
+    for hi in tlevels[1:]:
+        img = tf.nn.conv2d_transpose(img, k5x5*4, tf.shape(hi), [1,2,2,1]) + hi
+    return img[0,:,:,:]
+
 """Verifying options integrity"""
 config= configOptimization()
-
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
@@ -69,7 +96,13 @@ img_noise = np.random.uniform(low=0.0, high=1.0, size=config.input_size)
 
 for key, channel in config.features_opt_list:
  t_score = tf.reduce_mean(feature_maps[key][:,:,:,channel])
- t_grad = tf.gradients(t_score, x)[0]  
+ t_grad = tf.gradients(t_score, x)[0]
+
+ if config.lap_grad_normalization:
+  grad_norm=lap_normalize(t_grad[0,:,:,:])
+ else:
+  grad_norm=normalize_std(t_grad)
+
  images[0] = img_noise.copy()
  step_size=config.opt_step
  print("Maximizing output of channel %d of layer %s"%(channel, key))
@@ -79,23 +112,23 @@ for key, channel in config.features_opt_list:
  summary_op=tf.merge_summary([opt_summary,ft_summary,tf.image_summary('Output_'+opt_name, last_layer)])
  for i in xrange(1,config.opt_iter_n+1):
   feedDict.update({x: images, y_: images})
-  g, score = sess.run([t_grad, t_score], feed_dict=feedDict)
+  g, score = sess.run([grad_norm, t_score], feed_dict=feedDict)
   # normalizing the gradient, so the same step size should work for different layers and networks
-  g /= g.std()+1e-8
   images[0] = images[0]+g*step_size
-  if config.l2_decay:
-   images[0] = images[0]*(1-config.decay)
-  if config.gaussian_blur:
+  #l2 decay
+  images[0] = images[0]*(1-config.decay)
+  #gaussian blur
+  if config.blur_iter:
    if i%config.blur_iter==0:
     images[0] = gaussian_filter(images[0], sigma=config.blur_width)
-  if config.clip_norm:
-   norms=np.linalg.norm(images[0], axis=2, keepdims=True)
-   n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
-   images[0]=images[0]*(norms>n_thrshld)
-  if config.clip_contrib:
-   contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
-   c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
-   images[0]=images[0]*(contribs>c_thrshld)
+  #clip norm
+  norms=np.linalg.norm(images[0], axis=2, keepdims=True)
+  n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
+  images[0]=images[0]*(norms>=n_thrshld)
+  #clip contribution
+  contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
+  c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
+  images[0]=images[0]*(contribs>=c_thrshld)
 
   if i%10 == 0:
     print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
