@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from dehazenet_structure import create_structure
+from dehazeNOT import create_structure
 
 """Core libs"""
 import tensorflow as tf
