@@ -56,45 +56,7 @@ def lap_normalize(img, scale_n=4):
         img = tf.nn.conv2d_transpose(img, k5x5*4, tf.shape(hi), [1,2,2,1]) + hi
     return img[0,:,:,:]
 
-"""Verifying options integrity"""
-config= configOptimization()
-
-if config.restore not in (True, False):
-  raise Exception('Wrong restore option. (True or False)')
-
-
-""" Creating section"""
-x = tf.placeholder("float", name="input_image")
-y_ = tf.placeholder("float", name="output_image")
-sess = tf.InteractiveSession()
-last_layer, dropoutDict, feature_maps,_ = create_structure(tf, x,config.input_size,config.dropout)
-
-saver = tf.train.Saver(tf.all_variables())
-
-summary_writer = tf.train.SummaryWriter(config.summary_path,
-                                            graph=sess.graph)
-
-"""Load a previous model if restore is set to True"""
-
-if not os.path.exists(config.models_path):
-  os.mkdir(config.models_path)
-ckpt = tf.train.get_checkpoint_state(config.models_path)
-if config.restore:
-  if ckpt:
-    print 'Restoring from ', ckpt.model_checkpoint_path  
-    saver.restore(sess,ckpt.model_checkpoint_path)
-else:
-  ckpt = 0
-
-print 'Logging into ' + config.summary_path
-
-feedDict=dropoutDict
-
-images = np.empty((1, config.input_size[0], config.input_size[1], config.input_size[2]))
-img_noise = np.random.uniform(low=0.0, high=1.0, size=config.input_size)
-
-
-for key, channel in config.features_opt_list:
+def optimize_feature(key, channel):
  t_score = tf.reduce_mean(feature_maps[key][:,:,:,channel])
  t_grad = tf.gradients(t_score, x)[0]
 
@@ -134,3 +96,51 @@ for key, channel in config.features_opt_list:
     print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
     summary_str = sess.run(summary_op, feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
+
+"""Verifying options integrity"""
+config= configOptimization()
+
+if config.restore not in (True, False):
+  raise Exception('Wrong restore option. (True or False)')
+
+
+""" Creating section"""
+x = tf.placeholder("float", name="input_image")
+y_ = tf.placeholder("float", name="output_image")
+sess = tf.InteractiveSession()
+last_layer, dropoutDict, feature_maps,_ = create_structure(tf, x,config.input_size,config.dropout)
+
+saver = tf.train.Saver(tf.all_variables())
+
+summary_writer = tf.train.SummaryWriter(config.summary_path,
+                                            graph=sess.graph)
+
+"""Load a previous model if restore is set to True"""
+
+if not os.path.exists(config.models_path):
+  os.mkdir(config.models_path)
+ckpt = tf.train.get_checkpoint_state(config.models_path)
+if config.restore:
+  if ckpt:
+    print 'Restoring from ', ckpt.model_checkpoint_path  
+    saver.restore(sess,ckpt.model_checkpoint_path)
+else:
+  ckpt = 0
+
+print 'Logging into ' + config.summary_path
+
+feedDict=dropoutDict
+
+images = np.empty((1, config.input_size[0], config.input_size[1], config.input_size[2]))
+img_noise = np.random.uniform(low=0.0, high=1.0, size=config.input_size)
+
+
+for key, channel in config.features_opt_list:
+ if channel<0:
+  #otimiza todos os canais
+  ft=feature_maps[key]
+  n_channels=ft.get_shape()[3]
+  for ch in xrange(n_channels):
+   optimize_feature(key, ch)
+ else:
+  optimize_feature(key, channel)
