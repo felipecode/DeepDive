@@ -47,6 +47,17 @@ class DeepDive(object):
     return tf.nn.conv2d(x, W, strides=strides ,padding=padding)
 
   """
+  Creates a 2d deConvolution layer.
+  x: input layer (tensor)
+  padding: 'same' or 'valid'
+  W: variable or constant weight created.
+  output = shape of the output tensor
+  """
+  def conv2d_transpose(self, x, W, output, strides = [1, 1, 1, 1], padding = 'VALID'):
+    return tf.nn.conv2d_transpose(x, W, output, strides = strides, padding = padding)
+
+
+  """
   Creates a dropout layer.
   x: input layer (tensor)
   keep_prob: probability to keep a node
