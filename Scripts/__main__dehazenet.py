@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from dehazeNOT import create_structure
+from underwater_pathfinder import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -27,7 +27,7 @@ from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid
 
 """Verifying options integrity"""
-config= configDehazeNet()
+config= configPathfinder()
 
 #depois a gente coloca isso no config
 #o segundo parametro e o numero de linhas pra mostrar

@@ -45,6 +45,28 @@ class configDehazeNet:
 		self.training_path = '../datasets/dataset4_2/Training'
 		self.training_path_ground_truth = '../datasets/dataset4_2/Transmission'
 		self.validation_path = '../datasets/dataset4_2/Validation'
+		self.summary_path = '/tmp/dataset43q'
+		self.validation_path_ground_truth = '../datasets/dataset4_2/ValidationTransmission/'
+		self.models_path = 'models/'
+		self.input_size = (16, 16, 3)
+		self.output_size = (1, 1)
+		self.ground_truth_size = (16,16)
+		self.restore = False
+		self.dropout = []
+		self.features_list=[["conv1",2],["conv2_1",1],["incep1_3_3",4],["incep1_5_5",4],["incep1_7_7",4]]
+		self.histograms_list=["W_conv1","b_conv1","W_incep1_3_3","W_incep1_5_5","W_incep1_7_7"]
+		self.evaluate_path = '/home/nautec/DeepDive/Local_results/RealImages/'
+		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'
+
+class configDehazeNOT:
+	def __init__(self):
+		self.learning_rate = 5*1e-6
+		self.init_std_dev=0.01
+		self.batch_size = 5
+		self.n_epochs = 80   # the number of epochs that we are going to run
+		self.training_path = '../datasets/dataset4_2/Training'
+		self.training_path_ground_truth = '../datasets/dataset4_2/Transmission'
+		self.validation_path = '../datasets/dataset4_2/Validation'
 		self.summary_path = '/tmp/dataset43t'
 		self.validation_path_ground_truth = '../datasets/dataset4_2/ValidationTransmission/'
 		self.models_path = 'models/'
@@ -55,5 +77,27 @@ class configDehazeNet:
 		self.dropout = []
 		self.features_list=[["conv1",2],["conv2",4],["conv3",4],["pool1",2],["conv4",8]]
 		self.histograms_list=["W_conv1","b_conv1","W_conv2","b_conv2","W_conv3", "b_conv3", "W_conv4", "b_conv4"]
+		self.evaluate_path = '/home/nautec/DeepDive/Local_results/RealImages/'
+		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'
+
+class configUnderwaterPathfinder:
+	def __init__(self):
+		self.learning_rate = 5*1e-6
+		self.init_std_dev=0.01
+		self.batch_size = 5
+		self.n_epochs = 80   # the number of epochs that we are going to run
+		self.training_path = '../datasets/dataset4_2/Training'
+		self.training_path_ground_truth = '../datasets/dataset4_2/Transmission'
+		self.validation_path = '../datasets/dataset4_2/Validation'
+		self.summary_path = '/tmp/dataset43t'
+		self.validation_path_ground_truth = '../datasets/dataset4_2/ValidationTransmission/'
+		self.models_path = 'models/'
+		self.input_size = (16, 16, 3)
+		self.output_size = (1, 1)
+		self.ground_truth_size = (1, 1)
+		self.restore = False
+		self.dropout = []
+		self.features_list=[["conv1",4],["conv2",4],["conv3",8],["conv4",8],["pool1",1],["conv5",1]]
+		self.histograms_list=["W_conv1","b_conv1","W_conv2","b_conv2","W_conv3", "b_conv3", "W_conv4", "b_conv4", "W_conv5", "b_conv5"]
 		self.evaluate_path = '/home/nautec/DeepDive/Local_results/RealImages/'
 		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'
