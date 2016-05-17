@@ -90,7 +90,7 @@ def create_structure(tf, x, input_size, dropout):
   #TIMES APPLIED: 1
   #OUTPUT: 1x1x1
 
-  W_conv5 = deep_dive.weight_variable_scaling([4, 4, 32, 1], name='W_conv5')
+  W_conv5 = deep_dive.weight_variable_scaling([2, 2, 32, 1], name='W_conv5')
   b_conv5 = deep_dive.bias_variable([1])
 
   histograms["W_conv5"] = W_conv5
