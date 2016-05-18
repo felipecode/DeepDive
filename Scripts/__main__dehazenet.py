@@ -144,8 +144,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_str = sess.run(summary_op, feed_dict=feedDict)
     summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
 #    print summary_str_val
-    print result
-    print batch[1]
+    print abs(result - batch[1])
     #print np.mean(np.mean(batch[1],axis=1),axis=1)
 #    print batch[1].shape
     summary_writer.add_summary(summary_str,i)

@@ -95,7 +95,7 @@ def create_structure(tf, x, input_size, dropout):
 
   one_constant = tf.constant(1)
 
-  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(conv4, name = "relu"), name = "brelu")
+  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(pool2, name = "relu"), name = "brelu")
   print brelu
 
   return brelu, dropoutDict, features, scalars, histograms

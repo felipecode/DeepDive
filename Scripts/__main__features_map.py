@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from depth_map_structure_dropout2 import create_structure
+from dehazeNOT import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -27,7 +27,7 @@ from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid
 
 """Verifying options integrity"""
-config= configMain()
+config= configDehazeNet()
 
 
 if config.restore not in (True, False):
@@ -41,22 +41,22 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 sess = tf.InteractiveSession()
-last_layer, dropoutDict, feature_maps,scalars = create_structure(tf, x,config.input_size,config.dropout)
+last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 " Creating comparation metrics"
 y_image = y_
 loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)))
 # using the same function with a different name
 loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
-loss_function_ssim = ssim_tf(tf,y_image,last_layer)
+#loss_function_ssim = ssim_tf(tf,y_image,last_layer)
 
 train_step = tf.train.AdamOptimizer(config.learning_rate).minimize(loss_function)
 
 """Creating summaries"""
 
 tf.image_summary('Input', x)
-tf.image_summary('Output', last_layer)
-tf.image_summary('GroundTruth', y_)
+tf.image_summary('Output', tf.reshape(tf.image.grayscale_to_rgb(last_layer),[16,16,3,1]))
+tf.image_summary('GroundTruth', tf.reshape(tf.image.grayscale_to_rgb(y_),[16,16,3,1]))
 
 #test = tf.get_default_graph().get_tensor_by_name("scale_1/Scale1_first_relu:0")
 #tf.image_summary('Teste', put_features_on_grid(test, 8))
@@ -64,8 +64,10 @@ for key, l in config.features_list:
  tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
 for key in scalars:
   tf.scalar_summary(key,scalars[key])
+for key in config.histograms_list:
+  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.scalar_summary('Loss', loss_function)
-tf.scalar_summary('Loss_SSIM', loss_function_ssim)
+#tf.scalar_summary('Loss_SSIM', loss_function_ssim)
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
@@ -120,7 +122,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     print 'Model saved.'
 
   start_time = time.time()
-  print batch[0].shape
+  #print batch[0].shape
   feedDict.update({x: batch[0], y_: batch[1]})
   sess.run(train_step, feed_dict=feedDict)
   
@@ -143,6 +145,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_writer.add_summary(summary_str,i)
 
     """ Check here the weights """
-    result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-    result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-    summary_writer.add_summary(summary_str_val,i)
+    #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
+    #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
+    #summary_writer.add_summary(summary_str_val,i)
