@@ -17,11 +17,11 @@ class DeepDive(object):
   shape: tuple defining the number of weights
   """
   def weight_variable(self, shape, name):
-    initial = tf.truncated_normal(shape, stddev=init_std_dev)
+    initial = tf.truncated_normal(shape, stddev=config.init_std_dev)
     return tf.Variable(initial, name=name)
 
   def weight_variable_scaling(self, shape, name):
-    initializer = tf.uniform_unit_scaling_initializer(factor=1.15)
+    initializer = tf.uniform_unit_scaling_initializer(factor=0.01)
     initial = tf.get_variable(name=name, shape=shape, initializer=initializer, trainable=True)
     return initial
 
@@ -30,7 +30,7 @@ class DeepDive(object):
   shape: tuple defining the number of biases
   """
   def bias_variable(self, shape):  
-    initial = tf.constant(0.1, shape=shape)
+    initial = tf.constant(0.01, shape=shape)
     return tf.Variable(initial)
 
   # def bias_variable(self, shape):  
@@ -45,6 +45,17 @@ class DeepDive(object):
   """
   def conv2d(self, x, W, strides=[1,1,1,1], padding='VALID'):
     return tf.nn.conv2d(x, W, strides=strides ,padding=padding)
+
+  """
+  Creates a 2d deConvolution layer.
+  x: input layer (tensor)
+  padding: 'same' or 'valid'
+  W: variable or constant weight created.
+  output = shape of the output tensor
+  """
+  def conv2d_transpose(self, x, W, output, strides = [1, 1, 1, 1], padding = 'VALID'):
+    return tf.nn.conv2d_transpose(x, W, output, strides = strides, padding = padding)
+
 
   """
   Creates a dropout layer.

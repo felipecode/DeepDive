@@ -28,52 +28,89 @@ from scipy.ndimage.filters import gaussian_filter
 
 from features_on_grid import put_features_on_grid
 
+def normalize_std(img, eps=1e-10):
+    '''Normalize image by making its standard deviation = 1.0'''
+    std = tf.sqrt(tf.reduce_mean(tf.square(img)))
+    return img/tf.maximum(std, eps)
+
+def lap_normalize(img, scale_n=4):
+    '''Perform the Laplacian pyramid normalization.'''
+    k = np.float32([1,4,6,4,1])
+    k = np.outer(k, k)
+    k5x5 = k[:,:,None,None]/k.sum()*np.eye(3, dtype=np.float32)
+    img = tf.expand_dims(img,0)
+
+    levels = []
+    for i in xrange(scale_n):
+        lo = tf.nn.conv2d(img, k5x5, [1,2,2,1], 'SAME')
+        lo2 = tf.nn.conv2d_transpose(lo, k5x5*4, tf.shape(img), [1,2,2,1])
+        hi = img-lo2
+        levels.append(hi)
+	img=lo
+    levels.append(img)
+    tlevels=levels[::-1]
+    tlevels = map(normalize_std, tlevels)
+
+    img = tlevels[0]
+    for hi in tlevels[1:]:
+        img = tf.nn.conv2d_transpose(img, k5x5*4, tf.shape(hi), [1,2,2,1]) + hi
+    return img[0,:,:,:]
+
+def optimize_feature(key, channel):
+ t_score = tf.reduce_mean(feature_maps[key][:,:,:,channel])
+ t_grad = tf.gradients(t_score, x)[0]
+
+ if config.lap_grad_normalization:
+  grad_norm=lap_normalize(t_grad[0,:,:,:])
+ else:
+  grad_norm=normalize_std(t_grad)
+
+ images[0] = img_noise.copy()
+ step_size=config.opt_step
+ print("Maximizing output of channel %d of layer %s"%(channel, key))
+ opt_name='Opt_'+key+"_"+str(channel)
+ opt_summary=tf.image_summary(opt_name, x)
+ ft_summary=tf.image_summary(key+"_"+str(channel), tf.expand_dims(feature_maps[key][:,:,:,channel],3))
+ summary_op=tf.merge_summary([opt_summary,ft_summary,tf.image_summary('Output_'+opt_name, last_layer)])
+ for i in xrange(1,config.opt_iter_n+1):
+  feedDict.update({x: images, y_: images})
+  g, score = sess.run([grad_norm, t_score], feed_dict=feedDict)
+  # normalizing the gradient, so the same step size should work for different layers and networks
+  images[0] = images[0]+g*step_size
+  #l2 decay
+  images[0] = images[0]*(1-config.decay)
+  #gaussian blur
+  if config.blur_iter:
+   if i%config.blur_iter==0:
+    images[0] = gaussian_filter(images[0], sigma=config.blur_width)
+  #clip norm
+  norms=np.linalg.norm(images[0], axis=2, keepdims=True)
+  n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
+  images[0]=images[0]*(norms>=n_thrshld)
+  #clip contribution
+  contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
+  c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
+  images[0]=images[0]*(contribs>=c_thrshld)
+
+  if i%10 == 0:
+    print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
+    summary_str = sess.run(summary_op, feed_dict=feedDict)
+    summary_writer.add_summary(summary_str,i)
+
 """Verifying options integrity"""
 config= configOptimization()
 
-
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
-
-#dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
-global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
 """ Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 sess = tf.InteractiveSession()
-last_layer, dropoutDict, feature_maps,scalars = create_structure(tf, x,config.input_size,config.dropout)
+last_layer, dropoutDict, feature_maps,_ = create_structure(tf, x,config.input_size,config.dropout)
 
-" Creating comparation metrics"
-y_image = y_
-#loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)))
-# using the same function with a different name
-#loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
-#loss_function_ssim = ssim_tf(tf,y_image,last_layer)
-
-#train_step = tf.train.AdamOptimizer(config.learning_rate).minimize(loss_function)
-
-"""Creating summaries"""
-
-tf.image_summary('Output', last_layer)
-#tf.image_summary('GroundTruth', y_)
-
-#test = tf.get_default_graph().get_tensor_by_name("scale_1/Scale1_first_relu:0")
-#tf.image_summary('Teste', put_features_on_grid(test, 8))
-for key, l in config.features_list:
- tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
-#for key in scalars:
-#  tf.scalar_summary(key,scalars[key])
-#tf.scalar_summary('Loss', loss_function)
-#tf.scalar_summary('Loss_SSIM', loss_function_ssim)
-
-summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
-
-#val  =tf.scalar_summary('Loss_Validation', loss_validation)
-
-sess.run(tf.initialize_all_variables())
 
 summary_writer = tf.train.SummaryWriter(config.summary_path,
                                             graph=sess.graph)
@@ -92,97 +129,18 @@ else:
 
 print 'Logging into ' + config.summary_path
 
-"""Training"""
-
-lowest_error = 1.5;
-lowest_val  = 1.5;
-lowest_iter = 1;
-lowest_val_iter = 1;
-
 feedDict=dropoutDict
-if ckpt:
-  initialIteration = int(ckpt.model_checkpoint_path.split('-')[1])
-else:
-  initialIteration = 1
 
 images = np.empty((1, config.input_size[0], config.input_size[1], config.input_size[2]))
 img_noise = np.random.uniform(low=0.0, high=1.0, size=config.input_size)
 
-features_opt={}
+
 for key, channel in config.features_opt_list:
- t_score = tf.reduce_mean(feature_maps[key][:,:,:,channel])
- t_grad = tf.gradients(t_score, x)[0]  
- images[0] = img_noise.copy()
- step_size=config.opt_step
- print("Maximizing output of channel %d of layer %s"%(channel, key))
- opt_name='Optimization_'+key+"_"+str(channel)
- optm_summary=tf.image_summary(opt_name, x)
- for i in xrange(config.opt_iter_n):
-  feedDict.update({x: images, y_: images})
-  g, score = sess.run([t_grad, t_score], feed_dict=feedDict)
-  # normalizing the gradient, so the same step size should work for different layers and networks
-  g /= g.std()+1e-8
-  images[0] = images[0]+g*step_size
-  if config.l2_decay:
-   images[0] = images[0]*(1-config.decay)
-  if config.gaussian_blur:
-   if i%config.blur_iter==0:
-    images[0] = gaussian_filter(images[0], sigma=config.blur_width)
-  if config.clip_norm:
-   norms=np.linalg.norm(images[0], axis=2, keepdims=True)
-   n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
-   images[0]=images[0]*(norms>n_thrshld)
-  if config.clip_contrib:
-   contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
-   c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
-   images[0]=images[0]*(contribs>c_thrshld)
-   
-  if i%100 == 0:
-    print("Step %d, score of channel %d of layer %s: %f"%(i, channel, key, score))
-    summary_opt_str, summary_str = sess.run([optm_summary, summary_op], feed_dict=feedDict)
-    summary_writer.add_summary(summary_str,i)
-    summary_writer.add_summary(summary_opt_str,i)
-
-
-#for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
-
-  
-#  epoch_number = 1.0+ (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
-
-
-  
-#  """ Do validation error and generate Images """
-#  batch = dataset.train.next_batch(config.batch_size)
-  
-#  """Save the model every 300 iterations"""
-#  if i%300 == 0:
-#    saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
-#    print 'Model saved.'
-
-#  start_time = time.time()
-
-#  feedDict.update({x: batch[0], y_: batch[1]})
-#  sess.run(train_step, feed_dict=feedDict)
-  
-#  duration = time.time() - start_time
-
-#  if i%20 == 0:
-#    num_examples_per_step = config.batch_size 
-#    examples_per_sec = num_examples_per_step / duration
-#    train_accuracy = sess.run(loss_function, feed_dict=feedDict)
-#    if  train_accuracy < lowest_error:
-#      lowest_error = train_accuracy
-#      lowest_iter = i
-#    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
-
-#  """ Writing summary, not at every iterations """
-#  if i%20 == 0:
-#    batch_val = dataset.validation.next_batch(config.batch_size)
-#    summary_str = sess.run(summary_op, feed_dict=feedDict)
-#    summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
-#    summary_writer.add_summary(summary_str,i)
-
-#    """ Check here the weights """
-#    result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-#    result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-#    summary_writer.add_summary(summary_str_val,i)
+ if channel<0:
+  #otimiza todos os canais
+  ft=feature_maps[key]
+  n_channels=ft.get_shape()[3]
+  for ch in xrange(n_channels):
+   optimize_feature(key, ch)
+ else:
+  optimize_feature(key, channel)

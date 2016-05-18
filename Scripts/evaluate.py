@@ -82,6 +82,7 @@ for i in im_names:
   im = Image.open(i).convert('RGB')
 
   im = np.array(im, dtype=np.float32)
+  im = np.
   visualizer = im
 
   """ Open one image and add some padding to it """
@@ -184,6 +185,16 @@ for i in im_names:
 
   result.save(out_path + i[len(path):])
   count = count + 1
+
+
+
+
+
+
+
+
+
+
   #fig = plt.figure()
   #fig.add_subplot(1,2,1)
   #plt.imshow(np.array(visualizer, dtype=np.uint8))
