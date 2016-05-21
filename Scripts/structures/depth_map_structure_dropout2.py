@@ -414,7 +414,7 @@ def create_structure(tf, x, input_size,dropout):
   # TODO : TRY MULTISCALE DEPATCHFICATION . INTERESTING STUFF FOR NEURAL NETWORKS 
 
 
-  return S3_conv1,dropoutDict,features,scalars
+  return S3_conv1,dropoutDict,features,scalars,None
 
 
  # W_conv1_1_1 = deep_dive.weight_variable_scaling([1,1,3,32], name='w_conv1_1')
