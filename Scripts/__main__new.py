@@ -11,6 +11,7 @@ from depth_map_structure_dropout2 import create_structure
 """Core libs"""
 import tensorflow as tf
 import numpy as np
+from math import log10
 
 """Visualization libs"""
 import matplotlib.pyplot as plt
@@ -156,19 +157,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     """ Optimization """
     print("Running Optimization")
     for key, channel in config.features_opt_list:
+     ft=feature_maps[key]
+     n_channels=ft.get_shape()[3]
      if channel<0:
-      #otimiza todos os canais
-      ft=feature_maps[key]
-      n_channels=ft.get_shape()[3]
+      #otimiza todos os canais       
       for ch in xrange(n_channels):
-	output=optimize_feature(config.input_size, feature_maps[key][:,:,:,ch],sess)
-	opt_name="optimization_"+key+"_"+str(ch)
+	output=optimize_feature(config.input_size, ft[:,:,:,ch],sess)
+	opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
 	opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
 	summary_str=sess.run(opt_summary)
 	summary_writer.add_summary(summary_str,i)
      else:
-      output=optimize_feature(config.input_size, feature_maps[key][:,:,:,channel],sess)
-      opt_name="optimization_"+key+"_"+str(channel)
+      output=optimize_feature(config.input_size, ft[:,:,:,channel],sess)
+      opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
       opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
       summary_str=sess.run(opt_summary)
       summary_writer.add_summary(summary_str,i)
