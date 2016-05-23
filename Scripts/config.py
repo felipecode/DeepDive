@@ -3,13 +3,13 @@
 class configMain:
 	def __init__(self):
 		self.learning_rate = 5*1e-3
-		self.batch_size = 1
+		self.batch_size = 4
 		self.n_epochs = 40   # the number of epochs that we are going to run
-		self.training_path = '../datasets/dataset2_2F/Training/'
-		self.training_path_ground_truth = '../datasets/dataset2_2F/GroundTruth'
-		self.validation_path = '../datasets/dataset2_2F/Validation/'
+		self.training_path = '../../datasets/dataset2_2F/Training/'
+		self.training_path_ground_truth = '../../datasets/dataset2_2F/GroundTruth'
+		self.validation_path = '../../datasets/dataset2_2F/Validation/'
 		self.summary_path = '/tmp/dataset4_12'
-		self.validation_path_ground_truth = '../datasets/dataset2_2F/ValidationGroundTruth/'
+		self.validation_path_ground_truth = '../../datasets/dataset2_2F/ValidationGroundTruth/'
 		self.models_path = 'models/deepdivearch0.2s_d2.2F_mar_21/'
 		self.input_size = (512, 512, 3)
 		self.output_size = (512, 512, 3)
@@ -17,8 +17,8 @@ class configMain:
 		self.restore = True
 		self.dropout = [1,1,1,1]
 		self.histograms_list=[]
-		self.features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12],["S3_conv1",1]]
-		self.features_opt_list=[["S1_conv1", 0],["S1_conv1", 37]]
+		self.features_list=[["S1_conv1", 8],["S1_pool1", 8],["S1_pool2",12]]
+		self.features_opt_list=[["S1_conv1", 1],["S1_conv1", 63]]
 		self.opt_every_iter=100
 
 class configDehazeNet:

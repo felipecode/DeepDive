@@ -153,7 +153,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
     #summary_writer.add_summary(summary_str_val,i)
   
-  if i%config.opt_every_iter == 0:
+  if config.opt_every_iter>0 and i%config.opt_every_iter==0:
     """ Optimization """
     print("Running Optimization")
     for key, channel in config.features_opt_list:
@@ -162,13 +162,13 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      if channel<0:
       #otimiza todos os canais       
       for ch in xrange(n_channels):
-	output=optimize_feature(config.input_size, x, ft[:,:,:,ch],sess)
+	output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
 	opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
 	opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
 	summary_str=sess.run(opt_summary)
 	summary_writer.add_summary(summary_str,i)
      else:
-      output=optimize_feature(config.input_size, x, ft[:,:,:,channel],sess)
+      output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
       opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
       opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
       summary_str=sess.run(opt_summary)

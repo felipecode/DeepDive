@@ -32,13 +32,14 @@ def lap_normalize(img, scale_n=4):
         img = tf.nn.conv2d_transpose(img, k5x5*4, tf.shape(hi), [1,2,2,1]) + hi
     return img[0,:,:,:]
 
-def optimize_feature(input_size, x, feature_map, sess):
+def optimize_feature(input_size, x, feature_map):
  config= configOptimization()
  images = np.empty((1, input_size[0], input_size[1], input_size[2]))
  img_noise = np.random.uniform(low=0.0, high=1.0, size=input_size)
  config= configOptimization()
  #graph=sess.graph
  #x=graph.get_tensor_by_name("input_image:0")
+ sess=tf.get_default_session()
  t_score = tf.reduce_mean(feature_map)
  t_grad = tf.gradients(t_score, x)[0]
 
