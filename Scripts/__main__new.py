@@ -11,7 +11,7 @@ from depth_map_structure_dropout2 import create_structure
 """Core libs"""
 import tensorflow as tf
 import numpy as np
-from math import log10
+import math
 
 """Visualization libs"""
 import matplotlib.pyplot as plt
@@ -27,6 +27,21 @@ import time
 from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid
 from features_optimization import optimize_feature
+
+def put_features_on_grid_im (features, pad=4):
+ iy=features.shape[1]
+ ix=features.shape[2]
+ n_ft=features.shape[3]
+ b_size=features.shape[0]
+ square_size=int(math.ceil(np.sqrt(n_ft)))
+ z_pad=square_size**2-n_ft
+ features = np.pad(features, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ features = np.reshape(features,[b_size,iy,ix,square_size,square_size])
+ features = np.pad(features, [[0,0],[pad,0],[pad,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ iy+=pad
+ ix+=pad
+ features = np.transpose(features,(0,3,1,4,2))
+ return np.reshape(features,[-1,square_size*iy,square_size*ix,1])
 
 """Verifying options integrity"""
 config= configMain()
@@ -147,6 +162,21 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_str = sess.run(summary_op, feed_dict=feedDict)
     summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
+# salvando as imagens das features como png
+#   for key, l in config.features_list:
+#    ft_map=put_features_on_grid_im(feature_maps[key].eval(feed_dict=feedDict))
+#    ft_name="Features_map_"+key
+#    ft_summary=tf.image_summary(ft_name, ft_map)
+#    summary_str=sess.run(ft_summary)
+#    summary_writer.add_summary(summary_str,i)
+#    for i in xrange(ft_map.shape[0]):
+#     ft_img=ft_map[i]
+#     ft_img_rescaled = (ft_img - ft_img.min())
+#     ft_img_rescaled*=(255/ft_img_rescaled.max())
+#     ft_img_rescaled=ft_img_rescaled[:,:,0].astype(np.uint8)
+#     ft_name="Features_map_"+key+"_"+str(i)
+#     im = Image.fromarray(ft_img_rescaled)
+#     im.save(config.summary_path+"/"+ft_name+".png")
 
     """ Check here the weights """
     #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
@@ -167,9 +197,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 	opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
 	summary_str=sess.run(opt_summary)
 	summary_writer.add_summary(summary_str,i)
+# salvando as imagens como png
+# 	output_rescaled = (output - output.min())
+#       output_rescaled*=(255/output_rescaled.max())
+#       im = Image.fromarray(output_rescaled.astype(np.uint8))
+#       im.save(config.summary_path+"/"+opt_name+".png")	
      else:
       output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
       opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
       opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
       summary_str=sess.run(opt_summary)
       summary_writer.add_summary(summary_str,i)
+# salvando as imagens como png
+#     output_rescaled = (output - output.min())
+#     output_rescaled*=(255/output_rescaled.max())
+#     im = Image.fromarray(output_rescaled.astype(np.uint8))
+#     im.save(config.summary_path+"/"+opt_name+".png")
