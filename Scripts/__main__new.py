@@ -11,12 +11,10 @@ from depth_map_structure_dropout2 import create_structure
 """Core libs"""
 import tensorflow as tf
 import numpy as np
-import math
 
 """Visualization libs"""
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-
 
 """Python libs"""
 import os
@@ -25,27 +23,11 @@ from PIL import Image
 import subprocess
 import time
 from ssim_tf import ssim_tf
-from features_on_grid import put_features_on_grid
+from features_on_grid import *
 from features_optimization import optimize_feature
-
-def put_features_on_grid_im (features, pad=4):
- iy=features.shape[1]
- ix=features.shape[2]
- n_ft=features.shape[3]
- b_size=features.shape[0]
- square_size=int(math.ceil(np.sqrt(n_ft)))
- z_pad=square_size**2-n_ft
- features = np.pad(features, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
- features = np.reshape(features,[b_size,iy,ix,square_size,square_size])
- features = np.pad(features, [[0,0],[pad,0],[pad,0],[0,0],[0,0]], mode='constant',constant_values=0)
- iy+=pad
- ix+=pad
- features = np.transpose(features,(0,3,1,4,2))
- return np.reshape(features,[-1,square_size*iy,square_size*ix,1])
 
 """Verifying options integrity"""
 config= configMain()
-
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
@@ -77,10 +59,11 @@ tf.image_summary('GroundTruth', y_)
 #tf.image_summary('Output', tf.reshape(tf.image.grayscale_to_rgb(last_layer),[16,16,3,1]))
 #tf.image_summary('GroundTruth', tf.reshape(tf.image.grayscale_to_rgb(y_),[16,16,3,1]))
 
-#test = tf.get_default_graph().get_tensor_by_name("scale_1/Scale1_first_relu:0")
-#tf.image_summary('Teste', put_features_on_grid(test, 8))
-for key, l in config.features_list:
- tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
+#for key in config.features_list:
+# tf.image_summary('Features_map_'+key, put_features_on_grid_tf(feature_maps[key], 4))
+ft_ops=[]
+for key in config.features_list:
+  ft_ops.append(feature_maps[key])
 for key in scalars:
   tf.scalar_summary(key,scalars[key])
 for key in config.histograms_list:
@@ -158,17 +141,22 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 
   """ Writing summary, not at every iterations """
   if i%20 == 0:
+
+#   start = time.time()
+
     batch_val = dataset.validation.next_batch(config.batch_size)
     summary_str = sess.run(summary_op, feed_dict=feedDict)
     summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
+    
 # salvando as imagens das features como png
-#   for key, l in config.features_list:
-#    ft_map=put_features_on_grid_im(feature_maps[key].eval(feed_dict=feedDict))
-#    ft_name="Features_map_"+key
-#    ft_summary=tf.image_summary(ft_name, ft_map)
-#    summary_str=sess.run(ft_summary)
-#    summary_writer.add_summary(summary_str,i)
+    ft_maps=sess.run(ft_ops,feed_dict=feedDict)
+    for ft, key in zip(ft_maps,config.features_list):
+     ft_map=put_features_on_grid_np(ft)
+     ft_name="Features_map_"+key
+     ft_summary=tf.image_summary(ft_name, ft_map)
+     summary_str=sess.run(ft_summary)
+     summary_writer.add_summary(summary_str,i)
 #    for i in xrange(ft_map.shape[0]):
 #     ft_img=ft_map[i]
 #     ft_img_rescaled = (ft_img - ft_img.min())
@@ -177,6 +165,9 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 #     ft_name="Features_map_"+key+"_"+str(i)
 #     im = Image.fromarray(ft_img_rescaled)
 #     im.save(config.summary_path+"/"+ft_name+".png")
+#   end = time.time()
+#   print "summary time:"
+#   print(end - start)
 
     """ Check here the weights """
     #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
