@@ -214,6 +214,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 #     im = Image.fromarray(output_rescaled.astype(np.uint8))
 #     file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
 #     folder_name=config.summary_path+"/"+key
-      if not os.path.exists(folder_name):
-       os.makedirs(folder_name)
-      im.save(folder_name+"/"+file_name)
+#     if not os.path.exists(folder_name):
+#      os.makedirs(folder_name)
+#     im.save(folder_name+"/"+file_name)
