@@ -148,23 +148,28 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_str = sess.run(summary_op, feed_dict=feedDict)
     summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
-    
-# salvando as imagens das features como png
+
     ft_maps=sess.run(ft_ops,feed_dict=feedDict)
     for ft, key in zip(ft_maps,config.features_list):
-     ft_map=put_features_on_grid_np(ft)
+     ft_grid=put_features_on_grid_np(ft)
      ft_name="Features_map_"+key
-     ft_summary=tf.image_summary(ft_name, ft_map)
+     ft_summary=tf.image_summary(ft_name, ft_grid)
      summary_str=sess.run(ft_summary)
      summary_writer.add_summary(summary_str,i)
-#    for i in xrange(ft_map.shape[0]):
-#     ft_img=ft_map[i]
-#     ft_img_rescaled = (ft_img - ft_img.min())
-#     ft_img_rescaled*=(255/ft_img_rescaled.max())
-#     ft_img_rescaled=ft_img_rescaled[:,:,0].astype(np.uint8)
-#     ft_name="Features_map_"+key+"_"+str(i)
-#     im = Image.fromarray(ft_img_rescaled)
-#     im.save(config.summary_path+"/"+ft_name+".png")
+# salvando as imagens das features como png
+#    for i in xrange(ft.shape[0]):
+#     for j in xrange(ft.shape[3]):
+#      ft_img=ft[i]
+#      ft_img_rescaled = (ft_img - ft_img.min())
+#      ft_img_rescaled*=(255/ft_img_rescaled.max())
+#      ft_img_rescaled=ft_img_rescaled[:,:,j].astype(np.uint8) 
+#      im = Image.fromarray(ft_img_rescaled)
+#      file_name=str(j).zfill(len(str(ft.shape[3])))+".png"
+#      im_folder=str(i).zfill(len(str(ft.shape[0])))
+#      folder_name=config.summary_path+"/"+key+"/"+im_folder
+#      if not os.path.exists(folder_name):
+#       os.makedirs(folder_name)
+#      im.save(folder_name+"/"+file_name)
 #   end = time.time()
 #   print "summary time:"
 #   print(end - start)
@@ -189,10 +194,14 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 	summary_str=sess.run(opt_summary)
 	summary_writer.add_summary(summary_str,i)
 # salvando as imagens como png
-# 	output_rescaled = (output - output.min())
+#       output_rescaled = (output - output.min())
 #       output_rescaled*=(255/output_rescaled.max())
 #       im = Image.fromarray(output_rescaled.astype(np.uint8))
-#       im.save(config.summary_path+"/"+opt_name+".png")	
+#       file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".png"
+#       folder_name=config.summary_path+"/"+key
+#       if not os.path.exists(folder_name):
+#        os.makedirs(folder_name)
+#       im.save(folder_name+"/"+file_name)	
      else:
       output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
       opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
@@ -203,4 +212,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 #     output_rescaled = (output - output.min())
 #     output_rescaled*=(255/output_rescaled.max())
 #     im = Image.fromarray(output_rescaled.astype(np.uint8))
-#     im.save(config.summary_path+"/"+opt_name+".png")
+#     file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
+#     folder_name=config.summary_path+"/"+key
+      if not os.path.exists(folder_name):
+       os.makedirs(folder_name)
+      im.save(folder_name+"/"+file_name)
