@@ -149,6 +149,37 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
     summary_writer.add_summary(summary_str,i)
 
+#salva as imagens
+    result_imgs=(result * 255).round().astype(np.uint8)
+    for i in xrange(result_imgs.shape[0]):
+     im = Image.fromarray(result_imgs[i])
+     file_name="output.png"
+     im_folder=str(i).zfill(len(str(result_imgs.shape[0])))
+     folder_name=config.summary_path+"/output/"+im_folder
+     if not os.path.exists(folder_name):
+      os.makedirs(folder_name)
+     im.save(folder_name+"/"+file_name)
+
+    input_imgs=(batch[0] * 255).round().astype(np.uint8)
+    for i in xrange(input_imgs.shape[0]):
+     im = Image.fromarray(input_imgs[i])
+     file_name="input.png"
+     im_folder=str(i).zfill(len(str(input_imgs.shape[0])))
+     folder_name=config.summary_path+"/input/"+im_folder
+     if not os.path.exists(folder_name):
+      os.makedirs(folder_name)
+     im.save(folder_name+"/"+file_name)
+    
+    gt_imgs=(batch[1] * 255).round().astype(np.uint8)
+    for i in xrange(gt_imgs.shape[0]):
+     im = Image.fromarray(gt_imgs[i])
+     file_name="Ground_Thruth.png"
+     im_folder=str(i).zfill(len(str(gt_imgs.shape[0])))
+     folder_name=config.summary_path+"/Ground_Thruth/"+im_folder
+     if not os.path.exists(folder_name):
+      os.makedirs(folder_name)
+     im.save(folder_name+"/"+file_name)    
+
     ft_maps=sess.run(ft_ops,feed_dict=feedDict)
     for ft, key in zip(ft_maps,config.features_list):
      ft_grid=put_features_on_grid_np(ft)
@@ -157,19 +188,18 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      summary_str=sess.run(ft_summary)
      summary_writer.add_summary(summary_str,i)
 # salvando as imagens das features como png
-#    for i in xrange(ft.shape[0]):
-#     for j in xrange(ft.shape[3]):
-#      ft_img=ft[i]
-#      ft_img_rescaled = (ft_img - ft_img.min())
-#      ft_img_rescaled*=(255/ft_img_rescaled.max())
-#      ft_img_rescaled=ft_img_rescaled[:,:,j].astype(np.uint8) 
-#      im = Image.fromarray(ft_img_rescaled)
-#      file_name=str(j).zfill(len(str(ft.shape[3])))+".png"
-#      im_folder=str(i).zfill(len(str(ft.shape[0])))
-#      folder_name=config.summary_path+"/"+key+"/"+im_folder
-#      if not os.path.exists(folder_name):
-#       os.makedirs(folder_name)
-#      im.save(folder_name+"/"+file_name)
+     ft_img = (ft - ft.min())
+     ft_img*=(255/ft_img.max())
+     for i in xrange(ft.shape[0]):
+      for j in xrange(ft.shape[3]):
+       ch_img=ft_img[i,:,:,j].astype(np.uint8) 
+       im = Image.fromarray(ch_img)
+       file_name=str(j).zfill(len(str(ft.shape[3])))+".png"
+       im_folder=str(i).zfill(len(str(ft.shape[0])))
+       folder_name=config.summary_path+"/"+key+"/"+im_folder
+       if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+       im.save(folder_name+"/"+file_name)
 #   end = time.time()
 #   print "summary time:"
 #   print(end - start)
@@ -188,32 +218,32 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      if channel<0:
       #otimiza todos os canais       
       for ch in xrange(n_channels):
-	output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
+	opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
 	opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
-	opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
+	opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
 	summary_str=sess.run(opt_summary)
 	summary_writer.add_summary(summary_str,i)
 # salvando as imagens como png
-#       output_rescaled = (output - output.min())
-#       output_rescaled*=(255/output_rescaled.max())
-#       im = Image.fromarray(output_rescaled.astype(np.uint8))
-#       file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".png"
-#       folder_name=config.summary_path+"/"+key
-#       if not os.path.exists(folder_name):
-#        os.makedirs(folder_name)
-#       im.save(folder_name+"/"+file_name)	
+        opt_output_rescaled = (opt_output - opt_output.min())
+        opt_output_rescaled*=(255/opt_output_rescaled.max())
+        im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
+        file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".png"
+        folder_name=config.summary_path+"/"+key
+        if not os.path.exists(folder_name):
+         os.makedirs(folder_name)
+        im.save(folder_name+"/"+file_name)	
      else:
-      output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
+      opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
       opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
-      opt_summary=tf.image_summary(opt_name, np.expand_dims(output,0))
+      opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
       summary_str=sess.run(opt_summary)
       summary_writer.add_summary(summary_str,i)
 # salvando as imagens como png
-#     output_rescaled = (output - output.min())
-#     output_rescaled*=(255/output_rescaled.max())
-#     im = Image.fromarray(output_rescaled.astype(np.uint8))
-#     file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
-#     folder_name=config.summary_path+"/"+key
-#     if not os.path.exists(folder_name):
-#      os.makedirs(folder_name)
-#     im.save(folder_name+"/"+file_name)
+      opt_output_rescaled = (opt_output - opt_output.min())
+      opt_output_rescaled*=(255/opt_output_rescaled.max())
+      im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
+      file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
+      folder_name=config.summary_path+"/"+key
+      if not os.path.exists(folder_name):
+       os.makedirs(folder_name)
+      im.save(folder_name+"/"+file_name)
