@@ -173,9 +173,9 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     gt_imgs=(batch[1] * 255).round().astype(np.uint8)
     for i in xrange(gt_imgs.shape[0]):
      im = Image.fromarray(gt_imgs[i])
-     file_name="Ground_Thruth.png"
+     file_name="ground_truth.png"
      im_folder=str(i).zfill(len(str(gt_imgs.shape[0])))
-     folder_name=config.summary_path+"/Ground_Thruth/"+im_folder
+     folder_name=config.summary_path+"/ground_truth/"+im_folder
      if not os.path.exists(folder_name):
       os.makedirs(folder_name)
      im.save(folder_name+"/"+file_name)    
@@ -196,7 +196,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
        im = Image.fromarray(ch_img)
        file_name=str(j).zfill(len(str(ft.shape[3])))+".png"
        im_folder=str(i).zfill(len(str(ft.shape[0])))
-       folder_name=config.summary_path+"/"+key+"/"+im_folder
+       folder_name=config.summary_path+"/feature_maps/"+key+"/"+im_folder
        if not os.path.exists(folder_name):
         os.makedirs(folder_name)
        im.save(folder_name+"/"+file_name)
@@ -228,7 +228,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
         opt_output_rescaled*=(255/opt_output_rescaled.max())
         im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
         file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".png"
-        folder_name=config.summary_path+"/"+key
+        folder_name=config.summary_path+"/feature_maps/"+key
         if not os.path.exists(folder_name):
          os.makedirs(folder_name)
         im.save(folder_name+"/"+file_name)	
@@ -243,7 +243,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       opt_output_rescaled*=(255/opt_output_rescaled.max())
       im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
       file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
-      folder_name=config.summary_path+"/"+key
+      folder_name=config.summary_path+"/feature_maps/"+key
       if not os.path.exists(folder_name):
        os.makedirs(folder_name)
       im.save(folder_name+"/"+file_name)
