@@ -25,6 +25,7 @@ import subprocess
 import time
 from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid_np
+from scipy import misc
 
 """Verifying options integrity"""
 config= configMain()
@@ -215,6 +216,24 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
     #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
     #summary_writer.add_summary(summary_str_val,i)
+
+
+    print config.features_list
+    for key in config.features_list:
+      print key
+      print feature_maps
+      comp_feature_map = sess.run(feature_maps[key], feed_dict= feedDict)
+      grid_output = put_features_on_grid_np(comp_feature_map)
+
+      print grid_output.shape
+      if not os.path.exists(config.models_path + '/' + key):
+        os.makedirs(config.models_path + '/' + key)
+
+      misc.imsave(config.models_path + '/' + key  + '/' + str(i) + '.png', grid_output)
+
+
+
+
   if i%2 == 1:
 
     print ' VALIDATING '
@@ -224,15 +243,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
 
       #print feature_maps
+
       summary_str_val +=  sess.run(loss_function, feed_dict={x: batch_val[0], y_: batch_val[1]})
       print j
 
     val_error_vec.append(summary_str_val/len(range(1,dataset.getNImagesValidation()/(8*config.batch_size_val))))
     figure = plt.figure(  )
     plot   = figure.add_subplot ( 111 )
-
-    #for key, l in config.features_list
-
     plot.plot(iteration, error_vec, 'b-', iteration_val, val_error_vec, 'r-')
     figure.savefig(config.models_path + str(i) + '.png')
+
+
+
+
+      
+
 
