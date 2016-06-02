@@ -159,30 +159,30 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 
     if(config.save_features_to_disk):
      result_imgs=(result * 255).round().astype(np.uint8)
-     for i in xrange(result_imgs.shape[0]):
-      im = Image.fromarray(result_imgs[i])
+     for j in xrange(result_imgs.shape[0]):
+      im = Image.fromarray(result_imgs[j])
       file_name="output.png"
-      im_folder=str(i).zfill(len(str(result_imgs.shape[0])))
+      im_folder=str(j).zfill(len(str(result_imgs.shape[0])))
       folder_name=config.summary_path+"/output/"+im_folder
       if not os.path.exists(folder_name):
        os.makedirs(folder_name)
       im.save(folder_name+"/"+file_name)
 
      input_imgs=(batch[0] * 255).round().astype(np.uint8)
-     for i in xrange(input_imgs.shape[0]):
-      im = Image.fromarray(input_imgs[i])
+     for j in xrange(input_imgs.shape[0]):
+      im = Image.fromarray(input_imgs[j])
       file_name="input.png"
-      im_folder=str(i).zfill(len(str(input_imgs.shape[0])))
+      im_folder=str(j).zfill(len(str(input_imgs.shape[0])))
       folder_name=config.summary_path+"/input/"+im_folder
       if not os.path.exists(folder_name):
        os.makedirs(folder_name)
       im.save(folder_name+"/"+file_name)
     
      gt_imgs=(batch[1] * 255).round().astype(np.uint8)
-     for i in xrange(gt_imgs.shape[0]):
-      im = Image.fromarray(gt_imgs[i])
+     for j in xrange(gt_imgs.shape[0]):
+      im = Image.fromarray(gt_imgs[j])
       file_name="ground_truth.png"
-      im_folder=str(i).zfill(len(str(gt_imgs.shape[0])))
+      im_folder=str(j).zfill(len(str(gt_imgs.shape[0])))
       folder_name=config.summary_path+"/ground_truth/"+im_folder
       if not os.path.exists(folder_name):
        os.makedirs(folder_name)
@@ -191,12 +191,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       for ft, key in zip(ft_maps,config.features_list):
        ft_img = (ft - ft.min())
        ft_img*=(255/ft_img.max())
-       for i in xrange(ft.shape[0]):
-        for j in xrange(ft.shape[3]):
-         ch_img=ft_img[i,:,:,j].astype(np.uint8) 
+       for k in xrange(ft.shape[0]):
+        for l in xrange(ft.shape[3]):
+         ch_img=ft_img[k,:,:,l].astype(np.uint8) 
          im = Image.fromarray(ch_img)
-         file_name=str(j).zfill(len(str(ft.shape[3])))+".png"
-         im_folder=str(i).zfill(len(str(ft.shape[0])))
+         file_name=str(l).zfill(len(str(ft.shape[3])))+".png"
+         im_folder=str(k).zfill(len(str(ft.shape[0])))
          folder_name=config.summary_path+"/feature_maps/"+key+"/"+im_folder
          if not os.path.exists(folder_name):
           os.makedirs(folder_name)
@@ -209,7 +209,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
     #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
     #summary_writer.add_summary(summary_str_val,i)
-  
   if config.opt_every_iter>0 and i%config.opt_every_iter==0:
     """ Optimization """
     print("Running Optimization")
