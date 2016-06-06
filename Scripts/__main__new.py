@@ -140,23 +140,29 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
   """ Writing summary, not at every iterations """
-  if i%20 == 0:
+  if (i%20 == 0 and (config.use_tensorboard or config.save_features_to_disk)):
+
+    batch_val = dataset.validation.next_batch(config.batch_size)    
+    result= sess.run(last_layer, feed_dict=feedDict)      
+    ft_maps=sess.run(ft_ops,feed_dict=feedDict)
 
 #   start = time.time()
-
-    batch_val = dataset.validation.next_batch(config.batch_size)
-    summary_str = sess.run(summary_op, feed_dict=feedDict)
-    summary_str_val,result= sess.run([val,last_layer], feed_dict=feedDict)
-    summary_writer.add_summary(summary_str,i)
-  
-    ft_maps=sess.run(ft_ops,feed_dict=feedDict)
-    for ft, key in zip(ft_maps,config.features_list):
-     ft_grid=put_features_on_grid_np(ft)
-     ft_name="Features_map_"+key
-     ft_summary=tf.image_summary(ft_name, ft_grid)
-     summary_str=sess.run(ft_summary)
+    if config.use_tensorboard:
+     summary_str_val= sess.run(val, feed_dict=feedDict)
+     summary_str = sess.run(summary_op, feed_dict=feedDict)
      summary_writer.add_summary(summary_str,i)
+     
+     for ft, key in zip(ft_maps,config.features_list):
+      ft_grid=put_features_on_grid_np(ft)
+      ft_name="Features_map_"+key
+      ft_summary=tf.image_summary(ft_name, ft_grid)
+      summary_str=sess.run(ft_summary)
+      summary_writer.add_summary(summary_str,i)
+#   end = time.time()
+#   print "summary time:"
+#   print(end - start)
 
+#   start = time.time()
     if(config.save_features_to_disk):
      result_imgs=(result * 255).round().astype(np.uint8)
      for j in xrange(result_imgs.shape[0]):
@@ -202,7 +208,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
           os.makedirs(folder_name)
          im.save(folder_name+"/"+file_name)
 #   end = time.time()
-#   print "summary time:"
+#   print "saving time:"
 #   print(end - start)
 
     """ Check here the weights """
@@ -219,10 +225,11 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       #otimiza todos os canais       
       for ch in xrange(n_channels):
 	opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
-	opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
-	opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-	summary_str=sess.run(opt_summary)
-	summary_writer.add_summary(summary_str,i)
+	if config.use_tensorboard:
+	 opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
+	 opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+	 summary_str=sess.run(opt_summary)
+	 summary_writer.add_summary(summary_str,i)
 # salvando as imagens como png
 	if(config.save_features_to_disk):
          opt_output_rescaled = (opt_output - opt_output.min())
@@ -235,10 +242,11 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
          im.save(folder_name+"/"+file_name)	
      else:
       opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
-      opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
-      opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-      summary_str=sess.run(opt_summary)
-      summary_writer.add_summary(summary_str,i)
+      if config.use_tensorboard:
+       opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
+       opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+       summary_str=sess.run(opt_summary)
+       summary_writer.add_summary(summary_str,i)
 # salvando as imagens como png
       if(config.save_features_to_disk):
        opt_output_rescaled = (opt_output - opt_output.min())
