@@ -167,7 +167,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      result_imgs=(result * 255).round().astype(np.uint8)
      for j in xrange(result_imgs.shape[0]):
       im = Image.fromarray(result_imgs[j])
-      file_name="output.png"
+      file_name="output.bmp"
       im_folder=str(j).zfill(len(str(result_imgs.shape[0])))
       folder_name=config.summary_path+"/output/"+im_folder
       if not os.path.exists(folder_name):
@@ -177,7 +177,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      input_imgs=(batch[0] * 255).round().astype(np.uint8)
      for j in xrange(input_imgs.shape[0]):
       im = Image.fromarray(input_imgs[j])
-      file_name="input.png"
+      file_name="input.bmp"
       im_folder=str(j).zfill(len(str(input_imgs.shape[0])))
       folder_name=config.summary_path+"/input/"+im_folder
       if not os.path.exists(folder_name):
@@ -187,7 +187,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
      gt_imgs=(batch[1] * 255).round().astype(np.uint8)
      for j in xrange(gt_imgs.shape[0]):
       im = Image.fromarray(gt_imgs[j])
-      file_name="ground_truth.png"
+      file_name="ground_truth.bmp"
       im_folder=str(j).zfill(len(str(gt_imgs.shape[0])))
       folder_name=config.summary_path+"/ground_truth/"+im_folder
       if not os.path.exists(folder_name):
@@ -201,7 +201,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
         for l in xrange(ft.shape[3]):
          ch_img=ft_img[k,:,:,l].astype(np.uint8) 
          im = Image.fromarray(ch_img)
-         file_name=str(l).zfill(len(str(ft.shape[3])))+".png"
+         file_name=str(l).zfill(len(str(ft.shape[3])))+".bmp"
          im_folder=str(k).zfill(len(str(ft.shape[0])))
          folder_name=config.summary_path+"/feature_maps/"+key+"/"+im_folder
          if not os.path.exists(folder_name):
@@ -230,12 +230,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 	 opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
 	 summary_str=sess.run(opt_summary)
 	 summary_writer.add_summary(summary_str,i)
-# salvando as imagens como png
+# salvando as imagens como bmp
 	if(config.save_features_to_disk):
          opt_output_rescaled = (opt_output - opt_output.min())
          opt_output_rescaled*=(255/opt_output_rescaled.max())
          im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
-         file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".png"
+         file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".bmp"
          folder_name=config.summary_path+"/feature_maps/"+key
          if not os.path.exists(folder_name):
           os.makedirs(folder_name)
@@ -247,12 +247,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
        opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
        summary_str=sess.run(opt_summary)
        summary_writer.add_summary(summary_str,i)
-# salvando as imagens como png
+# salvando as imagens como bmp
       if(config.save_features_to_disk):
        opt_output_rescaled = (opt_output - opt_output.min())
        opt_output_rescaled*=(255/opt_output_rescaled.max())
        im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
-       file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".png"
+       file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".bmp"
        folder_name=config.summary_path+"/feature_maps/"+key
        if not os.path.exists(folder_name):
         os.makedirs(folder_name)
