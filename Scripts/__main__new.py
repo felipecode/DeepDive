@@ -40,7 +40,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 sess = tf.InteractiveSession()
-last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
+last_layer, dropoutDict, feature_maps,weights,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 " Creating comparation metrics"
 y_image = y_
@@ -158,6 +158,14 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
       ft_summary=tf.image_summary(ft_name, ft_grid)
       summary_str=sess.run(ft_summary)
       summary_writer.add_summary(summary_str,i)
+      wkey="W_"+key
+      if wkey in weights:
+       kernel=weights[wkey].eval()
+       kernel_grid=put_kernels_on_grid_np(kernel)
+       kernel_name="kernels_"+key
+       kernel_summary=tf.image_summary(kernel_name, kernel_grid)
+       kernel_summary_str=sess.run(kernel_summary)
+       summary_writer.add_summary(kernel_summary_str,i)
 #   end = time.time()
 #   print "summary time:"
 #   print(end - start)
@@ -207,6 +215,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
          if not os.path.exists(folder_name):
           os.makedirs(folder_name)
          im.save(folder_name+"/"+file_name)
+       wkey="W_"+key
+       if wkey in weights:
+        kernel=weights[wkey].eval()
+	kernel_img = (kernel - kernel.min())
+        kernel_img*=(255/kernel_img.max())
+	for k in xrange(kernel_img.shape[3]):
+         im = Image.fromarray(kernel_img[:,:,:,k].astype(np.uint8))
+	 k_file_name="W_"+str(k).zfill(len(str(ft.shape[3])))+".bmp"
+         k_folder_name=config.summary_path+"/feature_maps/"+key+"/kernels"
+	 if not os.path.exists(k_folder_name):
+          os.makedirs(k_folder_name)
+	 im.save(k_folder_name+"/"+k_file_name)
+	
 #   end = time.time()
 #   print "saving time:"
 #   print(end - start)
@@ -236,7 +257,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
          opt_output_rescaled*=(255/opt_output_rescaled.max())
          im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
          file_name="opt_"+str(ch).zfill(len(str(n_channels)))+".bmp"
-         folder_name=config.summary_path+"/feature_maps/"+key
+         folder_name=config.summary_path+"/feature_maps/"+key+"/optimization"
          if not os.path.exists(folder_name):
           os.makedirs(folder_name)
          im.save(folder_name+"/"+file_name)	
@@ -253,7 +274,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
        opt_output_rescaled*=(255/opt_output_rescaled.max())
        im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
        file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".bmp"
-       folder_name=config.summary_path+"/feature_maps/"+key
+       folder_name=config.summary_path+"/feature_maps/"+key+"/optimization"
        if not os.path.exists(folder_name):
         os.makedirs(folder_name)
        im.save(folder_name+"/"+file_name)
