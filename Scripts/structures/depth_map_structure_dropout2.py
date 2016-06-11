@@ -170,7 +170,7 @@ def create_structure(tf, x, input_size,dropout):
     S1_pool3_up = tf.nn.relu(tf.nn.conv2d(S1_pool3, W_S1_up1 , strides=[1,1,1,1], padding='SAME', name=None) + b_S1_up1, name="Scale1_first_up")
     
     print S1_pool3_up
-    #features["S1_pool3_up"]=S1_pool3_up
+
 
 
     """ Dropout layer when you reach the smaller structure. """  
@@ -182,7 +182,6 @@ def create_structure(tf, x, input_size,dropout):
     S1_up1 = tf.depth_to_space(S1_pool3_up_drop, 32 , name=None)
 
     print S1_up1
-    #features["S1_up1"]=S1_up1
    
     #output_shape =tf.pack([batch_size,128,128,3])
 
@@ -193,12 +192,10 @@ def create_structure(tf, x, input_size,dropout):
     S1_up2 = tf.nn.relu(tf.nn.conv2d(S1_up1, W_S1_up2 , strides=[1,1,1,1], padding='SAME', name=None) + b_S1_up2, name="Scale1_second_up")
     
     print S1_up2
-    #features["S1_up2"]=S1_up2
 
     S1_up2_final = tf.depth_to_space(S1_up2, 4 , name=None)
     print 'final'
     print S1_up2_final
-    #features["S1_up2_final"]=S1_up2_final
 
     """Create l2 regularizer"""
     # regularizer = (tf.nn.l2_loss(W_conv1_1_1) + tf.nn.l2_loss(b_conv1_1_1) + 
@@ -331,7 +328,6 @@ def create_structure(tf, x, input_size,dropout):
 
 
   print S2_conv2_drop
-  #features["S2_conv2_drop"]=S2_conv2_drop
 
 
 
@@ -418,7 +414,6 @@ def create_structure(tf, x, input_size,dropout):
 
 
   print S3_conv1
-  #features["S3_conv1"]=S3_conv1
 
 
 
