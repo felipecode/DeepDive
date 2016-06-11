@@ -50,8 +50,8 @@ def create_structure(tf, x, input_size,dropout):
     W_S1_conv2 = deep_dive.weight_variable_scaling([3,3,64,96], name='w_conv2_1')
     b_S1_conv2 = deep_dive.bias_variable([96])
     S1_conv2 = tf.nn.relu(deep_dive.conv2d(S1_pool1, W_S1_conv2, padding='SAME') + b_S1_conv2, name="Scale1_second_relu")
-    features["S1_conv2"]=S1_conv2
-    weights["W_S1_conv2"]=W_S1_conv2
+    #features["S1_conv2"]=S1_conv2
+    #weights["W_S1_conv2"]=W_S1_conv2
 
     """ Max Pool 2 """
     S1_pool2 = tf.nn.max_pool(S1_conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='Scale1_second_Pool')
@@ -91,13 +91,13 @@ def create_structure(tf, x, input_size,dropout):
     S1_incep1 = tf.concat(3, [S1_incep1_1_1, S1_incep1_3_3, S1_incep1_5_5])
 
     features["S1_incep1_1_1"]=S1_incep1_1_1
-    weights["W_S1_incep1_1_1"]=W_S1_incep1_1_1
+    #weights["W_S1_incep1_1_1"]=W_S1_incep1_1_1
 
     features["S1_incep1_3_3"]=S1_incep1_3_3
-    weights["W_S1_incep1_3_3"]=W_S1_incep1_3_3
+    #weights["W_S1_incep1_3_3"]=W_S1_incep1_3_3
 
     features["S1_incep1_5_5"]=S1_incep1_5_5
-    weights["W_S1_incep1_5_5"]=W_S1_incep1_5_5
+    #weights["W_S1_incep1_5_5"]=W_S1_incep1_5_5
     print  S1_incep1
     features["S1_incep1"]=S1_incep1
 
