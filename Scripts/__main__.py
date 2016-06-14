@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_sBAC import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -81,7 +81,7 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)))
+loss_function = tf.sqrt(tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2),3),2),1))
 # using the same function with a different name
 #loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
 #loss_function_ssim = ssim_tf(tf,y_image,last_layer)
@@ -148,10 +148,7 @@ else:
 print config.n_epochs*dataset.getNImagesDataset() 
 
 
-error_vec = []
-val_error_vec = []
-iteration = []
-iteration_val = []
+training_start_time =time.time()
 
 for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 
@@ -179,22 +176,24 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
   if i%2 == 0:
     num_examples_per_step = config.batch_size 
     examples_per_sec = num_examples_per_step / duration
-    train_accuracy = sess.run(loss_function, feed_dict=feedDict)
+    train_accuracy = sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
   """ Writing summary, not at every iterations """
-  if i%20 == 1:
+  if i%config.summary_writing_period == 1:
     
-    
-    result= sess.run(loss_function, feed_dict=feedDict)
-    
-    iteration.append(i)
-    error_vec.append(result)
-    
+    outfile = open(config.models_path +'variable_errors', 'a+')
+    result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
 
+    print result.shape
+    outfile.write("%f " % result)
+
+    outfile.write("\n")
+    outfile.close()
+    
     #print iteration
     #print error_vec
     #print val_error_vec
@@ -205,10 +204,10 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
 
     #addedimage = sess.run(z,feed_dict={plot_image:fig2data(figure)})
 
-    summary_str = sess.run(summary_op, feed_dict=feedDict)
+    #summary_str = sess.run(summary_op, feed_dict=feedDict)
     #summary_str_val,result 
 
-    summary_writer.add_summary(summary_str,i)
+    #summary_writer.add_summary(summary_str,i)
 
     
 
@@ -218,41 +217,47 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()):
     #summary_writer.add_summary(summary_str_val,i)
 
 
-    print config.features_list
-    for key in config.features_list:
-      print key
-      print feature_maps
-      comp_feature_map = sess.run(feature_maps[key], feed_dict= feedDict)
-      grid_output = put_features_on_grid_np(comp_feature_map)
+   # print config.features_list
+   # for key in config.features_list:
+   #   print key
+   #   print feature_maps
+   #   comp_feature_map = sess.run(feature_maps[key], feed_dict= feedDict)
+   #   grid_output = put_features_on_grid_np(comp_feature_map)
 
-      print grid_output.shape
-      if not os.path.exists(config.models_path + '/' + key):
-        os.makedirs(config.models_path + '/' + key)
+   #   print grid_output.shape
+   #   if not os.path.exists(config.models_path + '/' + key):
+   #     os.makedirs(config.models_path + '/' + key)
 
-      misc.imsave(config.models_path + '/' + key  + '/' + str(i) + '.png', grid_output)
+   #  misc.imsave(config.models_path + '/' + key  + '/' + str(i) + '.png', grid_output)
+
+    outfile = open(config.models_path +'time', 'a+')
+
+    outfile.write("%f\n" % (time.time() - training_start_time))
+    outfile.close()
 
 
 
+  if i%config.validation_period == 0:
 
-  if i%2 == 1:
+    #iteration_val.append(i)
+    #summary_str_val = 0
 
-    print ' VALIDATING '
-    iteration_val.append(i)
-    summary_str_val = 0
-    for j in range(1,dataset.getNImagesValidation()/(8*config.batch_size_val)):
+
+      
+    validation_result_error = 0
+    outfile = open(config.models_path +'variable_errors_val', 'a+')
+
+    for j in range(0,dataset.validation.num_examples/(8*config.batch_size_val)):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
+      feedDictVal = {x: batch_val[0], y_: batch_val[1]}
+      validation_result_error+= sum(sess.run(loss_function, feed_dict=feedDictVal))/config.batch_size_val
 
-      #print feature_maps
+    print  validation_result_error
 
-      summary_str_val +=  sess.run(loss_function, feed_dict={x: batch_val[0], y_: batch_val[1]})
-      print j
+    outfile.write("%f " % (validation_result_error/len(range(0,dataset.validation.num_examples/(8*config.batch_size_val)) ))  )
 
-    val_error_vec.append(summary_str_val/len(range(1,dataset.getNImagesValidation()/(8*config.batch_size_val))))
-    figure = plt.figure(  )
-    plot   = figure.add_subplot ( 111 )
-    plot.plot(iteration, error_vec, 'b-', iteration_val, val_error_vec, 'r-')
-    figure.savefig(config.models_path + str(i) + '.png')
-
+    outfile.write("\n")
+    outfile.close()
 
 
 

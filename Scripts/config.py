@@ -2,20 +2,26 @@
 
 class configMain:
 	def __init__(self):
-		self.learning_rate = 5*1e-3
-		self.batch_size = 4
+		self.learning_rate = 1e-3
+		self.batch_size = 256
+		self.batch_size_val = 312
+		self.dataset_train_size = 400000
+		self.dataset_validation_size = 40000
+		self.variable_names = ['MSE']
 		self.n_epochs = 40   # the number of epochs that we are going to run
-		self.training_path = '../../datasets/dataset2_2F/Training/'
-		self.training_path_ground_truth = '../../datasets/dataset2_2F/GroundTruth'
-		self.validation_path = '../../datasets/dataset2_2F/Validation/'
+		self.training_path = '../datasets/Dataset2_3/Training/'
+		self.training_path_ground_truth = '../datasets/Dataset2_3/GroundTruth'
+		self.validation_path = '../datasets/Dataset2_3/Validation/'
 		self.summary_path = '/tmp/dataset4_12'
-		self.validation_path_ground_truth = '../../datasets/dataset2_2F/ValidationGroundTruth/'
-		self.models_path = 'models/deepdivearch0.2s_d2.2F_mar_21/'
-		self.input_size = (512, 512, 3)
-		self.output_size = (512, 512, 3)
-		self.ground_truth_size = (512, 512, 3)
-		self.restore = True
+		self.validation_path_ground_truth = '../datasets/Dataset2_3/ValidationGroundTruth/'
+		self.models_path = 'models/deepresSBAC_d2.2F_jun_14/'
+		self.input_size = (32, 32, 3)
+		self.output_size = (32, 32, 3)
+		self.ground_truth_size = (32, 32, 3)
+		self.restore = False
 		self.dropout = [1,1,1,1]
+		self.summary_writing_period = 20
+		self.validation_period = 20
 		self.histograms_list=[]
 		self.features_list=["S1_conv1","S1_pool1","S1_pool2","S3_incep1"]
 		self.features_opt_list=[["S1_conv1", 0],["S1_conv1", 63],["S3_incep1",0]]
