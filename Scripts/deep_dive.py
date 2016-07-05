@@ -24,6 +24,10 @@ class DeepDive(object):
     initializer = tf.uniform_unit_scaling_initializer(factor=0.01)
     initial = tf.get_variable(name=name, shape=shape, initializer=initializer, trainable=True)
     return initial
+  def weight_xavi_init(self,shape,name):
+
+    initial = tf.get_variable(name=name, shape=shape,initializer=tf.contrib.layers.xavier_initializer())
+    return initial
 
   """
   Creates a bias variable

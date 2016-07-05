@@ -6,7 +6,8 @@ from config import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_sBAC import create_structure
+from inception_res_batchSBAC import create_structure
+from alex_feature_extract import extract_features
 
 """Core libs"""
 import tensorflow as tf
@@ -63,6 +64,10 @@ def fig2data ( fig ):
 
 
 
+
+ 
+
+
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
@@ -79,9 +84,33 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 
 
+
+
+
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.sqrt(tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2),3),2),1))
+
+mse = tf.sqrt(tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2),3),2),1))
+
+
+conv1,conv2,conv3,conv4,conv5 = extract_features(tf, x,config.input_size)
+
+conv1gt,conv2gt,conv3gt,conv4gt,conv5gt = extract_features(tf, y_,config.input_size)
+
+
+
+feature_loss1 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv1,conv1gt)),3),2),1)
+
+feature_loss2 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv2,conv2gt)),3),2),1)
+
+feature_loss3 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv3,conv3gt)),3),2),1)
+
+feature_loss4 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv4,conv4gt)),3),2),1)
+
+feature_loss5 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv5,conv5gt)),3),2),1)
+
+
+loss_function = 0.5*mse + 0.5*(0.2*feature_loss1 + 0.2*feature_loss2 + 0.2*feature_loss3 + 0.2*feature_loss4 + 0.2*feature_loss5)
 # using the same function with a different name
 #loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
 #loss_function_ssim = ssim_tf(tf,y_image,last_layer)
