@@ -1,30 +1,29 @@
+
 """configuration file"""
 
 class configMain:
 	def __init__(self):
 		self.learning_rate = 1e-3
-		self.batch_size = 256
-		self.batch_size_val = 312
-		self.dataset_train_size = 400000
-		self.dataset_validation_size = 40000
+		self.batch_size = 32
+		self.batch_size_val = 64
 		self.variable_names = ['MSE']
 		self.n_epochs = 80   # the number of epochs that we are going to run
-		self.training_path = '../datasets/Dataset2_3/Training/'
-		self.training_path_ground_truth = '../datasets/Dataset2_3/GroundTruth'
-		self.validation_path = '../datasets/Dataset2_3/Validation/'
-		self.summary_path = '/tmp/dataset4_12'
-		self.validation_path_ground_truth = '../datasets/Dataset2_3/ValidationGroundTruth/'
-		self.models_path = 'models/new_res_jun_22_feature/'
-		self.input_size = (32, 32, 3)
-		self.output_size = (32, 32, 3)
-		self.ground_truth_size = (32, 32, 3)
+		self.training_path = '../../DeepDive-master/datasets/datasetDepthV3/Training/'
+		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/GroundTruth'
+		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV3/Validation/'
+		self.summary_path = '/tmp/new_15_7/'
+		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/ValidationGroundTruth/'
+		self.models_path = 'models/new_15_7/'
+		self.input_size = (224, 224, 3)
+		self.output_size = (224, 224, 3)
+		self.ground_truth_size = (224,224, 3)
 		self.restore = True
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
 		self.validation_period = 160
 		self.histograms_list=[]
-		self.features_list=["S1_conv1","S1_pool1","S1_pool2","S3_incep1"]
-		self.features_opt_list=[["S1_conv1", 0],["S1_conv1", 63],["S3_incep1",0]]
+		self.features_list=[]#"S1_conv1","S1_pool1","S1_pool2","S3_incep1"]
+		self.features_opt_list=[]#["S1_conv1", 0],["S1_conv1", 63],["S3_incep1",0]]
 		self.opt_every_iter=0
 		self.save_features_to_disk=False
 		self.use_tensorboard=False
