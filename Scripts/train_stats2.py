@@ -30,8 +30,6 @@ if os.path.isfile(config.models_path +'summary.json'):
 else:
 	print 'Arquivo inexistente.'
 
-
-
 variable_errors=dados['variable_errors']
 variable_errors_val=dados['variable_errors_val']
 time=dados['time']

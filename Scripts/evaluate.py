@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from inception_res_batchSBAC import create_structure
+from inception_res_BAC import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -33,8 +33,8 @@ overlap_size = (7, 7)
 """ Configuration, set all the variables , including getting all the files that are going to be evaluated. """
 
 
-path = '/home/adas/DeepDive/Local_results/RealImages/'
-out_path ='/home/adas/DeepDive/Local_results/RealImagesResults/'
+path = '/home/nautec/DeepDive/Local_results/'
+out_path ='/home/nautec/DeepDive/Local_results/resultado/'
 
 im_names =  glob.glob(path + "*.jpg")
 im_names = im_names + glob.glob(path + "*.png")
@@ -65,7 +65,7 @@ saver = tf.train.Saver(tf.all_variables())
 
 
 """ Recover the previous state of the models. """
-
+print config.models_path
 if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
@@ -111,7 +111,6 @@ for i in im_names:
 
   """Separating the image in chunks"""
   im_vec = []
-  #out_vec = [] #  I THINK IT IS NOT NEEDED
   cont =1
 
   nValues = len(range(0, height, config.input_size[0]-(overlap_size[0]*2)))*len(range(0, width, config.input_size[1]-(overlap_size[1]*2)))
