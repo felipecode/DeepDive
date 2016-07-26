@@ -93,7 +93,7 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 " Creating comparation metrics"
 y_image = y_
 
-mse = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2),3),2),1)
+loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 
 '''
 conv1,conv2,conv3,conv4,conv5 = extract_features(tf, x,config.input_size)
@@ -113,7 +113,7 @@ feature_loss4 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv
 feature_loss5 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv5,conv5gt)),3),2),1)
 '''
 
-loss_function = mse #+ 0.5*(0.2*feature_loss1 + 0.2*feature_loss2 + 0.2*feature_loss3 + 0.2*feature_loss4 + 0.2*feature_loss5)
+#loss_function = mse #+ 0.5*(0.2*feature_loss1 + 0.2*feature_loss2 + 0.2*feature_loss3 + 0.2*feature_loss4 + 0.2*feature_loss5)
 # using the same function with a different name
 #loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
 #loss_function_ssim = ssim_tf(tf,y_image,last_layer)
@@ -205,8 +205,8 @@ print config.n_epochs*dataset.getNImagesDataset()
 
 training_start_time =time.time()
 
-for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset(),config.batch_size):
-  epoch_number = 1.0+ float(i)/float(dataset.getNImagesDataset())
+for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/config.batch_size):
+  epoch_number = 1.0+ (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
 
   batch = dataset.train.next_batch(config.batch_size)
   
@@ -225,13 +225,14 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset(),con
     num_examples_per_step = config.batch_size 
     examples_per_sec = num_examples_per_step / duration
     result=sess.run(loss_function, feed_dict=feedDict)
+    #print result
     train_accuracy = sum(result)/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
-    if i%config.summary_writing_period == 1:
+  if i%config.summary_writing_period == 1:
     result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
     dados['variable_errors'].append(result)
     dados['time'].append(time.time() - training_start_time)

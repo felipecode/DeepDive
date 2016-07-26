@@ -3,24 +3,29 @@
 
 class configMain:
 	def __init__(self):
-		self.learning_rate = 1e-3
+		self.learning_rate = 1e-7
+		self.beta1=0.9
+		self.beta2=0.999
+		self.epsilon=1e-08
+		self.use_locking=False
 		self.batch_size = 32
 		self.batch_size_val = 64
 		self.variable_names = ['MSE']
 		self.n_epochs = 80   # the number of epochs that we are going to run
+		self.leveldb_path = '../../DeepDive-master/datasets/datasetDepthV3/'
 		self.training_path = '../../DeepDive-master/datasets/datasetDepthV3/Training/'
 		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/GroundTruth'
 		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV3/Validation/'
-		self.summary_path = '/tmp/new_15_7/'
+		self.summary_path = '/tmp/new_26_7/'
 		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/ValidationGroundTruth/'
-		self.models_path = 'models/new_15_7/'
+		self.models_path = 'models/new_26_7/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
-		self.restore = True
+		self.restore = False
 		self.dropout = [1,1,1,1]
-		self.summary_writing_period = 20
-		self.validation_period = 160
+		self.summary_writing_period = 4
+		self.validation_period = 16
 		self.histograms_list=[]
 		self.features_list=[]#"S1_conv1","S1_pool1","S1_pool2","S3_incep1"]
 		self.features_opt_list=[]#["S1_conv1", 0],["S1_conv1", 63],["S3_incep1",0]]
@@ -76,20 +81,21 @@ class configDehazeNOT:
 
 class configPathfinder:
 	def __init__(self):
-		self.learning_rate = 5*1e-6
+		self.learning_rate = 5*1e-7
 		self.init_std_dev=0.01
 		self.batch_size = 5
+		self.batch_size_val = 2048
 		self.n_epochs = 80   # the number of epochs that we are going to run
 		self.training_path = '../datasets/UDataset16x16/Training'
 		self.training_path_ground_truth = '../datasets/UDataset16x16/Transmission'
 		self.validation_path = '../datasets/UDataset16x16/Validation'
-		self.summary_path = '/tmp/dataset43u'
+		self.summary_path = '/tmp/transmission_25_7'
 		self.validation_path_ground_truth = '../datasets/UDataset16x16/ValidationTransmission/'
-		self.models_path = 'models/modelu/'
+		self.models_path = 'models/transmission_25_7/'
 		self.input_size = (16, 16, 3)
 		self.output_size = (1, 1)
 		self.ground_truth_size = (16, 16)
-		self.restore = True
+		self.restore = False
 		self.dropout = []
 		self.features_list=[["conv1",4],["conv2",4],["conv3",8],["conv4",8],["pool1",8],["conv5",1]]
 		self.histograms_list=["W_conv1","b_conv1","W_conv2","b_conv2","W_conv3", "b_conv3", "W_conv4", "b_conv4", "W_conv5", "b_conv5"]
