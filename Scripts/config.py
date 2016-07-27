@@ -3,7 +3,7 @@
 
 class configMain:
 	def __init__(self):
-		self.learning_rate = 1e-7
+		self.learning_rate = 1e-4
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-08
@@ -16,22 +16,25 @@ class configMain:
 		self.training_path = '../../DeepDive-master/datasets/datasetDepthV3/Training/'
 		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/GroundTruth'
 		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV3/Validation/'
-		self.summary_path = '/tmp/new_26_7/'
+		self.summary_path = '/tmp/new_27_7/'
 		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/ValidationGroundTruth/'
-		self.models_path = 'models/new_26_7/'
+		self.models_path = 'models/new_27_7/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
 		self.restore = False
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 4
-		self.validation_period = 16
-		self.histograms_list=[]
+		self.validation_period = 120
+		self.histograms_list=["W_B_conv1","b_B_conv1","W_B_conv2","b_B_conv2","W_B_conv3","b_B_conv3","W_B_conv4","b_B_conv4","W_B_conv5","b_B_conv5"]
+								#"W_A_conv1","b_A_conv1","W_A_conv2","b_A_conv2","W_A_conv3","b_A_conv3","W_A_conv4","b_A_conv4","W_A_conv5","b_A_conv5",
+								#"W_A_conv6","b_A_conv6","W_A_conv7","b_A_conv7","W_C_conv1","b_C_conv1","W_C_conv2","b_C_conv2","W_C_conv3","b_C_conv3",
+								#"W_C_conv4","b_C_conv4","W_C_conv5","b_C_conv5"]
 		self.features_list=[]#"S1_conv1","S1_pool1","S1_pool2","S3_incep1"]
 		self.features_opt_list=[]#["S1_conv1", 0],["S1_conv1", 63],["S3_incep1",0]]
 		self.opt_every_iter=0
 		self.save_features_to_disk=False
-		self.use_tensorboard=False
+		self.use_tensorboard=True
 
 class configDehazeNet:
 	def __init__(self):
