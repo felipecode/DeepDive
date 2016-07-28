@@ -48,6 +48,12 @@ def fig2data ( fig ):
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
+if config.save_features_to_disk not in (True, False):
+  raise Exception('Wrong save_features_to_disk option. (True or False)')
+if config.save_json_summary not in (True, False):
+  raise Exception('Wrong save_json_summary option. (True or False)')
+if config.use_tensorboard not in (True, False):
+  raise Exception('Wrong use_tensorboard option. (True or False)')
 
 dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
@@ -113,14 +119,15 @@ if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path  
     saver.restore(sess,ckpt.model_checkpoint_path)
-    if os.path.isfile(config.models_path +'summary.json'):
-      outfile= open(config.models_path +'summary.json','r+')
-      dados=json.load(outfile)
-      outfile.close()
-    else:
-      outfile= open(config.models_path +'summary.json','w')
-      json.dump(dados, outfile)
-      outfile.close()   
+    if config.save_json_summary:
+      if os.path.isfile(config.models_path +'summary.json'):
+        outfile= open(config.models_path +'summary.json','r+')
+        dados=json.load(outfile)
+        outfile.close()
+      else:
+        outfile= open(config.models_path +'summary.json','w')
+        json.dump(dados, outfile)
+        outfile.close()   
 else:
   ckpt = 0
 
@@ -169,11 +176,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 
   if i%config.summary_writing_period == 1:
     result= sess.run(loss_function, feed_dict=feedDict)#sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
-    dados['variable_errors'].append(float(result))
-    dados['time'].append(time.time() - training_start_time)
-    outfile= open(config.models_path +'summary.json','w')
-    json.dump(dados, outfile)
-    outfile.close()
+    if config.save_json_summary:
+      dados['variable_errors'].append(float(result))
+      dados['time'].append(time.time() - training_start_time)
+      outfile= open(config.models_path +'summary.json','w')
+      json.dump(dados, outfile)
+      outfile.close()
     if config.use_tensorboard:
       summary_str = sess.run(summary_op, feed_dict=feedDict)
       summary_writer.add_summary(summary_str,i)
@@ -184,11 +192,17 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       batch_val = dataset.validation.next_batch(config.batch_size_val)
       feedDictVal = {x: batch_val[0], y_: batch_val[1]}
       validation_result_error+= sess.run(loss_function, feed_dict=feedDictVal) #sum(sess.run(loss_function, feed_dict=feedDictVal))
-    dados['variable_errors_val'].append((validation_result_error*config.batch_size_val)/dataset.validation.num_examples)
-
-    outfile= open(config.models_path +'summary.json','w')
-    json.dump(dados, outfile)
-    outfile.close()   
+    validation_result_error = (validation_result_error*config.batch_size_val)/dataset.validation.num_examples
+    if config.use_tensorboard:
+      val=tf.scalar_summary('Loss_Validation', validation_result_error)
+      summary_str_val=sess.run(val)
+      summary_writer.add_summary(summary_str_val,i)
+    if config.save_json_summary:
+      dados['variable_errors_val'].append(validation_result_error)
+      outfile= open(config.models_path +'summary.json','w')
+      json.dump(dados, outfile)
+      outfile.close()
+    
 
 
 
