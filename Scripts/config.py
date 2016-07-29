@@ -16,9 +16,9 @@ class configMain:
 		self.training_path = '../../DeepDive-master/datasets/datasetDepthV3/Training/'
 		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/GroundTruth'
 		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV3/Validation/'
-		self.summary_path = '/tmp/new_28_7/'
+		self.summary_path = '/tmp/new_29_7_2/'
 		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/ValidationGroundTruth/'
-		self.models_path = 'models/new_28_7/'
+		self.models_path = 'models/new_29_7_2/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)

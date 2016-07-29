@@ -1,5 +1,5 @@
 """Deep dive libs"""
-from input_data_dive_test import DataSetManager
+from input_data_levelDB import DataSetManager
 from config import *
 
 """Structure"""
@@ -34,18 +34,6 @@ import json
 """Verifying options integrity"""
 config= configMain()
 
-def fig2data ( fig ):
-    """
-    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
-    @param fig a matplotlib figure
-    @return a numpy 3D array of RGBA values
-    """
-    fig.canvas.draw ( )
-    w,h = fig.canvas.get_width_height()
-    image = np.fromstring ( fig.canvas.tostring_rgb(), dtype=np.uint8 )
-    image.shape = (1, w, h,3 )
-    return image
-
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 if config.save_features_to_disk not in (True, False):
@@ -67,8 +55,9 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 " Creating comparation metrics"
 y_image = y_
+loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
-loss_function = tf.reduce_mean(tf.square(tf.sub(last_layer, y_image)))
+#loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
 train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
 
@@ -85,7 +74,7 @@ for key in scalars:
   tf.scalar_summary(key,scalars[key])
 for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
-tf.scalar_summary('Loss', loss_function)
+tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
@@ -168,14 +157,14 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     examples_per_sec = config.batch_size / duration
     result=sess.run(loss_function, feed_dict=feedDict)
     result > 0
-    train_accuracy = result #sum(result)/config.batch_size
+    train_accuracy = sum(result)/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
   if i%config.summary_writing_period == 1:
-    result= sess.run(loss_function, feed_dict=feedDict)#sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
+    result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
@@ -188,11 +177,11 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 
   if i%config.validation_period == 0:
     validation_result_error = 0
-    for j in range(0,dataset.validation.num_examples/(config.batch_size_val)):
+    for j in range(0,dataset.getNImagesValidation()/(config.batch_size_val)):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
       feedDictVal = {x: batch_val[0], y_: batch_val[1]}
-      validation_result_error+= sess.run(loss_function, feed_dict=feedDictVal) #sum(sess.run(loss_function, feed_dict=feedDictVal))
-    validation_result_error = (validation_result_error*config.batch_size_val)/dataset.validation.num_examples
+      validation_result_error+= sum(sess.run(loss_function, feed_dict=feedDictVal))
+    validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
       val=tf.scalar_summary('Loss_Validation', validation_result_error)
       summary_str_val=sess.run(val)
@@ -202,70 +191,3 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       outfile= open(config.models_path +'summary.json','w')
       json.dump(dados, outfile)
       outfile.close()
-    
-
-
-
-
-    #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-    #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-
-    #outfile.write("%f " % (validation_result_error/len(range(0,dataset.validation.num_examples/(config.batch_size_val)) ))  )
-
-    #outfile.write("\n")
-    #outfile.close()
-  #""" Writing summary, not at every iterations """
-  #if i%config.summary_writing_period == 1:
-    
-    #outfile = open(config.models_path +'variable_errors', 'a+')
-    #result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
-
-    #outfile.write("%f " % result)
-
-    #outfile.write("\n")
-    #outfile.close()
-
-    #outfile = open(config.models_path +'time', 'a+')
-
-    #outfile.write("%f\n" % ())
- 
-    #print iteration
-    #print error_vec
-    #print val_error_vec
-
-   
-    #plot_image = fig2data(figure)
-    #print fig2data(figure).dtype
-
-    #addedimage = sess.run(z,feed_dict={plot_image:fig2data(figure)})
-
-    #summary_str = sess.run(summary_op, feed_dict=feedDict)
-    #summary_str_val,result 
-
-    #summary_writer.add_summary(summary_str,i)
-
-    
-
-    """ Check here the weights """
-    #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-    #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-    #summary_writer.add_summary(summary_str_val,i)
-
-
-   # print config.features_list
-   # for key in config.features_list:
-   #   print key
-   #   print feature_maps
-   #   comp_feature_map = sess.run(feature_maps[key], feed_dict= feedDict)
-   #   grid_output = put_features_on_grid_np(comp_feature_map)
-
-   #   print grid_output.shape
-   #   if not os.path.exists(config.models_path + '/' + key):
-   #     os.makedirs(config.models_path + '/' + key)
-
-   #  misc.imsave(config.models_path + '/' + key  + '/' + str(i) + '.png', grid_output)
-
-
-
-
-
