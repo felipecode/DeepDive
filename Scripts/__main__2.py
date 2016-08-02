@@ -32,7 +32,7 @@ import json
 
 
 """Verifying options integrity"""
-config= configMain()
+config = configMain()
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
@@ -43,13 +43,13 @@ if config.save_json_summary not in (True, False):
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
+dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
+                         config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
-plot_image = tf.placeholder("float", name="output_image_1")
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
@@ -59,7 +59,8 @@ loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_in
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
-train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
+train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, 
+                                    epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
 
 
 """Creating summaries"""
@@ -101,9 +102,6 @@ dados['batch_size']=config.batch_size
 dados['variable_errors']=[]
 dados['time']=[]
 dados['variable_errors_val']=[]
-
-
-
 if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path  
@@ -138,9 +136,8 @@ else:
 training_start_time =time.time()
 print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/config.batch_size):
-  epoch_number = 1.0+ (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
+  epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
 
-  batch = dataset.train.next_batch(config.batch_size)
   
   """Save the model every 300 iterations"""
   if i%300 == 0:
@@ -148,12 +145,14 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     print 'Model saved.'
 
   start_time = time.time()
+
+  batch = dataset.train.next_batch(config.batch_size)
   feedDict.update({x: batch[0], y_: batch[1]})
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
 
-  if i%2 == 0:
+  if i%4 == 0:
     examples_per_sec = config.batch_size / duration
     result=sess.run(loss_function, feed_dict=feedDict)
     result > 0
@@ -161,14 +160,15 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
-    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
+    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"
+        %(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
   if i%config.summary_writing_period == 1:
-    result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
+    result = sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
-      outfile= open(config.models_path +'summary.json','w')
+      outfile = open(config.models_path +'summary.json','w')
       json.dump(dados, outfile)
       outfile.close()
     if config.use_tensorboard:
@@ -176,11 +176,25 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       summary_writer.add_summary(summary_str,i)
 
   if i%config.validation_period == 0:
+    error_per_transmission=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+    count_per_transmission=[0,0,0,0,0,0,0,0,0,0,0]
     validation_result_error = 0
     for j in range(0,dataset.getNImagesValidation()/(config.batch_size_val)):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
       feedDictVal = {x: batch_val[0], y_: batch_val[1]}
-      validation_result_error+= sum(sess.run(loss_function, feed_dict=feedDictVal))
+      result = sess.run(loss_function, feed_dict=feedDictVal)
+      validation_result_error += sum(result)
+      if config.save_error_transmission:
+        for i in range(len(batch_val[2])):
+          index = int(float(batch_val[2][i]) * 10)
+          error_per_transmission[index] += result[i]
+          count_per_transmission[index] += 1
+        for i in range(10):
+          if count_per_transmission[i]!=0:
+            error_per_transmission[i] = error_per_transmission[i]/count_per_transmission[i]
+        dados['error_per_transmission']=error_per_transmission
+
+
     validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
       val=tf.scalar_summary('Loss_Validation', validation_result_error)

@@ -28,7 +28,6 @@ def read_image_gray_scale(self,image_name):
 	image = np.asarray(image)
 	image = image.astype(np.float32)
 	image = np.multiply(image, 1.0 / 255.0)
-	image = np.mean(image)
 	return image
 
 config = configMain()
@@ -38,6 +37,7 @@ output_size = config.output_size
 
 im_names = glob.glob(config.training_path + "/*.jpg")
 im_names_labels = glob.glob(config.training_path_ground_truth + "/*.jpg")
+im_names_trans = glob.glob(config.training_transmission_path + "/*.jpg")
 assert len(im_names) == len(im_names_labels)
 db.Put('num_examples',str(len(im_names)))
 for i in range(len(im_names)):
@@ -48,9 +48,14 @@ for i in range(len(im_names)):
 	else:
 		image=read_image_gray_scale(im_names_labels[i])
 	db.Put(str(i)+"label",image.tostring())
+	transmission = np.mean(read_image(im_names_trans[i]))
+	db.Put(str(i)+"trans",str(transmission))
+	print transmission
+
 
 im_names_val = glob.glob(config.validation_path + "/*.jpg")
 im_names_val_labels = glob.glob(config.validation_path_ground_truth + "/*.jpg")
+im_names_trans = glob.glob(config.validation_transmission_path + "/*.jpg")
 assert len(im_names_val) == len(im_names_val_labels)
 db.Put('num_examples_val',str(len(im_names_val)))
 for i in range(len(im_names_val)):
@@ -61,3 +66,6 @@ for i in range(len(im_names_val)):
 	else:
 		image=read_image_gray_scale(im_names_val_labels[i])
 	db.Put("val"+str(i)+"label",image.tostring())
+	transmission = np.mean(read_image(im_names_trans[i]))
+	db.Put("val"+str(i)+"trans",str(transmission))
+	print transmission

@@ -45,6 +45,9 @@ class DataSet(object):
     self._input_size= input_size
     self._output_size=output_size
 
+  def getTransmission(n):
+    self._db.Get(str(n))
+
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
@@ -65,11 +68,13 @@ class DataSet(object):
 
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
     labels = np.empty((batch_size, self._output_size[0], self._output_size[1],self._output_size[2]))
-    
+    transmission = range(batch_size)
     for n in range(batch_size):
       images[n] = readImageFromDB(self._db,str(self._images_key[start+n]),self._input_size)
       labels[n] = readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size)
-    return images, labels
+      transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
+    return images, labels, transmission
+
 
   def next_batch_normalized(self, batch_size):
     """Return the next `batch_size` examples from this data set."""

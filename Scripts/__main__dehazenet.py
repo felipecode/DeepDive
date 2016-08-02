@@ -27,7 +27,7 @@ from ssim_tf import ssim_tf
 from features_on_grid import put_features_on_grid_tf
 
 """Verifying options integrity"""
-config = configPathfinder()
+config = configDehazenet()
 
 #depois a gente coloca isso no config
 #o segundo parametro e o numero de linhas pra mostrar
@@ -36,7 +36,8 @@ config = configPathfinder()
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
+dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
+                         config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 
@@ -48,8 +49,8 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.sqrt(tf.pow(tf.sub(last_layer,  y_image),2))
-loss_mean = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer,  y_image),2)))
+loss_function = tf.abs(tf.sub(last_layer,  y_image))
+loss_mean = tf.reduce_mean(tf.abs(tf.sub(last_layer,  y_image)))
 # using the same function with a different name
 #print last.shape
 #loss_function_ssim = ssim_tf(tf,y_image,last_layer)
@@ -74,8 +75,8 @@ tf.scalar_summary('Loss', loss_function)
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
 
-val  =tf.scalar_summary('Loss_Validation', loss_function)
-init_op=tf.initialize_all_variables()
+val = tf.scalar_summary('Loss_Validation', loss_function)
+init_op = tf.initialize_all_variables()
 sess.run(init_op)
 summary_writer = tf.train.SummaryWriter(config.summary_path,
                                             graph_def=sess.graph_def)
@@ -95,7 +96,7 @@ else:
   ckpt = 0
 print 'Logging into ' + config.summary_path
 
-"""Training opa quem ta usando ai?"""
+"""Training"""
 
 lowest_error = 1.5;
 lowest_val  = 1.5;
@@ -115,13 +116,13 @@ iteration = []
 iteration_val = []
 tmp_queue = []
 begin = time.time()
-for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset(),config.batch_size):
+for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/config.batch_size):
   if(i%dataset.getNImagesDataset()/config.batch_size == 0):
     print time.time() - begin
     begin = time.time()
 
 
-  epoch_number = 1.0+ float(i)/float(dataset.getNImagesDataset())
+  epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
 
 
   
@@ -147,7 +148,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset(),con
     if  np.mean(train_accuracy) < lowest_error:
       lowest_error = np.mean(train_accuracy)
       lowest_iter = i
-    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, np.mean(train_accuracy), lowest_error, lowest_iter,examples_per_sec))
+    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"
+        %(epoch_number, i, i*config.batch_size, np.mean(train_accuracy), lowest_error, lowest_iter,examples_per_sec))
 
   """ Writing summary, not at every iterations """
   if i%20 == 0:
@@ -198,4 +200,4 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset(),con
 
     plot.plot(iteration, error_vec, 'b-', iteration_val, val_error_vec, 'r-')
     figure.savefig(config.models_path + str(i) + '.png')
-
+    plt.close(figure)

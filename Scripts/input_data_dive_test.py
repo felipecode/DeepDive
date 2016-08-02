@@ -66,20 +66,20 @@ class DataSet(object):
     return self._epochs_completed
 
   def read_image(self,image_name):
-    image =Image.open(image_name).convert('RGB')
-    image =  image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
+    image = Image.open(image_name).convert('RGB')
+    image = image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
     image = np.asarray(image)
     image = image.astype(np.float32)
     image = np.multiply(image, 1.0 / 255.0)
     return image
 
   def read_image_gray_scale(self,image_name):
-    image =Image.open(image_name).convert('L')
-    image =  image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
+    image = Image.open(image_name).convert('L')
+    image = image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
     image = np.asarray(image)
     image = image.astype(np.float32)
     image = np.multiply(image, 1.0 / 255.0)
-    image = np.mean(image)
+    #image = np.mean(image)
     return image
 
   def next_batch(self, batch_size):
@@ -109,7 +109,7 @@ class DataSet(object):
       if len(self._output_size) > 2:
         labels[n] = self.read_image(self._labels_names[start+n])
       else:
-        labels[n] = self.read_image_gray_scale(self._labels_names[start+n])
+        labels[n] = np.reshape(self.read_image_gray_scale(self._labels_names[start+n]), (16,16,1))
     
     return images, labels
 
@@ -118,9 +118,9 @@ class DataSetManager(object):
 
   def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size):
     self.input_size = input_size
-    self.output_size =output_size
+    self.output_size = output_size
     """ Get all the image names for training images on a path folder """
-    self.im_names  = glob.glob(path + "/*.jpg")
+    self.im_names = glob.glob(path + "/*.jpg")
     self.im_names_labels = glob.glob(path_truth + "/*.jpg")
     """ Shufling all the Images with a single permutation"""
     shufle(self.im_names,self.im_names_labels)
@@ -133,5 +133,5 @@ class DataSetManager(object):
   def getNImagesDataset(self):
     return len(self.im_names)
 
-  def getNImagesValiton(self):
+  def getNImagesValidation(self):
     return len(self.im_names_val)

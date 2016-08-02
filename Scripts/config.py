@@ -12,17 +12,19 @@ class configMain:
 		self.batch_size_val = 96
 		self.variable_names = ['MSE']
 		self.n_epochs = 80   # the number of epochs that we are going to run
-		self.leveldb_path = '../../DeepDive-master/datasets/datasetDepthV3/'
-		self.training_path = '../../DeepDive-master/datasets/datasetDepthV3/Training/'
-		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/GroundTruth'
-		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV3/Validation/'
-		self.summary_path = '/tmp/new_29_7_2/'
-		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV3/ValidationGroundTruth/'
-		self.models_path = 'models/new_29_7_2/'
+		self.leveldb_path = '../../DeepDive-master/datasets/datasetDepthV4/'
+		self.training_path = '../../DeepDive-master/datasets/datasetDepthV4/Training/'
+		self.training_transmission_path = '../../DeepDive-master/datasets/datasetDepthV4/Transmission/'
+		self.validation_transmission_path = '../../DeepDive-master/datasets/datasetDepthV4/ValidationTransmission/'
+		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV4/GroundTruth'
+		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV4/Validation/'
+		self.summary_path = '/tmp/new_1_8/'
+		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV4/ValidationGroundTruth/'
+		self.models_path = 'models/new_1_8/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
-		self.restore = False
+		self.restore = True
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 4
 		self.validation_period = 120
@@ -35,69 +37,24 @@ class configMain:
 		self.opt_every_iter=0
 		self.save_features_to_disk=True
 		self.save_json_summary=True
+		self.save_error_transmission=True
 		self.use_tensorboard=True
 
-class configDehazeNet:
-	def __init__(self):
-		self.learning_rate = 5*1e-6
-		self.init_std_dev=0.01
-		self.batch_size = 5
-		self.n_epochs = 80   # the number of epochs that we are going to run
-		self.training_path = '../datasets/dataset4_2/Training'
-		self.training_path_ground_truth = '../datasets/dataset4_2/Transmission'
-		self.validation_path = '../datasets/dataset4_2/Validation'
-		self.summary_path = '/tmp/dataset43q'
-		self.validation_path_ground_truth = '../datasets/dataset4_2/ValidationTransmission/'
-		self.models_path = 'models/'
-		self.input_size = (16, 16, 3)
-		self.output_size = (1, 1)
-		self.ground_truth_size = (16,16)
-		self.restore = False
-		self.dropout = []
-		self.features_list=[["conv1",2],["conv2_1",1],["incep1_3_3",4],["incep1_5_5",4],["incep1_7_7",4]]
-		self.histograms_list=["W_conv1","b_conv1","W_incep1_3_3","W_incep1_5_5","W_incep1_7_7"]
-		self.evaluate_path = '/home/nautec/DeepDive/Local_results/'
-		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'
-		self.opt_every_iter=100
-
-class configDehazeNOT:
-	def __init__(self):
-		self.learning_rate = 5*1e-6
-		self.init_std_dev=0.01
-		self.batch_size = 5
-		self.n_epochs = 80   # the number of epochs that we are going to run
-		self.training_path = '../datasets/dataset4_2/Training'
-		self.training_path_ground_truth = '../datasets/dataset4_2/Transmission'
-		self.validation_path = '../datasets/dataset4_2/Validation'
-		self.summary_path = '/tmp/dataset43t'
-		self.validation_path_ground_truth = '../datasets/dataset4_2/ValidationTransmission/'
-		self.models_path = 'models/'
-		self.input_size = (16, 16, 3)
-		self.output_size = (16, 16, 1)
-		self.ground_truth_size = (16,16)
-		self.restore = False
-		self.dropout = []
-		self.features_list=[["conv1",2],["conv2",4],["conv3",4],["pool1",2],["conv4",8]]
-		self.histograms_list=["W_conv1","b_conv1","W_conv2","b_conv2","W_conv3", "b_conv3", "W_conv4", "b_conv4"]
-		self.evaluate_path = '/home/nautec/DeepDive/Local_results/RealImages/'
-		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/'
-		self.opt_every_iter=100
-
-class configPathfinder:
+class configDehazenet:
 	def __init__(self):
 		self.learning_rate = 5*1e-7
 		self.init_std_dev=0.01
 		self.batch_size = 5
-		self.batch_size_val = 2048
+		self.batch_size_val = 256
 		self.n_epochs = 80   # the number of epochs that we are going to run
 		self.training_path = '../datasets/UDataset16x16/Training'
 		self.training_path_ground_truth = '../datasets/UDataset16x16/Transmission'
 		self.validation_path = '../datasets/UDataset16x16/Validation'
-		self.summary_path = '/tmp/transmission_25_7'
+		self.summary_path = '/tmp/transmission_2_8'
 		self.validation_path_ground_truth = '../datasets/UDataset16x16/ValidationTransmission/'
-		self.models_path = 'models/transmission_25_7/'
+		self.models_path = 'models/transmission_2_8/'
 		self.input_size = (16, 16, 3)
-		self.output_size = (1, 1)
+		self.output_size = (16, 16)
 		self.ground_truth_size = (16, 16)
 		self.restore = False
 		self.dropout = []
