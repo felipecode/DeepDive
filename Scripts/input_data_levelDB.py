@@ -27,7 +27,7 @@ import glob
 import leveldb
 import matplotlib.pyplot as plt
 from time import time
-from config import configMain
+from config import *
 
 config=configMain()
 
@@ -67,9 +67,12 @@ class DataSet(object):
       batch_size = self._num_examples - self._index_in_epoch
 
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
+    if len(self._output_size)==2:
+      self._output_size = (self._output_size[0], self._output_size[1],1)
     labels = np.empty((batch_size, self._output_size[0], self._output_size[1],self._output_size[2]))
     transmission = range(batch_size)
     for n in range(batch_size):
+      #print (str(self._images_key[start+n]))
       images[n] = readImageFromDB(self._db,str(self._images_key[start+n]),self._input_size)
       labels[n] = readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size)
       transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
@@ -112,7 +115,7 @@ class DataSetManager(object):
     self.input_size = input_size
     self.output_size = output_size
     self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
-    self.num_examples = int(self.db.Get('num_examples'))
+    self.num_examples = 1000#int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
     self.images_key = range(self.num_examples)
     self.images_key_val = range(self.num_examples_val)

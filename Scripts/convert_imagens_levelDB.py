@@ -10,7 +10,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import random
 import glob
 from time import time
-from config import configMain
+from config import *
 import leveldb
 #import matplotlib.pyplot as plt
 
@@ -22,9 +22,9 @@ def read_image(image_name):
 	image = np.multiply(image, 1.0 / 255.0)
 	return image
 
-def read_image_gray_scale(self,image_name):
+def read_image_gray_scale(image_name):
 	image = Image.open(image_name).convert('L')
-	image = image.resize((self._input_size[0], self._input_size[1]), Image.ANTIALIAS)
+	image = image.resize((input_size[0],input_size[1]), Image.ANTIALIAS)
 	image = np.asarray(image)
 	image = image.astype(np.float32)
 	image = np.multiply(image, 1.0 / 255.0)
@@ -55,7 +55,7 @@ for i in range(len(im_names)):
 
 im_names_val = glob.glob(config.validation_path + "/*.jpg")
 im_names_val_labels = glob.glob(config.validation_path_ground_truth + "/*.jpg")
-im_names_trans = glob.glob(config.validation_transmission_path + "/*.jpg")
+#im_names_trans = glob.glob(config.validation_transmission_path + "/*.jpg")
 assert len(im_names_val) == len(im_names_val_labels)
 db.Put('num_examples_val',str(len(im_names_val)))
 for i in range(len(im_names_val)):

@@ -1,5 +1,5 @@
 """Deep dive libs"""
-from input_data_dive_test import DataSetManager
+from input_data_levelDB import DataSetManager
 from config import *
 
 """Structure"""
@@ -49,8 +49,8 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.abs(tf.sub(last_layer,  y_image))
-loss_mean = tf.reduce_mean(tf.abs(tf.sub(last_layer,  y_image)))
+loss_function = tf.abs(tf.sub(last_layer,  tf.reduce_mean(y_image,reduction_indices=[1,2])))
+loss_mean = tf.reduce_mean(tf.abs(tf.sub(last_layer,  tf.reduce_mean(y_image,reduction_indices=[1,2]))))
 # using the same function with a different name
 #print last.shape
 #loss_function_ssim = ssim_tf(tf,y_image,last_layer)

@@ -1,6 +1,8 @@
 """Deep dive libs"""
-from input_data_dive_test import DataSetManager
+from input_data_levelDB import DataSetManager
 from config import *
+from utils import *
+from features_optimization import optimize_feature
 
 """Structure"""
 import sys
@@ -25,127 +27,68 @@ from PIL import Image
 import subprocess
 import time
 from ssim_tf import ssim_tf
-from features_on_grid import put_features_on_grid_np
 from scipy import misc
 
 import json
 
 
 """Verifying options integrity"""
-config= configMain()
-
-def fig2data ( fig ):
-    """
-    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
-    @param fig a matplotlib figure
-    @return a numpy 3D array of RGBA values
-    """
-    # draw the renderer
-    fig.canvas.draw ( )
-    #fig.show()
- 
-    # Get the RGBA buffer from the figure
-    w,h = fig.canvas.get_width_height()
-    image = np.fromstring ( fig.canvas.tostring_rgb(), dtype=np.uint8 )
-    image.shape = (1, w, h,3 )
-
-
-
-    #image = np.asarray(image)
-    #image = image.astype(np.float32)
-    #image = np.multiply(image, 1.0 / 255.0)
-
-
- 
-    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
-    #buf = np.roll ( buf, 3, axis = 2 )
-  
-    #image = np.empty((1,w,h,3))
-    #image[0] = buf
-    return image
-
-
-
-
-
- 
-
+config = configMain()
 
 if config.restore not in (True, False):
   raise Exception('Wrong restore option. (True or False)')
+if config.save_features_to_disk not in (True, False):
+  raise Exception('Wrong save_features_to_disk option. (True or False)')
+if config.save_json_summary not in (True, False):
+  raise Exception('Wrong save_json_summary option. (True or False)')
+if config.use_tensorboard not in (True, False):
+  raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,config.validation_path_ground_truth, config.input_size, config.output_size)
+dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
+                         config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
-
 
 """ Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
-plot_image = tf.placeholder("float", name="output_image_1")
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-
-
-
-
-
 " Creating comparation metrics"
 y_image = y_
+loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
+#loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
+#loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
-loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
+train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, 
+                                    epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
 
-'''
-conv1,conv2,conv3,conv4,conv5 = extract_features(tf, x,config.input_size)
-
-conv1gt,conv2gt,conv3gt,conv4gt,conv5gt = extract_features(tf, y_,config.input_size)
-
-
-
-feature_loss1 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv1,conv1gt)),3),2),1)
-
-feature_loss2 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv2,conv2gt)),3),2),1)
-
-feature_loss3 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv3,conv3gt)),3),2),1)
-
-feature_loss4 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv4,conv4gt)),3),2),1)
-
-feature_loss5 =  tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.abs(tf.sub(conv5,conv5gt)),3),2),1)
-'''
-
-#loss_function = mse #+ 0.5*(0.2*feature_loss1 + 0.2*feature_loss2 + 0.2*feature_loss3 + 0.2*feature_loss4 + 0.2*feature_loss5)
-# using the same function with a different name
-#loss_validation = tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(last_layer, y_image),2)),name='Validation')
-#loss_function_ssim = ssim_tf(tf,y_image,last_layer)
-
-train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
 
 """Creating summaries"""
 
 tf.image_summary('Input', x)
-tf.image_summary('Output', last_layer)#tf.reshape(tf.image.grayscale_to_rgb(last_layer),[16,16,3,1]))
-tf.image_summary('GroundTruth',y_image) #tf.reshape(tf.image.grayscale_to_rgb(y_),[16,16,3,1]))
+tf.image_summary('Output', last_layer)
+tf.image_summary('GroundTruth', y_image)
 
-#test = tf.get_default_graph().get_tensor_by_name("scale_1/Scale1_first_relu:0")
-#tf.image_summary('Teste', put_features_on_grid(test, 8))
-#for key, l in config.features_list:
-# tf.image_summary('Features_map_'+key, put_features_on_grid(feature_maps[key], l))
-#for key in scalars:
-#  tf.scalar_summary(key,scalars[key])
-#for key in config.histograms_list:
-#  tf.histogram_summary('histograms_'+key, histograms[key])
-#tf.image_summary('Plot Image',plot_image)
-#tf.scalar_summary('Loss', loss_function)
-#tf.scalar_summary('Loss_SSIM', loss_function_ssim)
+
+
+# for key in config.features_list:
+#   ft_ops.append(feature_maps[key])
+ft_ops=[]
+for key in config.features_list:
+  ft_ops.append(feature_maps[key])
+for key in scalars:
+  tf.scalar_summary(key,scalars[key])
+for key in config.histograms_list:
+ tf.histogram_summary('histograms_'+key, histograms[key])
+tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
 
-#val  =tf.scalar_summary('Loss_Validation', loss_validation)
-
-sess.run(tf.initialize_all_variables())
-
-summary_writer = tf.train.SummaryWriter(config.summary_path,graph=sess.graph)
+init_op=tf.initialize_all_variables()
+sess.run(init_op)
+summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
 
 """Load a previous model if restore is set to True"""
 
@@ -155,31 +98,29 @@ ckpt = tf.train.get_checkpoint_state(config.models_path)
 
 dados={}
 dados['learning_rate']=config.learning_rate
-dados['beta1']=config.beta1=0.9
-dados['beta2']=config.beta2=0.999
-dados['epsilon']=config.epsilon=1e-08
-dados['use_locking']=config.use_locking=False
+dados['beta1']=config.beta1
+dados['beta2']=config.beta2
+dados['epsilon']=config.epsilon
+dados['use_locking']=config.use_locking
 dados['summary_writing_period']=config.summary_writing_period
 dados['validation_period']=config.validation_period
 dados['batch_size']=config.batch_size
 dados['variable_errors']=[]
 dados['time']=[]
 dados['variable_errors_val']=[]
-
-
-
 if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path  
     saver.restore(sess,ckpt.model_checkpoint_path)
-    if os.path.isfile(config.models_path +'summary.json'):
-      outfile= open(config.models_path +'summary.json','r+')
-      dados=json.load(outfile)
-      outfile.close()
-    else:
-      outfile= open(config.models_path +'summary.json','w')
-      json.dump(dados, outfile)
-      outfile.close()   
+    if config.save_json_summary:
+      if os.path.isfile(config.models_path +'summary.json'):
+        outfile= open(config.models_path +'summary.json','r+')
+        dados=json.load(outfile)
+        outfile.close()
+      else:
+        outfile= open(config.models_path +'summary.json','w')
+        json.dump(dados, outfile)
+        outfile.close()   
 else:
   ckpt = 0
 
@@ -198,17 +139,11 @@ if ckpt:
 else:
   initialIteration = 1
 
-
-
-print config.n_epochs*dataset.getNImagesDataset() 
-
-
 training_start_time =time.time()
-
+print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/config.batch_size):
-  epoch_number = 1.0+ (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
+  epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
 
-  batch = dataset.train.next_batch(config.batch_size)
   
   """Save the model every 300 iterations"""
   if i%300 == 0:
@@ -216,98 +151,106 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     print 'Model saved.'
 
   start_time = time.time()
+
+  batch = dataset.train.next_batch(config.batch_size)
   feedDict.update({x: batch[0], y_: batch[1]})
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
 
-  if i%2 == 0:
-    num_examples_per_step = config.batch_size 
-    examples_per_sec = num_examples_per_step / duration
+
+  if i%4 == 0:
+    examples_per_sec = config.batch_size / duration
     result=sess.run(loss_function, feed_dict=feedDict)
-    #print result
+    result > 0
     train_accuracy = sum(result)/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
-    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"%(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
+    print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"
+        %(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
-  if i%config.summary_writing_period == 1:
-    result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
-    dados['variable_errors'].append(result)
-    dados['time'].append(time.time() - training_start_time)
-    outfile= open(config.models_path +'summary.json','w')
-    json.dump(dados, outfile)
-    outfile.close()   
+  if i%config.summary_writing_period == 1 and (config.use_tensorboard or config.save_features_to_disk or config.save_json_summary):
+    output, result = sess.run([last_layer,loss_function], feed_dict=feedDict)
+    result= sum(result)/config.batch_size
+    if len(ft_ops) > 0:
+      ft_maps= sess.run(ft_ops, feed_dict=feedDict)
+    if config.save_json_summary:
+      dados['variable_errors'].append(float(result))
+      dados['time'].append(time.time() - training_start_time)
+      outfile = open(config.models_path +'summary.json','w')
+      json.dump(dados, outfile)
+      outfile.close()
+    if config.use_tensorboard:
+      summary_str = sess.run(summary_op, feed_dict=feedDict)
+      summary_writer.add_summary(summary_str,i)
+      if len(ft_ops) > 0:
+        for ft, key in zip(ft_maps,config.features_list):
+         ft_grid=put_features_on_grid_np(ft)
+         ft_name="Features_map_"+key
+         ft_summary=tf.image_summary(ft_name, ft_grid)
+         summary_str=sess.run(ft_summary)
+         summary_writer.add_summary(summary_str,i)
+    if(config.save_features_to_disk):
+      save_images_to_disk(output,batch[0],batch[1],config.summary_path)
+      save_feature_maps_to_disk(ft_maps,config.features_list,config.summary_path)
 
   if i%config.validation_period == 0:
+    error_per_transmission=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+    count_per_transmission=[0,0,0,0,0,0,0,0,0,0,0]
     validation_result_error = 0
-    for j in range(0,dataset.validation.num_examples/(config.batch_size_val)):
+    for j in range(0,dataset.getNImagesValidation()/(config.batch_size_val)):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
       feedDictVal = {x: batch_val[0], y_: batch_val[1]}
-      validation_result_error+= sum(sess.run(loss_function, feed_dict=feedDictVal))
-    dados['variable_errors_val'].append(validation_result_error/dataset.validation.num_examples)
-
-    outfile= open(config.models_path +'summary.json','w')
-    json.dump(dados, outfile)
-    outfile.close()   
-
-    #outfile.write("%f " % (validation_result_error/len(range(0,dataset.validation.num_examples/(config.batch_size_val)) ))  )
-
-    #outfile.write("\n")
-    #outfile.close()
-  #""" Writing summary, not at every iterations """
-  #if i%config.summary_writing_period == 1:
-    
-    #outfile = open(config.models_path +'variable_errors', 'a+')
-    #result= sum(sess.run(loss_function, feed_dict=feedDict))/config.batch_size
-
-    #outfile.write("%f " % result)
-
-    #outfile.write("\n")
-    #outfile.close()
-
-    #outfile = open(config.models_path +'time', 'a+')
-
-    #outfile.write("%f\n" % ())
- 
-    #print iteration
-    #print error_vec
-    #print val_error_vec
-
-   
-    #plot_image = fig2data(figure)
-    #print fig2data(figure).dtype
-
-    #addedimage = sess.run(z,feed_dict={plot_image:fig2data(figure)})
-
-    #summary_str = sess.run(summary_op, feed_dict=feedDict)
-    #summary_str_val,result 
-
-    #summary_writer.add_summary(summary_str,i)
-
-    
-
-    """ Check here the weights """
-    #result = Image.fromarray((result[0,:,:,:]*255).astype(np.uint8))
-    #result.save(config.validation_path_ground_truth + str(str(i)+ '.jpg'))
-    #summary_writer.add_summary(summary_str_val,i)
+      result = sess.run(loss_function, feed_dict=feedDictVal)
+      validation_result_error += sum(result)
+      if config.save_error_transmission:
+        for i in range(len(batch_val[2])):
+          index = int(float(batch_val[2][i]) * 10)
+          error_per_transmission[index] += result[i]
+          count_per_transmission[index] += 1
+        for i in range(10):
+          if count_per_transmission[i]!=0:
+            error_per_transmission[i] = error_per_transmission[i]/count_per_transmission[i]
+        dados['error_per_transmission']=error_per_transmission
 
 
-   # print config.features_list
-   # for key in config.features_list:
-   #   print key
-   #   print feature_maps
-   #   comp_feature_map = sess.run(feature_maps[key], feed_dict= feedDict)
-   #   grid_output = put_features_on_grid_np(comp_feature_map)
+    validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
+    if config.use_tensorboard:
+      val=tf.scalar_summary('Loss_Validation', validation_result_error)
+      summary_str_val=sess.run(val)
+      summary_writer.add_summary(summary_str_val,i)
+    if config.save_json_summary:
+      dados['variable_errors_val'].append(validation_result_error)
+      outfile= open(config.models_path +'summary.json','w')
+      json.dump(dados, outfile)
+      outfile.close()
 
-   #   print grid_output.shape
-   #   if not os.path.exists(config.models_path + '/' + key):
-   #     os.makedirs(config.models_path + '/' + key)
-
-   #  misc.imsave(config.models_path + '/' + key  + '/' + str(i) + '.png', grid_output)
-
-
-
-
-
+  if config.opt_every_iter>0 and i%config.opt_every_iter==0:
+    """ Optimization """
+    print("Running Optimization")
+    for key, channel in config.features_opt_list:
+        ft=feature_maps[key]
+        n_channels=ft.get_shape()[3]
+        if channel<0:
+          #otimiza todos os canais       
+          for ch in xrange(n_channels):
+            opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
+            if config.use_tensorboard:
+              opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
+              opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+              summary_str=sess.run(opt_summary)
+              summary_writer.add_summary(summary_str,i)
+          # salvando as imagens como bmp
+            if(config.save_features_to_disk):
+              save_optimazed_image_to_disk(opt_output,ch,n_channels,key,config.summary_path)
+        else:
+          opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
+          if config.use_tensorboard:
+            opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
+            opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+            summary_str=sess.run(opt_summary)
+            summary_writer.add_summary(summary_str,i)
+          # salvando as imagens como bmp
+          if(config.save_features_to_disk):
+            save_optimazed_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)

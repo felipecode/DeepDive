@@ -27,7 +27,7 @@ import glob
 # Set path as folder
 # Set overlap always rounded down.
 
-config= configPathfinder()
+config= configDehazenet()
 overlap_size = (7, 7)
 """ Configuration, set all the variables , including getting all the files that are going to be evaluated. """
 
