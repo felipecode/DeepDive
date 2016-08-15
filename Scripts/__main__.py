@@ -56,7 +56,7 @@ last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, 
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
+loss_function = tf.reduce_mean(tf.square(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
@@ -172,7 +172,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 
   if i%config.summary_writing_period == 1 and (config.use_tensorboard or config.save_features_to_disk or config.save_json_summary):
     output, result = sess.run([last_layer,loss_function], feed_dict=feedDict)
-    result= sum(result)/config.batch_size
+    result = np.mean(result)
     if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
     if config.save_json_summary:
@@ -196,8 +196,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       save_feature_maps_to_disk(ft_maps,config.features_list,config.summary_path)
 
   if i%config.validation_period == 0:
-    error_per_transmission=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
-    count_per_transmission=[0,0,0,0,0,0,0,0,0,0,0]
+    error_per_transmission=[0.0] * config.num_bins
+    count_per_transmission=[0] * config.num_bins
     validation_result_error = 0
     for j in range(0,dataset.getNImagesValidation()/(config.batch_size_val)):
       batch_val = dataset.validation.next_batch(config.batch_size_val)
@@ -206,10 +206,10 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       validation_result_error += sum(result)
       if config.save_error_transmission:
         for i in range(len(batch_val[2])):
-          index = int(float(batch_val[2][i]) * 10)
+          index = int(float(batch_val[2][i]) * config.num_bins)
           error_per_transmission[index] += result[i]
           count_per_transmission[index] += 1
-        for i in range(10):
+        for i in range(config.num_bins):
           if count_per_transmission[i]!=0:
             error_per_transmission[i] = error_per_transmission[i]/count_per_transmission[i]
         dados['error_per_transmission']=error_per_transmission

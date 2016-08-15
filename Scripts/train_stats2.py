@@ -51,7 +51,7 @@ plt.grid(True)
 #validation
 batch_number_val = range(validation_period,(len(variable_errors_val)+1)*validation_period,validation_period)
 plt.subplot(312)
-plt.plot(batch_number_val, variable_errors_val, 'r--')
+plt.plot(batch_number_val, variable_errors_val, 'r')
 axes = plt.gca()
 axes.set_ylim([0,1])
 plt.title('Validation')
@@ -63,7 +63,7 @@ error_per_transmission = dados['error_per_transmission']
 plt.subplot(313)
 plt.bar(x, error_per_transmission, color='blue')
 axes = plt.gca()
-axes.set_xlim([0,9])
+axes.set_xlim([0,config.num_bins])
 plt.title('Error per transmission mean')
 plt.grid(True)
 

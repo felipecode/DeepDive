@@ -62,12 +62,12 @@ def optimize_feature(input_size, x, feature_map):
    if i%config.blur_iter==0:
     images[0] = gaussian_filter(images[0], sigma=config.blur_width)
   #clip norm
-  norms=np.linalg.norm(images[0], axis=2, keepdims=True)
-  n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
-  images[0]=images[0]*(norms>=n_thrshld)
-  #clip contribution
-  contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
-  c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
-  images[0]=images[0]*(contribs>=c_thrshld)
+  # norms=np.linalg.norm(images[0], axis=2, keepdims=True)
+  # n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
+  # images[0]=images[0]*(norms>=n_thrshld)
+  # #clip contribution
+  # contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
+  # c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
+  # images[0]=images[0]*(contribs>=c_thrshld)
 
  return images[0].astype(np.float32)

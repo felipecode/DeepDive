@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 from time import time
 from config import *
 
-config=configMain()
+config=configDehazenet()
 
 def readImageFromDB(db, key, size):
   image =  np.reshape(np.fromstring(db.Get(key),dtype=np.float32),size)
@@ -74,40 +74,10 @@ class DataSet(object):
     for n in range(batch_size):
       #print (str(self._images_key[start+n]))
       images[n] = readImageFromDB(self._db,str(self._images_key[start+n]),self._input_size)
-      labels[n] = readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size)
-      transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
-    return images, labels, transmission
+      labels[n] = np.mean(readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size))
+      #transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
+    return images, labels#, transmission
 
-
-  def next_batch_normalized(self, batch_size):
-    """Return the next `batch_size` examples from this data set."""
-    start = self._index_in_epoch
-    self._index_in_epoch += batch_size
-    if self._index_in_epoch >= self._num_examples:
-      # Finished epoch
-      print 'end epoch'
-      self._epochs_completed += 1
-      # Shuffle the data
-      """ Shufling all the Images with a single permutation """
-      random.shuffle(self._images_key)
-      start = 0
-      self._index_in_epoch = batch_size
-      assert batch_size <= self._num_examples
-
-    if batch_size >  (self._num_examples - self._index_in_epoch):
-      batch_size = self._num_examples - self._index_in_epoch
-
-    images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
-    labels = np.empty((batch_size, self._output_size[0], self._output_size[1],self._output_size[2]))
-    
-    for n in range(batch_size):
-      images[n] = readImageFromDB(self._db,str(self._images_key[start+n]),self._input_size)
-      labels[n] = readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size)
-    imagemMedia = np.mean(images, axis=0)
-
-    for n in range(batch_size):
-      images[n] = images[n] - imagemMedia
-    return images, labels
 
 class DataSetManager(object):
 
@@ -115,7 +85,7 @@ class DataSetManager(object):
     self.input_size = input_size
     self.output_size = output_size
     self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
-    self.num_examples = 1000#int(self.db.Get('num_examples'))
+    self.num_examples = int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
     self.images_key = range(self.num_examples)
     self.images_key_val = range(self.num_examples_val)
