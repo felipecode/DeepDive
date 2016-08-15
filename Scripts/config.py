@@ -18,8 +18,8 @@ class configMain:
 		self.validation_transmission_path = '../../DeepDive-master/datasets/datasetDepthV5/ValidationTransmission/'
 		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV5/GroundTruth'
 		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV5/Validation/'
-		self.summary_path = '/tmp/new_10_8_dataset_reduzido/'
 		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV5/ValidationGroundTruth/'
+		self.summary_path = '/tmp/new_10_8_dataset_reduzido/'
 		self.models_path = 'models/new_10_8_dataset_reduzido/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
