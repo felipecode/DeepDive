@@ -75,8 +75,10 @@ tf.image_summary('GroundTruth', y_image)
 # for key in config.features_list:
 #   ft_ops.append(feature_maps[key])
 ft_ops=[]
+weights=[]
 for key in config.features_list:
-  ft_ops.append(feature_maps[key])
+  ft_ops.append(feature_maps[key][0])
+  weights.append(feature_maps[key][1])
 for key in scalars:
   tf.scalar_summary(key,scalars[key])
 for key in config.histograms_list:
@@ -185,15 +187,23 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       summary_str = sess.run(summary_op, feed_dict=feedDict)
       summary_writer.add_summary(summary_str,i)
       if len(ft_ops) > 0:
-        for ft, key in zip(ft_maps,config.features_list):
+        for ft, w, key in zip(ft_maps, weights, config.features_list):
          ft_grid=put_features_on_grid_np(ft)
          ft_name="Features_map_"+key
          ft_summary=tf.image_summary(ft_name, ft_grid)
          summary_str=sess.run(ft_summary)
          summary_writer.add_summary(summary_str,i)
+	 if w is not None:
+	 	kernel=w.eval()
+	 	kernel_grid=put_kernels_on_grid_np(kernel)
+	 	kernel_name="kernels_"+key
+	 	kernel_summary=tf.image_summary(kernel_name, kernel_grid)
+	 	kernel_summary_str=sess.run(kernel_summary)
+	 	summary_writer.add_summary(kernel_summary_str,i)
+
     if(config.save_features_to_disk):
       save_images_to_disk(output,batch[0],batch[1],config.summary_path)
-      save_feature_maps_to_disk(ft_maps,config.features_list,config.summary_path)
+      save_feature_maps_to_disk(ft_maps, weights, config.features_list,config.summary_path)
 
   if i%config.validation_period == 0:
     error_per_transmission=[0.0] * config.num_bins
@@ -230,7 +240,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     """ Optimization """
     print("Running Optimization")
     for key, channel in config.features_opt_list:
-        ft=feature_maps[key]
+        ft=feature_maps[key][0]
         n_channels=ft.get_shape()[3]
         if channel<0:
           #otimiza todos os canais       

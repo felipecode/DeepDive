@@ -47,9 +47,9 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 				os.makedirs(folder_name)
 			im.save(folder_name+"/"+file_name) 
 
-def save_feature_maps_to_disk(feature_maps,feature_names,path):
+def save_feature_maps_to_disk(feature_maps, weights, feature_names,path):
 
-	for ft, key in zip(feature_maps,feature_names):
+	for ft, w, key in zip(feature_maps, weights, feature_names):
 		ft_img = (ft - ft.min())
 		ft_img*=(255/ft_img.max())
 		for k in xrange(ft.shape[0]):
@@ -62,6 +62,17 @@ def save_feature_maps_to_disk(feature_maps,feature_names,path):
 				if not os.path.exists(folder_name):
 				  os.makedirs(folder_name)
 				im.save(folder_name+"/"+file_name)
+		if w is not None:
+			kernel=w.eval()
+			kernel_img = (kernel - kernel.min())
+			kernel_img*=(255/kernel_img.max())
+			for k in xrange(kernel_img.shape[3]):
+				im = Image.fromarray(kernel_img[:,:,:,k].astype(np.uint8))
+				k_file_name="W_"+str(k).zfill(len(str(ft.shape[3])))+".bmp"
+				k_folder_name=path+"/feature_maps/"+key+"/kernels"
+				if not os.path.exists(k_folder_name):
+					os.makedirs(k_folder_name)
+				im.save(k_folder_name+"/"+k_file_name)
 
 def put_features_on_grid_np (features, pad=4):
  iy=features.shape[1]
