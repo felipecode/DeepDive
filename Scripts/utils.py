@@ -47,9 +47,9 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 				os.makedirs(folder_name)
 			im.save(folder_name+"/"+file_name) 
 
-def save_feature_maps_to_disk(feature_maps, weights, feature_names,path):
+def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path):
 
-	for ft, w, key in zip(feature_maps, weights, feature_names):
+	for ft, w, d, key in zip(feature_maps, weights, deconv, feature_names):
 		ft_img = (ft - ft.min())
 		ft_img*=(255/ft_img.max())
 		for k in xrange(ft.shape[0]):
@@ -73,6 +73,20 @@ def save_feature_maps_to_disk(feature_maps, weights, feature_names,path):
 				if not os.path.exists(k_folder_name):
 					os.makedirs(k_folder_name)
 				im.save(k_folder_name+"/"+k_file_name)
+		if d is not None:
+			for i in xrange(d.shape[4]):
+				for j in xrange(d.shape[0]):
+					d_img=d[j,:,:,:,i]
+					d_img = (d_img-d_img.min())
+					d_img*=(255/d_img.max())
+					deconv_img=d_img.astype(np.uint8) 
+					im = Image.fromarray(deconv_img)
+					file_name=str(i).zfill(len(str(d.shape[4])))+".bmp"
+					im_folder=str(j).zfill(len(str(d.shape[0])))
+					folder_name=path+"/deconv/"+key+"/"+im_folder
+					if not os.path.exists(folder_name):
+				  		os.makedirs(folder_name)
+					im.save(folder_name+"/"+file_name)
 
 def put_features_on_grid_np (features, pad=4):
  iy=features.shape[1]
@@ -104,6 +118,23 @@ def put_kernels_on_grid_np (kernels, pad=4):
  kernels = np.transpose(kernels,(2,0,3,1,4))
  kernels = np.reshape(kernels,[square_size*iy,square_size*ix,3])
  return np.expand_dims(kernels, axis=0)
+
+def put_grads_on_grid_np (grads, pad=4):
+ b_size=grads.shape[0]
+ iy=grads.shape[1]
+ ix=grads.shape[2]
+ n_ch=grads.shape[4]
+ square_size=int(math.ceil(np.sqrt(n_ch)))
+ z_pad=square_size**2-n_ch
+ grads = np.pad(grads, [[0,0],[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ grads = np.transpose(grads,(0,1,2,4,3))
+ grads = np.reshape(grads,[b_size,iy,ix,square_size,square_size,3])
+ grads = np.pad(grads, [[0,0],[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ iy+=pad
+ ix+=pad
+ grads = np.transpose(grads,(0,3,1,4,2,5))
+ grads = np.reshape(grads,[b_size,square_size*iy,square_size*ix,3])
+ return grads
 
 def put_features_on_grid_tf (features, cy=1, pad=4):
  iy=tf.shape(features)[1]

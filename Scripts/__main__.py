@@ -3,6 +3,7 @@ from input_data_levelDB import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
+from features_optimization import normalize_std
 
 """Structure"""
 import sys
@@ -177,6 +178,23 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     result = np.mean(result)
     if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
+    else:
+      ft_maps= []
+
+    deconv=[]
+    if config.use_deconv:
+    	for ft_map, key in zip(ft_ops, config.features_list):
+		ft_shape=ft_map.get_shape()
+		img_shape=config.input_size
+		ft_deconv=np.empty((config.batch_size, img_shape[0], img_shape[1], img_shape[2], ft_shape[3]))
+    		for ch in xrange(ft_shape[3]):
+			score = tf.reduce_mean(ft_map[:,:,:,ch])
+			grad = tf.gradients(score, x)[0]
+			grad=normalize_std(grad)
+			deconv_op=tf.mul(x,grad)
+			ft_deconv[:,:,:,:,ch]=sess.run(grad, feed_dict=feedDict)
+		deconv.append(ft_deconv)
+
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
@@ -187,7 +205,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       summary_str = sess.run(summary_op, feed_dict=feedDict)
       summary_writer.add_summary(summary_str,i)
       if len(ft_ops) > 0:
-        for ft, w, key in zip(ft_maps, weights, config.features_list):
+        for ft, w, d, key in zip(ft_maps, weights, deconv, config.features_list):
          ft_grid=put_features_on_grid_np(ft)
          ft_name="Features_map_"+key
          ft_summary=tf.image_summary(ft_name, ft_grid)
@@ -200,10 +218,16 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 	 	kernel_summary=tf.image_summary(kernel_name, kernel_grid)
 	 	kernel_summary_str=sess.run(kernel_summary)
 	 	summary_writer.add_summary(kernel_summary_str,i)
+	 if d is not None:
+		deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
+		deconv_name="deconv_"+key
+		deconv_summary=tf.image_summary(deconv_name, deconv_grid)
+	 	deconv_summary_str=sess.run(deconv_summary)
+	 	summary_writer.add_summary(deconv_summary_str,i)
 
     if(config.save_features_to_disk):
       save_images_to_disk(output,batch[0],batch[1],config.summary_path)
-      save_feature_maps_to_disk(ft_maps, weights, config.features_list,config.summary_path)
+      save_feature_maps_to_disk(ft_maps, weights, deconv, config.features_list,config.summary_path)
 
   if i%config.validation_period == 0:
     error_per_transmission=[0.0] * config.num_bins
