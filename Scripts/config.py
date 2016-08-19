@@ -39,6 +39,7 @@ class configMain:
 		self.save_json_summary=True
 		self.save_error_transmission=True
 		self.use_tensorboard=True
+		self.use_deconv=True
 
 class configDehazenet:
 	def __init__(self):

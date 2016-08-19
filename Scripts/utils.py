@@ -3,7 +3,7 @@ import numpy as np
 import math
 from PIL import Image
 import os
-
+from features_optimization import normalize_std
 
 
 def save_optimazed_image_to_disk(opt_output, channel,n_channels,key,path):
@@ -147,3 +147,19 @@ def put_features_on_grid_tf (features, cy=1, pad=4):
  ix+=pad
  features = tf.transpose(features,(0,3,1,4,2))
  return tf.reshape(features,tf.pack([-1,cy*iy,cx*ix,1]))
+
+def deconvolution(x, feedDict, ft_maps, features_list, batch_size, input_size):
+	deconv=[]
+	sess=tf.get_default_session()
+	for ft_map, key in zip(ft_maps, features_list):
+		ft_shape=ft_map.get_shape()
+		img_shape=input_size
+		ft_deconv=np.empty((batch_size, img_shape[0], img_shape[1], img_shape[2], ft_shape[3]))
+    		for ch in xrange(ft_shape[3]):
+			score = tf.reduce_mean(ft_map[:,:,:,ch])
+			grad = tf.gradients(score, x)[0]
+			grad=normalize_std(grad)
+			deconv_op=tf.mul(x,grad)
+			ft_deconv[:,:,:,:,ch]=sess.run(grad, feed_dict=feedDict)
+		deconv.append(ft_deconv)
+	return deconv

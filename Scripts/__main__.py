@@ -3,7 +3,6 @@ from input_data_levelDB import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
-from features_optimization import normalize_std
 
 """Structure"""
 import sys
@@ -181,19 +180,10 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     else:
       ft_maps= []
 
-    deconv=[]
     if config.use_deconv:
-    	for ft_map, key in zip(ft_ops, config.features_list):
-		ft_shape=ft_map.get_shape()
-		img_shape=config.input_size
-		ft_deconv=np.empty((config.batch_size, img_shape[0], img_shape[1], img_shape[2], ft_shape[3]))
-    		for ch in xrange(ft_shape[3]):
-			score = tf.reduce_mean(ft_map[:,:,:,ch])
-			grad = tf.gradients(score, x)[0]
-			grad=normalize_std(grad)
-			deconv_op=tf.mul(x,grad)
-			ft_deconv[:,:,:,:,ch]=sess.run(grad, feed_dict=feedDict)
-		deconv.append(ft_deconv)
+	deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
+    else:
+    	deconv=[]
 
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
