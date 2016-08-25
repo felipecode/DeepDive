@@ -3,7 +3,7 @@ import numpy as np
 import math
 from PIL import Image
 import os
-
+from features_optimization import normalize_std
 
 
 def save_optimazed_image_to_disk(opt_output, channel,n_channels,key,path):
@@ -47,9 +47,9 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 				os.makedirs(folder_name)
 			im.save(folder_name+"/"+file_name) 
 
-def save_feature_maps_to_disk(feature_maps,feature_names,path):
+def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path):
 
-	for ft, key in zip(feature_maps,feature_names):
+	for ft, w, d, key in zip(feature_maps, weights, deconv, feature_names):
 		ft_img = (ft - ft.min())
 		ft_img*=(255/ft_img.max())
 		for k in xrange(ft.shape[0]):
@@ -62,6 +62,31 @@ def save_feature_maps_to_disk(feature_maps,feature_names,path):
 				if not os.path.exists(folder_name):
 				  os.makedirs(folder_name)
 				im.save(folder_name+"/"+file_name)
+		if w is not None:
+			kernel=w.eval()
+			kernel_img = (kernel - kernel.min())
+			kernel_img*=(255/kernel_img.max())
+			for k in xrange(kernel_img.shape[3]):
+				im = Image.fromarray(kernel_img[:,:,:,k].astype(np.uint8))
+				k_file_name="W_"+str(k).zfill(len(str(ft.shape[3])))+".bmp"
+				k_folder_name=path+"/feature_maps/"+key+"/kernels"
+				if not os.path.exists(k_folder_name):
+					os.makedirs(k_folder_name)
+				im.save(k_folder_name+"/"+k_file_name)
+		if d is not None:
+			for i in xrange(d.shape[4]):
+				for j in xrange(d.shape[0]):
+					d_img=d[j,:,:,:,i]
+					d_img = (d_img-d_img.min())
+					d_img*=(255/d_img.max())
+					deconv_img=d_img.astype(np.uint8) 
+					im = Image.fromarray(deconv_img)
+					file_name=str(i).zfill(len(str(d.shape[4])))+".bmp"
+					im_folder=str(j).zfill(len(str(d.shape[0])))
+					folder_name=path+"/deconv/"+key+"/"+im_folder
+					if not os.path.exists(folder_name):
+				  		os.makedirs(folder_name)
+					im.save(folder_name+"/"+file_name)
 
 def put_features_on_grid_np (features, pad=4):
  iy=features.shape[1]
@@ -94,6 +119,23 @@ def put_kernels_on_grid_np (kernels, pad=4):
  kernels = np.reshape(kernels,[square_size*iy,square_size*ix,3])
  return np.expand_dims(kernels, axis=0)
 
+def put_grads_on_grid_np (grads, pad=4):
+ b_size=grads.shape[0]
+ iy=grads.shape[1]
+ ix=grads.shape[2]
+ n_ch=grads.shape[4]
+ square_size=int(math.ceil(np.sqrt(n_ch)))
+ z_pad=square_size**2-n_ch
+ grads = np.pad(grads, [[0,0],[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ grads = np.transpose(grads,(0,1,2,4,3))
+ grads = np.reshape(grads,[b_size,iy,ix,square_size,square_size,3])
+ grads = np.pad(grads, [[0,0],[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ iy+=pad
+ ix+=pad
+ grads = np.transpose(grads,(0,3,1,4,2,5))
+ grads = np.reshape(grads,[b_size,square_size*iy,square_size*ix,3])
+ return grads
+
 def put_features_on_grid_tf (features, cy=1, pad=4):
  iy=tf.shape(features)[1]
  ix=tf.shape(features)[2]
@@ -105,3 +147,19 @@ def put_features_on_grid_tf (features, cy=1, pad=4):
  ix+=pad
  features = tf.transpose(features,(0,3,1,4,2))
  return tf.reshape(features,tf.pack([-1,cy*iy,cx*ix,1]))
+
+def deconvolution(x, feedDict, ft_maps, features_list, batch_size, input_size):
+	deconv=[]
+	sess=tf.get_default_session()
+	for ft_map, key in zip(ft_maps, features_list):
+		ft_shape=ft_map.get_shape()
+		img_shape=input_size
+		ft_deconv=np.empty((batch_size, img_shape[0], img_shape[1], img_shape[2], ft_shape[3]))
+    		for ch in xrange(ft_shape[3]):
+			score = tf.reduce_mean(ft_map[:,:,:,ch])
+			grad = tf.gradients(score, x)[0]
+			grad=normalize_std(grad)
+			deconv_op=tf.mul(x,grad)
+			ft_deconv[:,:,:,:,ch]=sess.run(grad, feed_dict=feedDict)
+		deconv.append(ft_deconv)
+	return deconv
