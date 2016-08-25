@@ -30,7 +30,8 @@ def read_image_gray_scale(image_name):
 	image = np.multiply(image, 1.0 / 255.0)
 	return image
 
-config = configMain()
+config = configDehazenet()
+
 db = leveldb.LevelDB(config.leveldb_path + 'db') #Salva antes do training path
 input_size = config.input_size
 output_size = config.output_size
@@ -38,6 +39,8 @@ output_size = config.output_size
 im_names = glob.glob(config.training_path + "/*.jpg")
 im_names_labels = glob.glob(config.training_path_ground_truth + "/*.jpg")
 im_names_trans = glob.glob(config.training_transmission_path + "/*.jpg")
+print len(im_names)
+print len(im_names_labels)
 assert len(im_names) == len(im_names_labels)
 db.Put('num_examples',str(len(im_names)))
 for i in range(len(im_names)):

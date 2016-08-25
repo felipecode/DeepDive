@@ -24,7 +24,7 @@ from PIL import Image
 import subprocess
 import time
 from ssim_tf import ssim_tf
-from features_on_grid import put_features_on_grid_tf
+from utils import *
 
 """Verifying options integrity"""
 config = configDehazenet()
@@ -90,7 +90,7 @@ ckpt = tf.train.get_checkpoint_state(config.models_path)
 print ckpt
 if config.restore:
   if ckpt.model_checkpoint_path:
-    print 'Restoring from ', ckpt.model_checkpoint_path  
+    print 'Restoring from ', ckpt.model_checkpoint_path   
     saver.restore(sess,ckpt.model_checkpoint_path)
 else:
   ckpt = 0

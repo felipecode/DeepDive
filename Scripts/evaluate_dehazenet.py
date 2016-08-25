@@ -27,7 +27,7 @@ import glob
 # Set path as folder
 # Set overlap always rounded down.
 
-config= configDehazenet()
+config = configDehazenet()
 overlap_size = (7, 7)
 """ Configuration, set all the variables , including getting all the files that are going to be evaluated. """
 
@@ -45,7 +45,7 @@ y_ = tf.placeholder("float", name="output_image")
 
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
-last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
+last_layer, dropoutDict, feature_maps, scalars, histograms = create_structure(tf, x, config.input_size, config.dropout)
 sess.run(tf.initialize_all_variables())
 saver = tf.train.Saver(tf.all_variables())
 
@@ -79,7 +79,9 @@ for name in im_names:
   """ Open one image and add some padding to it """
   
   height, width = im.shape[0], im.shape[1]
-  im= np.lib.pad(im, ((0,(config.input_size[0]-(height%config.input_size[0]))%config.input_size[0]),(0,(config.input_size[1]-(width%config.input_size[1]))%config.input_size[1]), (0,0)), 'constant', constant_values=(0))
+  im = np.lib.pad(im, ((0, (config.input_size[0] - (height%config.input_size[0]))
+      %config.input_size[0]),(0,(config.input_size[1]-(width%config.input_size[1]))
+      %config.input_size[1]), (0,0)), 'constant', constant_values=(0))
   height, width = im.shape[0], im.shape[1]
   im_output=np.zeros((height-config.input_size[0],width-config.input_size[1]),dtype=np.float32)
   #n_tiles=(height-config.input_size[0])*(width-config.input_size[1])

@@ -51,12 +51,14 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 """ Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
+#training = tf.placeholder(tf.bool, name="training")
+
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.reduce_mean(tf.square(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
+loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
@@ -135,7 +137,8 @@ lowest_val_iter = 1;
 
 feedDict=dropoutDict
 if ckpt:
-  initialIteration = int(ckpt.model_checkpoint_path.split('-')[1])
+  tamanho=len(ckpt.model_checkpoint_path.split('-'))
+  initialIteration = int(ckpt.model_checkpoint_path.split('-')[tamanho-1])
 else:
   initialIteration = 1
 
