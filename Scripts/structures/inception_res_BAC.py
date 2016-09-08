@@ -178,6 +178,7 @@ def create_structure(tf, x, input_size,dropout):
   W_C_conv5 = deep_dive.weight_variable_scaling([1,1,64,16], name='W_C_conv5')
   b_C_conv5 = deep_dive.bias_variable([16])
   C_conv5 = deep_dive.conv2d(C_concat, W_C_conv5,strides=[1, 1, 1, 1], padding='SAME') + b_C_conv5
+
   print C_conv5
   features["C_conv5"]=[C_conv5,None]
   histograms["W_C_conv5"]=W_C_conv5
@@ -186,10 +187,13 @@ def create_structure(tf, x, input_size,dropout):
 
   W_conv2 = deep_dive.weight_variable_scaling([3,3,16,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
-  conv2 = deep_dive.conv2d(C_conv5 + A_relu, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  
+  C_relu=tf.nn.relu(C_conv5 + A_relu)
+  features["C_relu"]=[C_relu,None]
+  conv2 = deep_dive.conv2d(C_relu, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
 
   one_constant = tf.constant(1)
-  C_brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(conv2, name = "relu"), name = "brelu")
+  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(conv2, name = "relu"), name = "brelu")
 
-  features["C_relu"]=[C_brelu,None]
+  features["brelu"]=[brelu,None]
   return C_brelu,dropoutDict,features,scalars,histograms

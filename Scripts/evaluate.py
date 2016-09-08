@@ -58,7 +58,7 @@ dout4 = tf.placeholder("float")
 
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
-h_conv3, dropoutDict,_,_,_ = create_structure(tf, x, config.input_size,[dout1,dout2,dout3,dout4],True)
+h_conv3, dropoutDict,_,_,_ = create_structure(tf, x, config.input_size,[dout1,dout2,dout3,dout4],False)
 feedDict=dropoutDict
 
 sess.run(tf.initialize_all_variables())

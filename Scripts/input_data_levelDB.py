@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 from time import time
 from config import *
 
-config=configDehazenet()
+config=configMain()
 
 def readImageFromDB(db, key, size):
   image =  np.reshape(np.fromstring(db.Get(key),dtype=np.float32),size)
@@ -74,7 +74,7 @@ class DataSet(object):
     for n in range(batch_size):
       #print (str(self._images_key[start+n]))
       images[n] = readImageFromDB(self._db,str(self._images_key[start+n]),self._input_size)
-      labels[n] = np.mean(readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size))
+      labels[n] = readImageFromDB(self._db,str(self._images_key[start+n])+"label",self._output_size)
       #transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
     return images, labels#, transmission
 

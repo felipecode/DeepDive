@@ -12,15 +12,15 @@ class configMain:
 		self.batch_size_val = 96
 		self.variable_names = []#['MSE']
 		self.n_epochs = 240   # the number of epochs that we are going to run
-		self.leveldb_path = '../../DeepDive-master/datasets/datasetDepthV5/'
-		self.training_path = '../../DeepDive-master/datasets/datasetDepthV5/Training/'
-		self.training_transmission_path = '../../DeepDive-master/datasets/datasetDepthV5/Transmission/'
-		self.validation_transmission_path = '../../DeepDive-master/datasets/datasetDepthV5/ValidationTransmission/'
-		self.training_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV5/GroundTruth/'
-		self.validation_path = '../../DeepDive-master/datasets/datasetDepthV5/Validation/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/new_18_8semBN/'
-		self.validation_path_ground_truth = '../../DeepDive-master/datasets/datasetDepthV5/ValidationGroundTruth/'
-		self.models_path = 'models/new_18_8/'
+		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/'
+		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Training/'
+		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Transmission/'
+		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
+		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
+		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN'
+		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
@@ -40,6 +40,20 @@ class configMain:
 		self.save_error_transmission=False
 		self.num_bins = 10
 		self.use_tensorboard=True
+		self.use_deconv=False
+
+class configConvert:
+	def __init__(self):
+		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/'
+		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Training/'
+		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Transmission/'
+		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
+		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
+		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
+		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.input_size = (224, 224, 3)
+		self.output_size = (224, 224, 3)
+		self.ground_truth_size = (224,224, 3)
 
 
 class configDehazenet:

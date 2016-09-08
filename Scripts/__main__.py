@@ -1,5 +1,5 @@
 """Deep dive libs"""
-from input_data_levelDB import DataSetManager
+from input_data_dive_test import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -92,6 +92,7 @@ saver = tf.train.Saver(tf.all_variables())
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
+
 summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
 
 """Load a previous model if restore is set to True"""
@@ -155,8 +156,9 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
     print 'Model saved.'
 
-  start_time = time.time()
 
+  start_time = time.time()
+  
   batch = dataset.train.next_batch(config.batch_size)
   feedDict.update({x: batch[0], y_: batch[1]})
   sess.run(train_step, feed_dict=feedDict)
