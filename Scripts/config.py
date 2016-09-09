@@ -4,6 +4,8 @@
 class configMain:
 	def __init__(self):
 		self.learning_rate = 1e-5
+		self.lr_update_value = 5
+		self.lr_update_period = 20
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-08
@@ -77,13 +79,13 @@ class configDehazenet:
 		self.restore = False
 		self.dropout = []
 		self.features_list=[]#["conv1",4],["conv2",4],["conv3",8],["conv4",8],["pool1",8], ["pool2", 8]]
-		#self.features_list=[]#["conv1_1", 4], ["conv1_2", 4], ["conv1_3", 4], ["conv1_4", 4], 
-							#["pool1_1",8], ["pool1_2",8], ["pool1_3",8], ["pool1_4",8], ["pool2", 8], 
+		#self.features_list=[]#["conv1_1", 4], ["conv1_2", 4], ["conv1_3", 4], ["conv1_4", 4],
+							#["pool1_1",8], ["pool1_2",8], ["pool1_3",8], ["pool1_4",8], ["pool2", 8],
 							#["incep1_3_3", 4], ["incep1_5_5", 4], ["incep1_7_7", 4]]
 		self.histograms_list=[]#"W_conv1","b_conv1","W_conv2","b_conv2","W_conv3", "b_conv3", "W_conv4", "b_conv4"]
 		#self.histograms_list=[]#"W_conv1_1", "W_conv1_2", "W_conv1_3", "W_conv1_4", "b_conv1_1",
-							  #"b_conv1_2", "b_conv1_3", "b_conv1_4", "W_incep1_3_3","b_incep1_3_3", 
-							  #"W_incep1_5_5", "b_incep1_5_5", "W_incep1_7_7", "b_incep1_7_7", 
+							  #"b_conv1_2", "b_conv1_3", "b_conv1_4", "W_incep1_3_3","b_incep1_3_3",
+							  #"W_incep1_5_5", "b_incep1_5_5", "W_incep1_7_7", "b_incep1_7_7",
 							  #"W_conv_2", "b_conv_2"]
 		self.evaluate_path = '/home/nautec/DeepDive/Local_results/'
 		self.evaluate_out_path ='/home/nautec/DeepDive/Local_results/RealImageTransmission/output_paper/'
