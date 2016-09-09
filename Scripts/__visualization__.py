@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -33,10 +33,8 @@ import json
 
 
 """Verifying options integrity"""
-config = configMain()
+config = configVisualization()
 
-if config.restore not in (True, False):
-  raise Exception('Wrong restore option. (True or False)')
 if config.save_features_to_disk not in (True, False):
   raise Exception('Wrong save_features_to_disk option. (True or False)')
 if config.save_json_summary not in (True, False):
@@ -49,7 +47,7 @@ dataset = DataSetManager(config.training_path, config.validation_path, config.tr
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
-x = tf.placeholder("float", name="input_image")
+x = tf.placeholder("float", shape= (None,)+config.input_size , name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
@@ -98,18 +96,18 @@ if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
 
-dados={}
-dados['learning_rate']=config.learning_rate
-dados['beta1']=config.beta1
-dados['beta2']=config.beta2
-dados['epsilon']=config.epsilon
-dados['use_locking']=config.use_locking
-dados['summary_writing_period']=config.summary_writing_period
-dados['validation_period']=config.validation_period
-dados['batch_size']=config.batch_size
-dados['variable_errors']=[]
-dados['time']=[]
-dados['variable_errors_val']=[]
+#dados={}
+#dados['learning_rate']=config.learning_rate
+#dados['beta1']=config.beta1
+#dados['beta2']=config.beta2
+#dados['epsilon']=config.epsilon
+#dados['use_locking']=config.use_locking
+#dados['summary_writing_period']=config.summary_writing_period
+#dados['validation_period']=config.validation_period
+#dados['batch_size']=config.batch_size
+#dados['variable_errors']=[]
+#dados['time']=[]
+#dados['variable_errors_val']=[]
 
 if ckpt:
  print 'Restoring from ', ckpt.model_checkpoint_path  
@@ -147,13 +145,41 @@ for key in config.features_list:
   init_img=np.zeros((config.input_size[0],config.input_size[1],config.input_size[2],feature_maps[key][0].get_shape()[3]))
   "descobrindo o tamanho de cada feature map"
   test_input=np.zeros((config.batch_size,config.input_size[0],config.input_size[1],config.input_size[2]))
-  ft_test=sess.run(feature_maps[key][0], feed_dict={x: test_input, y_: test_input})
-  ft_shape=ft_test.shape
-  init_actv=np.zeros((config.input_size[0],config.input_size[1],ft_test.shape[3]))
-  init_avg=np.zeros((ft_test.shape[3]))
+  ft_shape=feature_maps[key][0].get_shape()
+  init_actv=np.zeros((config.input_size[0],config.input_size[1],ft_shape[3]))
+  init_avg=np.zeros((ft_shape[3]))
   max_actvs.append((init_img,init_actv,init_avg))
 
-print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
+#print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
+
+""" Optimization """
+print("Running Optimization")
+for key, channel in config.features_opt_list:
+        ft=feature_maps[key][0]
+        n_channels=ft.get_shape()[3]
+        if channel<0:
+          #otimiza todos os canais       
+          for ch in xrange(n_channels):
+            opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
+            if config.use_tensorboard:
+              opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
+              opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+              summary_str=sess.run(opt_summary)
+              summary_writer.add_summary(summary_str,0)
+          # salvando as imagens como bmp
+            if(config.save_features_to_disk):
+              save_optimazed_image_to_disk(opt_output,ch,n_channels,key,config.summary_path)
+        else:
+          opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
+          if config.use_tensorboard:
+            opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
+            opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
+            summary_str=sess.run(opt_summary)
+            summary_writer.add_summary(summary_str,0)
+          # salvando as imagens como bmp
+          if(config.save_features_to_disk):
+            save_optimazed_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
+
 for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
   epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   start_time = time.time()
@@ -200,9 +226,9 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 #      ft_maps= []
 
     if config.use_deconv:
-	deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
+      deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
     else:
-    	deconv=[]
+      deconv=[None]*len(ft_ops)
 
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
@@ -215,38 +241,39 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
       summary_writer.add_summary(summary_str,i)
       if len(ft_ops) > 0:
         for ft, w, d, actv, key in zip(ft_maps, weights, deconv, max_actvs, config.features_list):
-         ft_grid=put_features_on_grid_np(ft)
-         ft_name="Features_map_"+key
-         ft_summary=tf.image_summary(ft_name, ft_grid)
-         summary_str=sess.run(ft_summary)
-         summary_writer.add_summary(summary_str,i)
-	 if w is not None:
-	 	kernel=w.eval()
-	 	kernel_grid=put_kernels_on_grid_np(kernel)
-	 	kernel_name="kernels_"+key
-	 	kernel_summary=tf.image_summary(kernel_name, kernel_grid)
-	 	kernel_summary_str=sess.run(kernel_summary)
-	 	summary_writer.add_summary(kernel_summary_str,i)
-	 if d is not None:
-		deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
-		deconv_name="deconv_"+key
-		deconv_summary=tf.image_summary(deconv_name, deconv_grid)
-	 	deconv_summary_str=sess.run(deconv_summary)
-	 	summary_writer.add_summary(deconv_summary_str,i)
-	 max_actv_grid=put_features_on_grid_np(np.expand_dims(actv[1].astype(np.float32),0))
-	 max_actv_name="max_actv_"+key
-	 max_actv_summary=tf.image_summary(max_actv_name, max_actv_grid)
-	 max_actv_summary_str=sess.run(max_actv_summary)
-	 summary_writer.add_summary(max_actv_summary_str,i)
-	 max_actv_input_grid=put_grads_on_grid_np(np.expand_dims(actv[0].astype(np.float32),0))
-	 max_actv_input_name="max_actv_inputs_"+key
-	 max_actv_input_summary=tf.image_summary(max_actv_input_name, max_actv_input_grid)
-	 max_actv_input_summary_str=sess.run(max_actv_input_summary)
-	 summary_writer.add_summary(max_actv_input_summary_str,i)
+          ft_grid=put_features_on_grid_np(ft)
+          ft_name="Features_map_"+key
+          ft_summary=tf.image_summary(ft_name, ft_grid)
+          summary_str=sess.run(ft_summary)
+          summary_writer.add_summary(summary_str,i)
+          if w is not None:
+            kernel=w.eval()
+            kernel_grid=put_kernels_on_grid_np(kernel)
+            kernel_name="kernels_"+key
+            kernel_summary=tf.image_summary(kernel_name, kernel_grid)
+            kernel_summary_str=sess.run(kernel_summary)
+            summary_writer.add_summary(kernel_summary_str,i)
+          if d is not None:
+            deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
+            deconv_name="deconv_"+key
+            deconv_summary=tf.image_summary(deconv_name, deconv_grid)
+            deconv_summary_str=sess.run(deconv_summary)
+            summary_writer.add_summary(deconv_summary_str,i)
+          max_actv_grid=put_features_on_grid_np(np.expand_dims(actv[1].astype(np.float32),0))
+          max_actv_name="max_actv_"+key
+          max_actv_summary=tf.image_summary(max_actv_name, max_actv_grid)
+          max_actv_summary_str=sess.run(max_actv_summary)
+          summary_writer.add_summary(max_actv_summary_str,i)
+          max_actv_input_grid=put_grads_on_grid_np(np.expand_dims(actv[0].astype(np.float32),0))
+          max_actv_input_name="max_actv_inputs_"+key
+          max_actv_input_summary=tf.image_summary(max_actv_input_name, max_actv_input_grid)
+          max_actv_input_summary_str=sess.run(max_actv_input_summary)
+          summary_writer.add_summary(max_actv_input_summary_str,i)
 
     if(config.save_features_to_disk):
       save_images_to_disk(output,batch[0],batch[1],config.summary_path)
       save_feature_maps_to_disk(ft_maps, weights, deconv, config.features_list,config.summary_path)
+      save_max_activations_to_disk(max_actvs, config.features_list,config.summary_path)
 
 #  if i%config.validation_period == 0:
 #    error_per_transmission=[0.0] * config.num_bins
@@ -280,30 +307,4 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 #      outfile.close()
 
 #  if config.opt_every_iter>0 and i%config.opt_every_iter==0:
-""" Optimization """
-print("Running Optimization")
-for key, channel in config.features_opt_list:
-        ft=feature_maps[key][0]
-        n_channels=ft.get_shape()[3]
-        if channel<0:
-          #otimiza todos os canais       
-          for ch in xrange(n_channels):
-            opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
-            if config.use_tensorboard:
-              opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
-              opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-              summary_str=sess.run(opt_summary)
-              summary_writer.add_summary(summary_str,i)
-          # salvando as imagens como bmp
-            if(config.save_features_to_disk):
-              save_optimazed_image_to_disk(opt_output,ch,n_channels,key,config.summary_path)
-        else:
-          opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
-          if config.use_tensorboard:
-            opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
-            opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-            summary_str=sess.run(opt_summary)
-            summary_writer.add_summary(summary_str,i)
-          # salvando as imagens como bmp
-          if(config.save_features_to_disk):
-            save_optimazed_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
+

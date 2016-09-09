@@ -188,7 +188,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     if config.use_deconv:
 	deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
     else:
-    	deconv=[]
+    	deconv=[None]*len(ft_ops)
 
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))

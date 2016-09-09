@@ -88,6 +88,29 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 				  		os.makedirs(folder_name)
 					im.save(folder_name+"/"+file_name)
 
+
+def save_max_activations_to_disk(max_activation, feature_names,path):
+
+	for actv, key in zip(max_activation, feature_names):
+		for i in xrange(actv[0].shape[3]):
+			actv_img=actv[0][:,:,:,i]
+			actv_img = (actv_img-actv_img.min())
+			actv_img*=(255/actv_img.max())
+			max_actv_img=actv_img.astype(np.uint8)
+			input_img=actv[1][:,:,i]
+			input_img = (input_img-input_img.min())
+			input_img*=(255/input_img.max())
+			max_actv_input_img=input_img.astype(np.uint8) 
+			actv_im = Image.fromarray(max_actv_input_img)
+			actv_file_name=str(i).zfill(len(str(actv[0].shape[3])))+".bmp"
+			input_im = Image.fromarray(max_actv_img)
+			input_file_name="input_"+str(i).zfill(len(str(actv[0].shape[3])))+".bmp"
+			folder_name=path+"/feature_maps/"+key+"/max_activations"
+			if not os.path.exists(folder_name):
+		  		os.makedirs(folder_name)
+			actv_im.save(folder_name+"/"+actv_file_name)
+			input_im.save(folder_name+"/"+input_file_name)
+
 def put_features_on_grid_np (features, pad=4):
  iy=features.shape[1]
  ix=features.shape[2]
