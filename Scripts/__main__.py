@@ -1,5 +1,5 @@
 """Deep dive libs"""
-from input_data_levelDB import DataSetManager
+from input_data_dive_test import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -44,24 +44,27 @@ if config.save_json_summary not in (True, False):
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
+dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,
                          config.validation_path_ground_truth, config.input_size, config.output_size)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
+lr = tf.placeholder("float", name = "learning_rate")
+#training = tf.placeholder(tf.bool, name="training")
+
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.reduce_mean(tf.square(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
+loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
 
-train_step = tf.train.AdamOptimizer(learning_rate=config.learning_rate, beta1=config.beta1, beta2=config.beta2, 
-                                    epsilon=config.epsilon, use_locking=config.use_locking).minimize(loss_function)
+train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
+                                    use_locking=config.use_locking).minimize(loss_function)
 
 
 """Creating summaries"""
@@ -90,6 +93,7 @@ saver = tf.train.Saver(tf.all_variables())
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
+
 summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
 
 """Load a previous model if restore is set to True"""
@@ -112,7 +116,7 @@ dados['time']=[]
 dados['variable_errors_val']=[]
 if config.restore:
   if ckpt:
-    print 'Restoring from ', ckpt.model_checkpoint_path  
+    print 'Restoring from ', ckpt.model_checkpoint_path
     saver.restore(sess,ckpt.model_checkpoint_path)
     if config.save_json_summary:
       if os.path.isfile(config.models_path +'summary.json'):
@@ -122,7 +126,7 @@ if config.restore:
       else:
         outfile= open(config.models_path +'summary.json','w')
         json.dump(dados, outfile)
-        outfile.close()   
+        outfile.close()
 else:
   ckpt = 0
 
@@ -137,25 +141,26 @@ lowest_val_iter = 1;
 
 feedDict=dropoutDict
 if ckpt:
-  initialIteration = int(ckpt.model_checkpoint_path.split('-')[1])
+  tamanho=len(ckpt.model_checkpoint_path.split('-'))
+  initialIteration = int(ckpt.model_checkpoint_path.split('-')[tamanho-1])
 else:
   initialIteration = 1
 
 training_start_time =time.time()
+
 print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/config.batch_size):
-  epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
-
-  
+  epoch_number = (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   """Save the model every 300 iterations"""
   if i%300 == 0:
     saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
     print 'Model saved.'
 
+
   start_time = time.time()
 
   batch = dataset.train.next_batch(config.batch_size)
-  feedDict.update({x: batch[0], y_: batch[1]})
+  feedDict.update({x: batch[0], y_: batch[1]}, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
@@ -257,7 +262,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
         ft=feature_maps[key][0]
         n_channels=ft.get_shape()[3]
         if channel<0:
-          #otimiza todos os canais       
+          #otimiza todos os canais
           for ch in xrange(n_channels):
             opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
             if config.use_tensorboard:

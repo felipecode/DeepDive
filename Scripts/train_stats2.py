@@ -41,7 +41,7 @@ batch_size=dados['batch_size']
 #train
 batch_number = range(0,len(variable_errors)*summary_writing_period,summary_writing_period)
 plt.figure(1)
-plt.subplot(311)
+plt.subplot(211)
 plt.plot(batch_number, variable_errors, 'b')
 axes = plt.gca()
 axes.set_ylim([0,1])
@@ -50,7 +50,7 @@ plt.grid(True)
 
 #validation
 batch_number_val = range(validation_period,(len(variable_errors_val)+1)*validation_period,validation_period)
-plt.subplot(312)
+plt.subplot(212)
 plt.plot(batch_number_val, variable_errors_val, 'r')
 axes = plt.gca()
 axes.set_ylim([0,1])
@@ -58,13 +58,13 @@ plt.title('Validation')
 plt.grid(True)
 
 #validation
-x = range(10)
-error_per_transmission = dados['error_per_transmission']
-plt.subplot(313)
-plt.bar(x, error_per_transmission, color='blue')
-axes = plt.gca()
-axes.set_xlim([0,config.num_bins])
-plt.title('Error per transmission mean')
-plt.grid(True)
+# x = range(10)
+# error_per_transmission = dados['error_per_transmission']
+# plt.subplot(313)
+# plt.bar(x, error_per_transmission, color='blue')
+# axes = plt.gca()
+# axes.set_xlim([0,config.num_bins])
+# plt.title('Error per transmission mean')
+# plt.grid(True)
 
 plt.show()

@@ -127,6 +127,8 @@ class DataSetManager(object):
 
     self.im_names_val = glob.glob(path_val + "/*.jpg")
     self.im_names_val_labels = glob.glob(path_val_truth + "/*.jpg")
+    self.im_names_val = self.im_names_val[:1000]
+    self.im_names_val_labels = self.im_names_val_labels[:1000]
     self.train = DataSet(self.im_names, self.im_names_labels,input_size,output_size)
     self.validation = DataSet(self.im_names_val, self.im_names_val_labels,input_size,output_size)
 

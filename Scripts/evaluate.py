@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -50,6 +50,7 @@ print im_names
 
 x = tf.placeholder("float", name="input_image")
 y_ = tf.placeholder("float", name="output_image")
+# training = tf.placeholder(tf.bool, name="training")
 dout1 = tf.placeholder("float")
 dout2 = tf.placeholder("float")
 dout3 = tf.placeholder("float")
@@ -57,7 +58,7 @@ dout4 = tf.placeholder("float")
 
 # sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.InteractiveSession()
-h_conv3, dropoutDict,_,_,_ = create_structure(tf, x, config.input_size,[dout1,dout2,dout3,dout4])
+h_conv3, dropoutDict,_,_,_ = create_structure(tf, x, config.input_size,[dout1,dout2,dout3,dout4],False)
 feedDict=dropoutDict
 
 sess.run(tf.initialize_all_variables())

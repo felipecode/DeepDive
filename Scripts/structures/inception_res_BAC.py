@@ -72,12 +72,12 @@ def create_structure(tf, x, input_size,dropout):
   histograms["W_B_conv5"]=W_B_conv5
   histograms["b_B_conv5"]=b_B_conv5
 
-  B_relu = B_conv5+ conv1
+  B_relu = tf.nn.relu(B_conv5+ conv1)
   features["B_relu"]=[B_relu,None]
 
   W_A_conv1 = deep_dive.weight_variable_scaling([1,1,16,6], name='W_A_conv1')
   b_A_conv1 = deep_dive.bias_variable([6])
-  A_conv1 = deep_dive.conv2d(B_conv5, W_A_conv1,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv1
+  A_conv1 = deep_dive.conv2d(B_relu, W_A_conv1,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv1
   print A_conv1
   features["A_conv1"]=[A_conv1,None]
   histograms["W_A_conv1"]=W_A_conv1
@@ -85,7 +85,7 @@ def create_structure(tf, x, input_size,dropout):
 
   W_A_conv2 = deep_dive.weight_variable_scaling([1,1,16,6], name='W_A_conv2')
   b_A_conv2 = deep_dive.bias_variable([6])
-  A_conv2 = deep_dive.conv2d(B_conv5, W_A_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv2
+  A_conv2 = deep_dive.conv2d(B_relu, W_A_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv2
   print A_conv2
   features["A_conv2"]=[A_conv2,None]
   histograms["W_A_conv2"]=W_A_conv2
@@ -101,7 +101,7 @@ def create_structure(tf, x, input_size,dropout):
 
   W_A_conv4 = deep_dive.weight_variable_scaling([1,1,16,8], name='W_A_conv4')
   b_A_conv4 = deep_dive.bias_variable([8])
-  A_conv4 = deep_dive.conv2d(B_conv5, W_A_conv4,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv4
+  A_conv4 = deep_dive.conv2d(B_relu, W_A_conv4,strides=[1, 1, 1, 1], padding='SAME') + b_A_conv4
   print A_conv4
   features["A_conv4"]=[A_conv4,None]
   histograms["W_A_conv4"]=W_A_conv4
@@ -133,7 +133,7 @@ def create_structure(tf, x, input_size,dropout):
   histograms["W_A_conv7"]=W_A_conv7
   histograms["b_A_conv7"]=b_A_conv7
 
-  A_relu = A_conv7+ B_relu
+  A_relu = tf.nn.relu(A_conv7+ B_relu)
   
   features["A_relu"]=[A_relu,None]
 
@@ -178,6 +178,7 @@ def create_structure(tf, x, input_size,dropout):
   W_C_conv5 = deep_dive.weight_variable_scaling([1,1,64,16], name='W_C_conv5')
   b_C_conv5 = deep_dive.bias_variable([16])
   C_conv5 = deep_dive.conv2d(C_concat, W_C_conv5,strides=[1, 1, 1, 1], padding='SAME') + b_C_conv5
+
   print C_conv5
   features["C_conv5"]=[C_conv5,None]
   histograms["W_C_conv5"]=W_C_conv5
@@ -186,8 +187,13 @@ def create_structure(tf, x, input_size,dropout):
 
   W_conv2 = deep_dive.weight_variable_scaling([3,3,16,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
-  conv2 = deep_dive.conv2d(C_conv5 + A_relu, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
-
-  C_relu = tf.nn.relu(conv2)
+  
+  C_relu=tf.nn.relu(C_conv5 + A_relu)
   features["C_relu"]=[C_relu,None]
-  return C_relu,dropoutDict,features,scalars,histograms
+  conv2 = deep_dive.conv2d(C_relu, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+
+  one_constant = tf.constant(1)
+  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(conv2, name = "relu"), name = "brelu")
+
+  features["brelu"]=[brelu,None]
+  return C_brelu,dropoutDict,features,scalars,histograms
