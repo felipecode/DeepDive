@@ -18,9 +18,9 @@ class configMain:
 		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
 		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
