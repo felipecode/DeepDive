@@ -34,7 +34,7 @@ def lap_normalize(img, scale_n=4):
 
 def optimize_feature(input_size, x, feature_map):
  config= configOptimization()
- images = np.empty((1, input_size[0], input_size[1], input_size[2]))
+ images = np.empty((1,)+input_size)
  img_noise = np.random.uniform(low=0.0, high=1.0, size=input_size)
  config= configOptimization()
  #graph=sess.graph

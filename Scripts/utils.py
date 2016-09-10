@@ -177,7 +177,7 @@ def deconvolution(x, feedDict, ft_maps, features_list, batch_size, input_size):
 	for ft_map, key in zip(ft_maps, features_list):
 		ft_shape=ft_map.get_shape()
 		img_shape=input_size
-		ft_deconv=np.empty((batch_size, img_shape[0], img_shape[1], img_shape[2], ft_shape[3]))
+		ft_deconv=np.empty((batch_size,)+img_shape+(ft_shape[3],))
     		for ch in xrange(ft_shape[3]):
 			score = tf.reduce_mean(ft_map[:,:,:,ch])
 			grad = tf.gradients(score, x)[0]
