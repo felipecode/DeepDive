@@ -78,17 +78,17 @@ def create_structure(tf, x, input_size,dropout,training=True):
   features.update(featuresC)
   histograms.update(histogramsC)
 
-  last_layerB,featuresB,histogramsB=inception_res_B(tf=tf, x=last_layerC,training=training,base_name="second")
-  features.update(featuresB)
-  histograms.update(histogramsB)
+  last_layerB2,featuresB2,histogramsB2=inception_res_B(tf=tf, x=last_layerC,training=training,base_name="second")
+  features.update(featuresB2)
+  histograms.update(histogramsB2)
 
-  last_layerA,featuresA,histogramsA=inception_res_A(tf=tf, x=last_layerB,training=training,base_name="second")
-  features.update(featuresA)
-  histograms.update(histogramsA)
+  last_layerA2,featuresA2,histogramsA2=inception_res_A(tf=tf, x=last_layerB2,training=training,base_name="second")
+  features.update(featuresA2)
+  histograms.update(histogramsA2)
 
-  last_layerC,featuresC,histogramsC=inception_res_C(tf=tf, x=last_layerA,training=training,base_name="second")
-  features.update(featuresC)
-  histograms.update(histogramsC)
+  last_layerC2,featuresC2,histogramsC2=inception_res_C(tf=tf, x=last_layerA2,training=training,base_name="second")
+  features.update(featuresC2)
+  histograms.update(histogramsC2)
 
 
 
@@ -217,7 +217,7 @@ def create_structure(tf, x, input_size,dropout,training=True):
   W_conv2 = deep_dive.weight_variable_scaling([3,3,16,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
 
-  conv2 = deep_dive.conv2d(last_layerC, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  conv2 = deep_dive.conv2d(last_layerC2, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
 
   one_constant = tf.constant(1)
 
