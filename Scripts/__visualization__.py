@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC_normalized import create_structure
+from inception_res_BAC import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -142,12 +142,12 @@ training_start_time =time.time()
 max_actvs=[]
 for key in config.features_list:
   "inicializando a variavel da ativacao maxima"
-  init_img=np.zeros((config.input_size[0],config.input_size[1],config.input_size[2],feature_maps[key][0].get_shape()[3]))
+  init_img=np.zeros(config.input_size+(feature_maps[key][0].get_shape()[3],))
   "descobrindo o tamanho de cada feature map"
-  test_input=np.zeros((config.batch_size,config.input_size[0],config.input_size[1],config.input_size[2]))
+  test_input=np.zeros((config.batch_size,)+config.input_size)
   ft_shape=feature_maps[key][0].get_shape()
-  init_actv=np.zeros((config.input_size[0],config.input_size[1],ft_shape[3]))
-  init_avg=np.zeros((ft_shape[3]))
+  init_actv=np.zeros(ft_shape[1:])
+  init_avg=np.zeros(ft_shape[3])
   max_actvs.append((init_img,init_actv,init_avg))
 
 #print config.n_epochs*dataset.getNImagesDataset()/config.batch_size

@@ -20,9 +20,15 @@ class configMain:
 		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
+<<<<<<< HEAD
 		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/new_10_9BN/'
 		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
 		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_10_9BN/'
+=======
+		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
+>>>>>>> 5a58e0a14725a748943cd096132ed53c0c720759
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
@@ -50,8 +56,8 @@ class configVisualization:
 		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
 		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
 		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
@@ -97,8 +103,8 @@ class configDehazenet:
 		self.training_transmission_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasetDepth16-2/Transmission/'
 		self.training_path_ground_truth = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasetDepth16-2/GroundTruth/'
 		self.validation_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasetDepth16-2/Validation/'
-		self.summary_path = '/tmp/22_8_transmission/'
 		self.validation_path_ground_truth = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasetDepth16-2/ValidationTransmission/'
+		self.summary_path = '/tmp/22_8_transmission/'
 		self.models_path = 'models/22_8_transmission/'
 		self.input_size = (16, 16, 3)
 		self.output_size = (16, 16)
