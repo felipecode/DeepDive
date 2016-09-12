@@ -48,7 +48,7 @@ print im_names
 
 """ Declare the placeholders variables """
 
-x = tf.placeholder("float", name="input_image")
+x = tf.placeholder("float",shape=(None,)+config.input_size, name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 # training = tf.placeholder(tf.bool, name="training")
 dout1 = tf.placeholder("float")

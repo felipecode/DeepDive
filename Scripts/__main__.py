@@ -49,7 +49,7 @@ dataset = DataSetManager(config.training_path, config.validation_path, config.tr
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
-x = tf.placeholder("float", name="input_image")
+x = tf.placeholder("float",(None,)+config.input_size, name="input_image")
 y_ = tf.placeholder("float", name="output_image")
 lr = tf.placeholder("float", name = "learning_rate")
 #training = tf.placeholder(tf.bool, name="training")
@@ -87,6 +87,7 @@ for key in scalars:
 for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
+tf.scalar_summary('learning_rate',lr)
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
@@ -114,6 +115,7 @@ dados['batch_size']=config.batch_size
 dados['variable_errors']=[]
 dados['time']=[]
 dados['variable_errors_val']=[]
+dados['learning_rate_update']=[]
 if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path
@@ -160,7 +162,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   start_time = time.time()
 
   batch = dataset.train.next_batch(config.batch_size)
-  feedDict.update({x: batch[0], y_: batch[1]}, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))
+  feedDict.update({x: batch[0], y_: batch[1], lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))})
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time

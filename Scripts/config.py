@@ -5,7 +5,7 @@ class configMain:
 	def __init__(self):
 		self.learning_rate = 1e-5
 		self.lr_update_value = 5
-		self.lr_update_period = 20
+		self.lr_update_period = 10
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-08
@@ -20,9 +20,9 @@ class configMain:
 		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/new_10_9BN/'
 		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_10_9BN/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.ground_truth_size = (224,224, 3)
@@ -30,12 +30,9 @@ class configMain:
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
 		self.validation_period = 120
-		self.histograms_list=["W_B_conv1","W_B_conv2","W_B_conv3","W_B_conv4","W_B_conv5",
-								"W_A_conv1","W_A_conv2","W_A_conv3","W_A_conv4","W_A_conv5",
-								"W_A_conv6","W_A_conv7","W_C_conv1","W_C_conv2","W_C_conv3",
-								"W_C_conv4","W_C_conv5"]
-		self.features_list=["B_conv4"]
-		self.features_opt_list=[["B_conv4",0]]
+		self.histograms_list=[]
+		self.features_list=[]
+		self.features_opt_list=[]
 		self.opt_every_iter= 0
 		self.save_features_to_disk=True
 		self.save_json_summary=True

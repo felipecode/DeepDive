@@ -3,7 +3,11 @@ Returns the last tensor of the network's structure
 followed dropout and features dictionaries to be summarised
 Input is tensorflow class and an input placeholder.  
 """
+from inception_res_A_normalized import *
 
+from inception_res_B_normalized import *
+
+from inception_res_C_normalized import *
 def create_structure(tf, x, input_size,dropout,training=True):
  
   """Deep dive libs"""
@@ -57,12 +61,38 @@ def create_structure(tf, x, input_size,dropout,training=True):
   Raises:
     ValueError: if rank or last dimension of `inputs` is undefined.
   """
-
-  x_image = x#tf.contrib.layers.batch_norm(x,center=True,updates_collections=None,scale=True,is_training=training)
+  x_image=x
+  x_image = tf.contrib.layers.batch_norm(x_image,center=True,updates_collections=None,scale=True,is_training=training)
   W_conv1 = deep_dive.weight_variable_scaling([3,3,3,16],name='W_conv1')
   conv1 = tf.contrib.layers.batch_norm(deep_dive.conv2d(x_image, W_conv1,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
 
-  W_B_conv1 = deep_dive.weight_variable_scaling([1,1,16,24], name='W_B_conv1')
+  last_layerB,featuresB,histogramsB=inception_res_B(tf=tf, x=conv1,training=training,base_name="first")
+  features.update(featuresB)
+  histograms.update(histogramsB)
+
+  last_layerA,featuresA,histogramsA=inception_res_A(tf=tf, x=last_layerB,training=training,base_name="first")
+  features.update(featuresA)
+  histograms.update(histogramsA)
+
+  last_layerC,featuresC,histogramsC=inception_res_C(tf=tf, x=last_layerA,training=training,base_name="first")
+  features.update(featuresC)
+  histograms.update(histogramsC)
+
+  last_layerB,featuresB,histogramsB=inception_res_B(tf=tf, x=last_layerC,training=training,base_name="second")
+  features.update(featuresB)
+  histograms.update(histogramsB)
+
+  last_layerA,featuresA,histogramsA=inception_res_A(tf=tf, x=last_layerB,training=training,base_name="second")
+  features.update(featuresA)
+  histograms.update(histogramsA)
+
+  last_layerC,featuresC,histogramsC=inception_res_C(tf=tf, x=last_layerA,training=training,base_name="second")
+  features.update(featuresC)
+  histograms.update(histogramsC)
+
+
+
+  """W_B_conv1 = deep_dive.weight_variable_scaling([1,1,16,24], name='W_B_conv1')
   B_conv1 = tf.contrib.layers.batch_norm(deep_dive.conv2d(conv1, W_B_conv1,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
   print B_conv1
   features["B_conv1"] = [B_conv1,None]
@@ -178,14 +208,16 @@ def create_structure(tf, x, input_size,dropout,training=True):
   C_conv5 = tf.contrib.layers.batch_norm(deep_dive.conv2d(C_concat, W_C_conv5,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
   print C_conv5
   features["C_conv5"]=[C_conv5,None]
-  histograms["W_C_conv5"]=W_C_conv5
+  histograms["W_C_conv5"]=W_C_conv5 
   
   C_relu = tf.nn.relu(C_conv5 + A_relu)
-  features["C_relu"]=[C_relu,None]
+  features["C_relu"]=[C_relu,None]  """
+
+
   W_conv2 = deep_dive.weight_variable_scaling([3,3,16,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
 
-  conv2 = deep_dive.conv2d(C_relu, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  conv2 = deep_dive.conv2d(last_layerC, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
 
   one_constant = tf.constant(1)
 
