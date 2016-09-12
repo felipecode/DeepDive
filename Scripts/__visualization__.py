@@ -96,29 +96,29 @@ if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
 
-#dados={}
+dados={}
 #dados['learning_rate']=config.learning_rate
 #dados['beta1']=config.beta1
 #dados['beta2']=config.beta2
 #dados['epsilon']=config.epsilon
 #dados['use_locking']=config.use_locking
-#dados['summary_writing_period']=config.summary_writing_period
+dados['summary_writing_period']=config.summary_writing_period
 #dados['validation_period']=config.validation_period
-#dados['batch_size']=config.batch_size
-#dados['variable_errors']=[]
-#dados['time']=[]
-#dados['variable_errors_val']=[]
+dados['batch_size']=config.batch_size
+dados['variable_errors']=[]
+dados['time']=[]
+dados['variable_errors_val']=[]
 
 if ckpt:
  print 'Restoring from ', ckpt.model_checkpoint_path  
  saver.restore(sess,ckpt.model_checkpoint_path)
  if config.save_json_summary:
-    if os.path.isfile(config.models_path +'summary.json'):
-      outfile= open(config.models_path +'summary.json','r+')
+    if os.path.isfile(config.summary_path +'visualization_summary.json'):
+      outfile= open(config.summary_path +'visualization_summary.json','r+')
       dados=json.load(outfile)
       outfile.close()
     else:
-      outfile= open(config.models_path +'summary.json','w')
+      outfile= open(config.summary_path +'visualization_summary.json','w')
       json.dump(dados, outfile)
       outfile.close()   
 else:
@@ -149,6 +149,8 @@ for key in config.features_list:
   init_actv=np.zeros(ft_shape[1:])
   init_avg=np.zeros(ft_shape[3])
   max_actvs.append((init_img,init_actv,init_avg))
+  for i in xrange(ft_shape[3]):
+  	dados[key+str(i).zfill(len(str(ft_shape[3])))]=[]
 
 #print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 
@@ -196,15 +198,19 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
       ft_maps= []
 
   for ft, actv, key in zip(ft_maps, max_actvs, config.features_list):
+	batch_actv_sum=np.zeros(ft.shape[3])
 	"Percorre todo o batch"
 	for j in xrange(ft.shape[0]):
 		"percorre os canais do feature map"
 		for k in xrange(ft.shape[3]):
 			ft_avg=np.average(ft[j,:,:,k])
+			batch_actv_sum[k]+=ft_avg
 			if ft_avg>actv[2][k]:
 				actv[0][:,:,:,k]=batch[0][j,:,:,:]
 				actv[1][:,:,k]=ft[j,:,:,k]
 				actv[2][k]=ft_avg
+	for k in xrange(ft.shape[3]):
+  		dados[key+str(k).zfill(len(str(ft_shape[3])))].append(batch_actv_sum[k]/ft.shape[0])
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration
@@ -233,7 +239,7 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
-      outfile = open(config.models_path +'summary.json','w')
+      outfile = open(config.summary_path +'visualization_summary.json','w')
       json.dump(dados, outfile)
       outfile.close()
     if config.use_tensorboard:
