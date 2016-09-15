@@ -48,8 +48,14 @@ axes.set_ylim([0,1])
 plt.title('Train')
 plt.grid(True)
 
-for key in dados.keys():
-	print key
+dkeys=dados.keys()
+for ft_key in config.features_list:
+	ft_dic = [k for k in dkeys if ft_key in k]
+	ft_dic.sort()
+	print ft_dic
+
+#for key in dados.keys() if "conv" in key:
+#	print key
 
 #validation
 #batch_number_val = range(validation_period,(len(variable_errors_val)+1)*validation_period,validation_period)
