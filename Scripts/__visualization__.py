@@ -150,7 +150,7 @@ for key in config.features_list:
   init_avg=np.zeros(ft_shape[3])
   max_actvs.append((init_img,init_actv,init_avg))
   for i in xrange(ft_shape[3]):
-  	dados[key+str(i).zfill(len(str(ft_shape[3])))]=[]
+  	dados[key+"_"+str(i).zfill(len(str(ft_shape[3])))]=[]
 
 #print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 
