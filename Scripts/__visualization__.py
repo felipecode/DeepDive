@@ -204,13 +204,13 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 		"percorre os canais do feature map"
 		for k in xrange(ft.shape[3]):
 			ft_avg=np.average(ft[j,:,:,k])
-			batch_actv_sum[k]+=ft_avg
 			if ft_avg>actv[2][k]:
 				actv[0][:,:,:,k]=batch[0][j,:,:,:]
 				actv[1][:,:,k]=ft[j,:,:,k]
 				actv[2][k]=ft_avg
 	for k in xrange(ft.shape[3]):
-  		dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(batch_actv_sum[k]/ft.shape[0])
+  		dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(float(np.average(ft[:,:,:,k])))
+		#dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(0)
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration
@@ -247,6 +247,11 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
       summary_writer.add_summary(summary_str,i)
       if len(ft_ops) > 0:
         for ft, w, d, actv, key in zip(ft_maps, weights, deconv, max_actvs, config.features_list):
+          for ch in xrange(ft.shape[3]):
+		summary_name=key+"_"+str(ch).zfill(len(str(ft.shape[3])))
+          	avg_actv_summary=tf.scalar_summary(summary_name, np.average(ft[:,:,:,ch]))
+          	avg_actv_str = sess.run(avg_actv_summary, feed_dict=feedDict)
+          	summary_writer.add_summary(avg_actv_str,i) 		
           ft_grid=put_features_on_grid_np(ft)
           ft_name="Features_map_"+key
           ft_summary=tf.image_summary(ft_name, ft_grid)
