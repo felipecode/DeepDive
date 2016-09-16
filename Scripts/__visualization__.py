@@ -210,7 +210,6 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 				actv[2][k]=ft_avg
 	for k in xrange(ft.shape[3]):
   		dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(float(np.average(ft[:,:,:,k])))
-		#dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(0)
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration
