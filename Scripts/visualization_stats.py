@@ -49,10 +49,26 @@ plt.title('Train')
 plt.grid(True)
 
 dkeys=dados.keys()
-for ft_key in config.features_list:
+for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list))):
 	ft_dic = [k for k in dkeys if ft_key in k]
 	ft_dic.sort()
-	print ft_dic
+	plt.figure(ft_ind+2)
+	min_val=1
+	max_val=0
+	for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):
+		ch_actvs=dados[ft_ch_key]
+		min_val=min(min_val,min(ch_actvs))
+		max_val=max(max_val,max(ch_actvs))
+		batch_number = range(0,len(ch_actvs))
+		plt.subplot(211)
+		plt.plot(batch_number, ch_actvs, 'b')
+		axes = plt.gca()
+		axes.set_ylim([min_val,max_val])
+		plt.title(ft_key)
+		plt.grid(True)
+		print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(ch_actvs), np.var(ch_actvs)))
+		
+		
 
 #for key in dados.keys() if "conv" in key:
 #	print key
