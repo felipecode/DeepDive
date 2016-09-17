@@ -56,22 +56,21 @@ for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list)
 	ft_dic.sort()
 	if len(ft_dic)>0:
 		plt.figure(ft_ind+2)
-		plt.title(ft_key)
 		plt.grid(True)
+		plt.suptitle(ft_key)
 		axes = plt.gca()
 		min_val=1
 		max_val=0
 		batch_number = range(0,len(dados[ft_dic[0]]))
-		num_plots=min(10,len(ft_dic))
-		for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):
+		num_plots=min(10,len(ft_dic))	
+		for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):			
 			if ch%10==0:			
 				plt.subplot(math.ceil(len(ft_dic)/10.0),1,1+ch/10.0)
 				plt.gca().set_color_cycle(color_cycle)
-				print ch, ch/10.0
 			ch_actvs=dados[ft_ch_key]
 			min_val=min(min_val,min(ch_actvs))
 			max_val=max(max_val,max(ch_actvs))
-			plt.plot(batch_number, ch_actvs, label=ft_ch_key)
+			plt.plot(batch_number, ch_actvs, label=str(ch).zfill(len(str(len(ft_dic)))))
 			plt.legend()	
 			print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(ch_actvs), np.var(ch_actvs)))
 		diff=max_val-min_val		
