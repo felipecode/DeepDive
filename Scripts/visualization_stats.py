@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import math
 from config import *
 from random import *
 import colorsys
@@ -41,7 +42,7 @@ batch_size=dados['batch_size']
 #train
 batch_number = range(0,len(variable_errors)*summary_writing_period,summary_writing_period)
 plt.figure(1)
-plt.subplot(211)
+plt.subplot(111)
 plt.plot(batch_number, variable_errors, 'b')
 axes = plt.gca()
 axes.set_ylim([0,1])
@@ -49,26 +50,33 @@ plt.title('Train')
 plt.grid(True)
 
 dkeys=dados.keys()
+color_cycle = ["red", "blue", "yellow", "green", "black", "purple", "turquoise", "magenta", "orange", "chartreuse"]
 for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list))):
-	ft_dic = [k for k in dkeys if ft_key in k]
+	ft_dic = [k for k in dkeys if (ft_key+"_") in k]
 	ft_dic.sort()
-	plt.figure(ft_ind+2)
-	min_val=1
-	max_val=0
-	for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):
-		ch_actvs=dados[ft_ch_key]
-		min_val=min(min_val,min(ch_actvs))
-		max_val=max(max_val,max(ch_actvs))
-		batch_number = range(0,len(ch_actvs))
-		plt.subplot(211)
-		plt.plot(batch_number, ch_actvs, 'b')
-		axes = plt.gca()
-		axes.set_ylim([min_val,max_val])
+	if len(ft_dic)>0:
+		plt.figure(ft_ind+2)
 		plt.title(ft_key)
 		plt.grid(True)
-		print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(ch_actvs), np.var(ch_actvs)))
-		
-		
+		axes = plt.gca()
+		min_val=1
+		max_val=0
+		batch_number = range(0,len(dados[ft_dic[0]]))
+		num_plots=min(10,len(ft_dic))
+		for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):
+			if ch%10==0:			
+				plt.subplot(math.ceil(len(ft_dic)/10.0),1,1+ch/10.0)
+				plt.gca().set_color_cycle(color_cycle)
+				print ch, ch/10.0
+			ch_actvs=dados[ft_ch_key]
+			min_val=min(min_val,min(ch_actvs))
+			max_val=max(max_val,max(ch_actvs))
+			plt.plot(batch_number, ch_actvs, label=ft_ch_key)
+			plt.legend()	
+			print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(ch_actvs), np.var(ch_actvs)))
+		diff=max_val-min_val		
+		axes.set_ylim([min_val-0.05*diff,max_val+0.05*diff])	
+				
 
 #for key in dados.keys() if "conv" in key:
 #	print key
