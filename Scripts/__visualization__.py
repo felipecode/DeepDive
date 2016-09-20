@@ -113,12 +113,12 @@ if ckpt:
  print 'Restoring from ', ckpt.model_checkpoint_path  
  saver.restore(sess,ckpt.model_checkpoint_path)
  if config.save_json_summary:
-    if os.path.isfile(config.summary_path +'visualization_summary.json'):
-      outfile= open(config.summary_path +'visualization_summary.json','r+')
+    if os.path.isfile(config.summary_path +'summary.json'):
+      outfile= open(config.summary_path +'summary.json','r+')
       dados=json.load(outfile)
       outfile.close()
     else:
-      outfile= open(config.summary_path +'visualization_summary.json','w')
+      outfile= open(config.summary_path +'summary.json','w')
       json.dump(dados, outfile)
       outfile.close()   
 else:
