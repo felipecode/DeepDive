@@ -25,8 +25,8 @@ def generate_ncolors(num_colors):
 """ Here I read the files """
 config = configVisualization()
 
-if os.path.isfile(config.summary_path +'visualization_summary.json'):
-      outfile= open(config.summary_path +'visualization_summary.json','r')
+if os.path.isfile(config.summary_path +'summary.json'):
+      outfile= open(config.summary_path +'summary.json','r')
       dados=json.load(outfile)
 else:
 	print 'Arquivo inexistente.'

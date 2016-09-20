@@ -238,7 +238,7 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
     if config.save_json_summary:
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
-      outfile = open(config.summary_path +'visualization_summary.json','w')
+      outfile = open(config.summary_path +'summary.json','w')
       json.dump(dados, outfile)
       outfile.close()
     if config.use_tensorboard:
