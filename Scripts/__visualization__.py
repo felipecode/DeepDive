@@ -149,8 +149,7 @@ for key in config.features_list:
   init_actv=np.zeros(ft_shape[1:])
   init_avg=np.zeros(ft_shape[3])
   max_actvs.append((init_img,init_actv,init_avg))
-  for i in xrange(ft_shape[3]):
-  	dados[key+"_"+str(i).zfill(len(str(ft_shape[3])))]=[]
+  dados[key]=[]
 
 #print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 
@@ -208,8 +207,8 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 				actv[0][:,:,:,k]=batch[0][j,:,:,:]
 				actv[1][:,:,k]=ft[j,:,:,k]
 				actv[2][k]=ft_avg
-	for k in xrange(ft.shape[3]):
-  		dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(float(np.average(ft[:,:,:,k])))
+  	dados[key].append(ft.mean(axis=(0,1,2)).tolist())
+	
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration

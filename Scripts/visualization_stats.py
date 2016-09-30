@@ -49,32 +49,24 @@ axes.set_ylim([0,1])
 plt.title('Train')
 plt.grid(True)
 
-dkeys=dados.keys()
 color_cycle = ["red", "blue", "yellow", "green", "black", "purple", "turquoise", "magenta", "orange", "chartreuse"]
 for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list))):
-	ft_dic = [k for k in dkeys if (ft_key+"_") in k]
-	ft_dic.sort()
-	if len(ft_dic)>0:
+	if(ft_key in dados):
+		actvs = np.array(dados[ft_key])
 		plt.figure(ft_ind+2)
 		plt.grid(True)
 		plt.suptitle(ft_key)
 		axes = plt.gca()
-		min_val=1
-		max_val=0
-		batch_number = range(0,len(dados[ft_dic[0]]))
-		num_plots=min(10,len(ft_dic))	
-		for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):			
+		n_channels=actvs.shape[1]
+		batch_number = range(0,actvs.shape[0])
+		num_plots=min(10,n_channels)	
+		for ch in xrange(n_channels):			
 			if ch%10==0:			
-				plt.subplot(math.ceil(len(ft_dic)/10.0),1,1+ch/10.0)
+				plt.subplot(math.ceil(n_channels/10.0),1,1+ch/10.0)
 				plt.gca().set_color_cycle(color_cycle)
-			ch_actvs=dados[ft_ch_key]
-			min_val=min(min_val,min(ch_actvs))
-			max_val=max(max_val,max(ch_actvs))
-			plt.plot(batch_number, ch_actvs, label=str(ch).zfill(len(str(len(ft_dic)))))
+			plt.plot(batch_number, actvs[:,ch], label=str(ch).zfill(len(str(n_channels))))
 			plt.legend()	
-			print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(ch_actvs), np.var(ch_actvs)))
-		diff=max_val-min_val		
-		axes.set_ylim([min_val-0.05*diff,max_val+0.05*diff])	
+			print("feature map %s, channel%d: avegare %f, variance %f"%(ft_key, ch, np.mean(actvs[:,ch]), np.var(actvs[:,ch])))
 				
 
 #for key in dados.keys() if "conv" in key:
