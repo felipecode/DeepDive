@@ -65,30 +65,37 @@ def create_structure(tf, x, input_size,dropout,training=True):
   x_image = tf.contrib.layers.batch_norm(x_image,center=True,updates_collections=None,scale=True,is_training=training)
   W_conv1 = deep_dive.weight_variable_scaling([3,3,3,16],name='W_conv1')
   conv1 = tf.contrib.layers.batch_norm(deep_dive.conv2d(x_image, W_conv1,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
+  features["conv1"]=[conv1, W_conv1]
 
   last_layerB,featuresB,histogramsB=inception_res_B(tf=tf, x=conv1,training=training,base_name="first")
   features.update(featuresB)
   histograms.update(histogramsB)
+  features["B"]=[last_layerB, None]
 
   last_layerA,featuresA,histogramsA=inception_res_A(tf=tf, x=last_layerB,training=training,base_name="first")
   features.update(featuresA)
   histograms.update(histogramsA)
+  features["A"]=[last_layerA, None]
 
   last_layerC,featuresC,histogramsC=inception_res_C(tf=tf, x=last_layerA,training=training,base_name="first")
   features.update(featuresC)
   histograms.update(histogramsC)
+  features["C"]=[last_layerC, None]
 
   last_layerB2,featuresB2,histogramsB2=inception_res_B(tf=tf, x=last_layerC,training=training,base_name="second")
   features.update(featuresB2)
   histograms.update(histogramsB2)
+  features["B2"]=[last_layerB2, None]
 
   last_layerA2,featuresA2,histogramsA2=inception_res_A(tf=tf, x=last_layerB2,training=training,base_name="second")
   features.update(featuresA2)
   histograms.update(histogramsA2)
+  features["A2"]=[last_layerA2, None]
 
   last_layerC2,featuresC2,histogramsC2=inception_res_C(tf=tf, x=last_layerA2,training=training,base_name="second")
   features.update(featuresC2)
   histograms.update(histogramsC2)
+  features["C2"]=[last_layerC2, None]
 
 
 
@@ -218,6 +225,7 @@ def create_structure(tf, x, input_size,dropout,training=True):
   b_conv2 = deep_dive.bias_variable([3])
 
   conv2 = deep_dive.conv2d(last_layerC2, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  features["conv2"]=[conv2, W_conv2]
 
   one_constant = tf.constant(1)
 
