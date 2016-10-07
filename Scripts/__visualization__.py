@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -181,7 +181,8 @@ for key, channel in config.features_opt_list:
           if(config.save_features_to_disk):
             save_optimazed_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
 
-for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
+print("Images in dataset: %d"%(dataset.getNImagesDataset()))
+for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1):
   epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   start_time = time.time()
 
