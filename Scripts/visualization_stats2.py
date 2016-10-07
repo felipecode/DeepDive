@@ -29,7 +29,8 @@ config = configVisualization()
 dados=[]
 names=[]
 
-json_files=sorted(glob.glob(config.summary_path+"/*.json"))
+#json_files=sorted(glob.glob(config.summary_path+"/*.json"))
+json_files=sorted(glob.glob("../summary/*.json"))
 
 for f in json_files:
  outfile=open(f,'r')
@@ -88,6 +89,6 @@ for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list)
 					plt.plot(np.full(actvs[i].shape[0],ch,dtype=int), actvs[i][:,ch], '.', label=names[i])
 				else:
 					plt.plot(np.full(actvs[i].shape[0],ch,dtype=int), actvs[i][:,ch], '.')
-							
-plt.legend(numpoints=1)			
+		plt.legend(numpoints=1)						
+		
 plt.show()
