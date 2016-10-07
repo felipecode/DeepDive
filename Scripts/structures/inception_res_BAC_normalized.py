@@ -225,7 +225,7 @@ def create_structure(tf, x, input_size,dropout,training=True):
   b_conv2 = deep_dive.bias_variable([3])
 
   conv2 = deep_dive.conv2d(last_layerC2, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
-  features["conv2"]=[conv2, W_conv2]
+  features["conv2"]=[conv2, None]
 
   one_constant = tf.constant(1)
 
