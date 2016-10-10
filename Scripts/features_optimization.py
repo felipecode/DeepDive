@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from config import configOptimization
-
+from scipy.ndimage.filters import gaussian_filter
 
 
 def normalize_std(img, eps=1e-10):
@@ -56,18 +56,21 @@ def optimize_feature(input_size, x, feature_map):
   # normalizing the gradient, so the same step size should work for different layers and networks
   images[0] = images[0]+g*step_size
   #l2 decay
-  images[0] = images[0]*(1-config.decay)
+  if config.decay:
+   images[0] = images[0]*(1-config.decay)
   #gaussian blur
   if config.blur_iter:
    if i%config.blur_iter==0:
     images[0] = gaussian_filter(images[0], sigma=config.blur_width)
   #clip norm
-  # norms=np.linalg.norm(images[0], axis=2, keepdims=True)
-  # n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
-  # images[0]=images[0]*(norms>=n_thrshld)
+  if config.norm_pct_thrshld:
+   norms=np.linalg.norm(images[0], axis=2, keepdims=True)
+   n_thrshld=np.sort(norms, axis=None)[int(norms.size*config.norm_pct_thrshld)]
+   images[0]=images[0]*(norms>=n_thrshld)
   # #clip contribution
-  # contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
-  # c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
-  # images[0]=images[0]*(contribs>=c_thrshld)
+  if config.contrib_pct_thrshld:
+   contribs=np.sum(images[0]*g[0], axis=2, keepdims=True)
+   c_thrshld=np.sort(contribs, axis=None)[int(contribs.size*config.contrib_pct_thrshld)]
+   images[0]=images[0]*(contribs>=c_thrshld)
 
  return images[0].astype(np.float32)

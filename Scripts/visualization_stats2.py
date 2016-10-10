@@ -29,7 +29,8 @@ config = configVisualization()
 dados=[]
 names=[]
 
-json_files=sorted(glob.glob(config.summary_path+"/*.json"))
+#json_files=sorted(glob.glob(config.summary_path+"/*.json"))
+json_files=sorted(glob.glob("../summary/*.json"))
 
 for f in json_files:
  outfile=open(f,'r')
@@ -70,24 +71,24 @@ if len(dados)>0:
 	dkeys=dados[0].keys()
 
 for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list))):
-	ft_dic = [k for k in dkeys if (ft_key+"_") in k]
-	ft_dic.sort()
-	if len(ft_dic)>0:
+	if ft_key in dados[0]:
 		plt.figure(ft_ind+2)
 		plt.grid(True)
 		plt.suptitle(ft_key)
 		axes = plt.gca()
-		axes.set_xlabel('Channel')
-		axes.set_ylabel('Activation')
-		num_plots=min(10,len(ft_dic))	
-		for ft_ch_key, ch in zip(ft_dic, xrange(len(ft_dic))):			
+		actvs=[]
+		for i in xrange(len(dados)):
+			actvs.append(np.array(dados[i][ft_key]))
+		n_channels=actvs[0].shape[1]
+		batch_number = range(0,actvs[0].shape[0])
+		num_plots=min(10,n_channels)
+		for ch in xrange(n_channels):			
 			plt.gca().set_color_cycle(color_cycle)
-			for i in xrange(len(dados)):
-				ch_actvs=dados[i][ft_ch_key]
+			for i in xrange(len(actvs)):
 				if ch==0:
-					plt.plot(np.full(len(ch_actvs),ch,dtype=int), ch_actvs, '.', label=names[i])
+					plt.plot(np.full(actvs[i].shape[0],ch,dtype=int), actvs[i][:,ch], '.', label=names[i])
 				else:
-					plt.plot(np.full(len(ch_actvs),ch,dtype=int), ch_actvs, '.')
-							
-plt.legend(numpoints=1)			
+					plt.plot(np.full(actvs[i].shape[0],ch,dtype=int), actvs[i][:,ch], '.')
+		plt.legend(numpoints=1)						
+		
 plt.show()

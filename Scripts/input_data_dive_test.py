@@ -114,7 +114,7 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size):
+  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size, leveldb_path=None):
     self.input_size = input_size
     self.output_size = output_size
     """ Get all the image names for training images on a path folder """

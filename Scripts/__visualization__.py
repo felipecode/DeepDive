@@ -8,7 +8,7 @@ from features_optimization import optimize_feature
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC import create_structure
+from inception_res_BAC_normalized import create_structure
 from alex_feature_extract import extract_features
 
 """Core libs"""
@@ -43,7 +43,7 @@ if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
 dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
-                         config.validation_path_ground_truth, config.input_size, config.output_size)
+                         config.validation_path_ground_truth, config.input_size, config.output_size, config.leveldb_path)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
@@ -149,8 +149,7 @@ for key in config.features_list:
   init_actv=np.zeros(ft_shape[1:])
   init_avg=np.zeros(ft_shape[3])
   max_actvs.append((init_img,init_actv,init_avg))
-  for i in xrange(ft_shape[3]):
-  	dados[key+"_"+str(i).zfill(len(str(ft_shape[3])))]=[]
+  dados[key]=[]
 
 #print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
 
@@ -182,7 +181,8 @@ for key, channel in config.features_opt_list:
           if(config.save_features_to_disk):
             save_optimazed_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
 
-for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
+print("Images in dataset: %d"%(dataset.getNImagesDataset()))
+for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1):
   epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   start_time = time.time()
 
@@ -208,8 +208,8 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size):
 				actv[0][:,:,:,k]=batch[0][j,:,:,:]
 				actv[1][:,:,k]=ft[j,:,:,k]
 				actv[2][k]=ft_avg
-	for k in xrange(ft.shape[3]):
-  		dados[key+"_"+str(k).zfill(len(str(ft_shape[3])))].append(float(np.average(ft[:,:,:,k])))
+  	dados[key].append(ft.mean(axis=(0,1,2)).tolist())
+	
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration

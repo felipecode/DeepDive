@@ -78,10 +78,10 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size):
+  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size, leveldb_path=config.leveldb_path):
     self.input_size = input_size
     self.output_size = output_size
-    self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
+    self.db = leveldb.LevelDB(leveldb_path + 'db') 
     self.num_examples = int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
     self.images_key = range(self.num_examples)
