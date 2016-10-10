@@ -52,7 +52,7 @@ class DataSet(object):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
     self._index_in_epoch += batch_size
-    if self._index_in_epoch >= self._num_examples:
+    if batch_size >  (self._num_examples - self._index_in_epoch):
       # Finished epoch
       print 'end epoch'
       self._epochs_completed += 1
@@ -62,9 +62,6 @@ class DataSet(object):
       start = 0
       self._index_in_epoch = batch_size
       assert batch_size <= self._num_examples
-
-    if batch_size >  (self._num_examples - self._index_in_epoch):
-      batch_size = self._num_examples - self._index_in_epoch
 
     images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
     if len(self._output_size)==2:
