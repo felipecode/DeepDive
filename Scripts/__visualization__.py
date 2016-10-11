@@ -42,8 +42,7 @@ if config.save_json_summary not in (True, False):
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth, 
-                         config.validation_path_ground_truth, config.input_size, config.output_size, config.leveldb_path)
+dataset = DataSetManager(config)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
