@@ -1,15 +1,15 @@
 """Deep dive libs"""
-from input_data_dive_test import DataSetManager
+from input_data_levelDB import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
+from loss_network import *
 
 """Structure"""
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BAC_normalized import create_structure
-from alex_feature_extract import extract_features
+from perceptual_loss_network import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -44,25 +44,28 @@ if config.save_json_summary not in (True, False):
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config.training_path, config.validation_path, config.training_path_ground_truth,
-                         config.validation_path_ground_truth, config.input_size, config.output_size)
+dataset = DataSetManager(config)
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
-x = tf.placeholder("float",(None,)+config.input_size, name="input_image")
-y_ = tf.placeholder("float", name="output_image")
+x = tf.placeholder("float",(config.batch_size,)+config.input_size, name="input_image")
+y_ = tf.placeholder("float",(config.batch_size,)+config.output_size, name="output_image")
 lr = tf.placeholder("float", name = "learning_rate")
 #training = tf.placeholder(tf.bool, name="training")
 
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
+feature_loss=create_loss_structure(tf, last_layer, y_, sess)
+
 " Creating comparation metrics"
 y_image = y_
-loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)), reduction_indices=[1,2,3])
+mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3]) 
+loss_function = (mse_loss+feature_loss)
+
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
-
+print y_image
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function)
 
@@ -87,7 +90,10 @@ for key in scalars:
 for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
+tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
+tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
+
 
 summary_op = tf.merge_all_summaries()
 saver = tf.train.Saver(tf.all_variables())
@@ -230,8 +236,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     error_per_transmission=[0.0] * config.num_bins
     count_per_transmission=[0] * config.num_bins
     validation_result_error = 0
-    for j in range(0,dataset.getNImagesValidation()/(config.batch_size_val)):
-      batch_val = dataset.validation.next_batch(config.batch_size_val)
+    for j in range(0,dataset.getNImagesValidation()/(config.batch_size)):
+      batch_val = dataset.validation.next_batch(config.batch_size)
       feedDictVal = {x: batch_val[0], y_: batch_val[1]}
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += sum(result)
@@ -245,8 +251,9 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
             error_per_transmission[i] = error_per_transmission[i]/count_per_transmission[i]
         dados['error_per_transmission']=error_per_transmission
 
-
-    validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
+    if dataset.getNImagesValidation() !=0 :
+      validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
+      
     if config.use_tensorboard:
       val=tf.scalar_summary('Loss_Validation', validation_result_error)
       summary_str_val=sess.run(val)

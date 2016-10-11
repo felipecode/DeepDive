@@ -114,21 +114,21 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size, leveldb_path=None):
-    self.input_size = input_size
-    self.output_size = output_size
+  def __init__(self, config):
+    self.input_size = config.input_size
+    self.output_size = config.output_size
     """ Get all the image names for training images on a path folder """
-    self.im_names = glob.glob(path + "/*.jpg")
-    self.im_names_labels = glob.glob(path_truth + "/*.jpg")
+    self.im_names = glob.glob(config.training_path + "/*.jpg")
+    self.im_names_labels = glob.glob(config.training_path_ground_truth + "/*.jpg")
     """ Shufling all the Images with a single permutation"""
     shufle(self.im_names,self.im_names_labels)
 
-    self.im_names_val = glob.glob(path_val + "/*.jpg")
-    self.im_names_val_labels = glob.glob(path_val_truth + "/*.jpg")
+    self.im_names_val = glob.glob(config.validation_path + "/*.jpg")
+    self.im_names_val_labels = glob.glob(config.validation_path_ground_truth + "/*.jpg")
     self.im_names_val = self.im_names_val[:1000]
     self.im_names_val_labels = self.im_names_val_labels[:1000]
-    self.train = DataSet(self.im_names, self.im_names_labels,input_size,output_size)
-    self.validation = DataSet(self.im_names_val, self.im_names_val_labels,input_size,output_size)
+    self.train = DataSet(self.im_names, self.im_names_labels,config.input_size,config.output_size)
+    self.validation = DataSet(self.im_names_val, self.im_names_val_labels,config.input_size,config.output_size)
 
   def getNImagesDataset(self):
     return len(self.im_names)

@@ -29,8 +29,6 @@ import matplotlib.pyplot as plt
 from time import time
 from config import *
 
-config=configMain()
-
 def readImageFromDB(db, key, size):
   image =  np.reshape(np.fromstring(db.Get(key),dtype=np.float32),size)
   return image
@@ -78,18 +76,18 @@ class DataSet(object):
 
 class DataSetManager(object):
 
-  def __init__(self, path, path_val, path_truth, path_val_truth, input_size,output_size, leveldb_path=config.leveldb_path):
-    self.input_size = input_size
-    self.output_size = output_size
-    self.db = leveldb.LevelDB(leveldb_path + 'db') 
+  def __init__(self, config):
+    self.input_size = config.input_size
+    self.output_size = config.output_size
+    self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
     self.num_examples = int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
     self.images_key = range(self.num_examples)
     self.images_key_val = range(self.num_examples_val)
     for i in range(self.num_examples_val):
       self.images_key_val[i] = 'val' + str(i)
-    self.train = DataSet(self.images_key,input_size,output_size,self.num_examples,self.db)
-    self.validation = DataSet(self.images_key_val,input_size,output_size,self.num_examples_val,self.db)
+    self.train = DataSet(self.images_key,config.input_size,config.output_size,self.num_examples,self.db)
+    self.validation = DataSet(self.images_key_val,config.input_size,config.output_size,self.num_examples_val,self.db)
 
   def getNImagesDataset(self):
     return self.num_examples
