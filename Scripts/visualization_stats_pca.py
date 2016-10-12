@@ -82,27 +82,24 @@ for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list)
 			data_length.append(len(dados[i][ft_key]))
 			actvs=np.concatenate((actvs,np.array(dados[i][ft_key])),axis=0)
 
-		means=np.empty([len(dados),n_channels],dtype=np.float32)
-		variances=np.empty([len(dados),n_channels],dtype=np.float32)
+		#means=np.empty([len(dados),n_channels],dtype=np.float32)
+		#variances=np.empty([len(dados),n_channels],dtype=np.float32)
 		pca_r=PCA(actvs)
-
-		
-
 
 		fig = plt.figure() # Make a plotting figure
 		ax = Axes3D(fig) # use the plotting figure to create a Axis3D object.	
 
-		min_vals=np.amin(np.array(pca_r.Y[:,0:3]),axis=0)
-		max_vals=np.amax(np.array(pca_r.Y[:,0:3]),axis=0)
+		#min_vals=np.amin(np.array(pca_r.Y[:,0:3]),axis=0)
+		#max_vals=np.amax(np.array(pca_r.Y[:,0:3]),axis=0)
  		
 
 		# make simple, bare axis lines through space:
-		xAxisLine = ((min_vals[0], max_vals[0]), (0, 0), (0,0)) # 2 points make the x-axis line at the data extrema along x-axis 
-		ax.plot(xAxisLine[0], xAxisLine[1], xAxisLine[2], 'black') # make a red line for the x-axis.
-		yAxisLine = ((0, 0), (min_vals[1], max_vals[1]), (0,0)) # 2 points make the y-axis line at the data extrema along y-axis
-		ax.plot(yAxisLine[0], yAxisLine[1], yAxisLine[2], 'black') # make a red line for the y-axis.
-		zAxisLine = ((0, 0), (0,0), (min_vals[2], max_vals[2])) # 2 points make the z-axis line at the data extrema along z-axis
-		ax.plot(zAxisLine[0], zAxisLine[1], zAxisLine[2], 'black') # make a red line for the z-axis.
+		#xAxisLine = ((min_vals[0], max_vals[0]), (0, 0), (0,0)) # 2 points make the x-axis line at the data extrema along x-axis 
+		#ax.plot(xAxisLine[0], xAxisLine[1], xAxisLine[2], 'black') # make a red line for the x-axis.
+		#yAxisLine = ((0, 0), (min_vals[1], max_vals[1]), (0,0)) # 2 points make the y-axis line at the data extrema along y-axis
+		#ax.plot(yAxisLine[0], yAxisLine[1], yAxisLine[2], 'black') # make a red line for the y-axis.
+		#zAxisLine = ((0, 0), (0,0), (min_vals[2], max_vals[2])) # 2 points make the z-axis line at the data extrema along z-axis
+		#ax.plot(zAxisLine[0], zAxisLine[1], zAxisLine[2], 'black') # make a red line for the z-axis.
 
 		# label the axes
 		ax.set_xlabel("PC1") 
@@ -121,7 +118,7 @@ for ft_key, ft_ind in zip(config.features_list, xrange(len(config.features_list)
  				z.append(item[2])
 			index+=data_length[i]
 			pltData = [x,y,z]
-			ax.scatter(pltData[0], pltData[1], pltData[2], 'o', color=color_cycle[i]) # make a scatter plotfrom the data
+			ax.scatter(pltData[0], pltData[1], pltData[2], s=5, marker='.', color=color_cycle[i], edgecolors='none') # make a scatter plotfrom the data
 			ax.plot([], [], 'o', color=color_cycle[i], label=names[i])#gambiarra pra legenda aparecer		
 
 		plt.legend(numpoints=1)
