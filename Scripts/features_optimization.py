@@ -36,7 +36,6 @@ def optimize_feature(input_size, x, feature_map):
  config= configOptimization()
  images = np.empty((1,)+input_size)
  img_noise = np.random.uniform(low=0.0, high=1.0, size=input_size)
- config= configOptimization()
  #graph=sess.graph
  #x=graph.get_tensor_by_name("input_image:0")
  sess=tf.get_default_session()
