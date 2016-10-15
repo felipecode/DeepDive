@@ -42,6 +42,7 @@ def optimize_feature(input_size, x, feature_map):
  t_score = tf.reduce_mean(feature_map)
  t_grad = tf.gradients(t_score, x)[0]
 
+ # normalizing the gradient, so the same step size should work for different layers and networks
  if config.lap_grad_normalization:
   grad_norm=lap_normalize(t_grad[0,:,:,:])
  else:
@@ -51,8 +52,7 @@ def optimize_feature(input_size, x, feature_map):
  step_size=config.opt_step
  for i in xrange(1,config.opt_n_iters+1):
   feedDict={x: images}
-  g, score = sess.run([grad_norm, t_score], feed_dict=feedDict)
-  # normalizing the gradient, so the same step size should work for different layers and networks
+  g, score = sess.run([grad_norm, t_score], feed_dict=feedDict) 
   images[0] = images[0]+g*step_size
   #l2 decay
   if config.decay:
