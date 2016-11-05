@@ -6,7 +6,7 @@ import os
 from features_optimization import normalize_std
 
 
-def save_optimazed_image_to_disk(opt_output, channel,n_channels,key,path):
+def save_optimized_image_to_disk(opt_output, channel,n_channels,key,path):
 	opt_output_rescaled = (opt_output - opt_output.min())
 	opt_output_rescaled *= (255/opt_output_rescaled.max())
 	im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
