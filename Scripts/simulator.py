@@ -27,14 +27,3 @@ def applyTurbidity(images, depths, c, binf, ranges):
 	Ed=tf.mul(images,trans)
 	Eb=binf-tf.mul(trans,binf)
 	return Ed+Eb
-
-#    J=patch;
-#    trans=ones([size(patch)]);
-#    for i=1:3
-#        trans(:,:,i)=exp(-distance*c(i));
-#    end
-#    Ed = J.*trans;                                      % Direct component
-#    for i=1:3
-#        Eb(:,:,i) = (Binf(i) - Binf(i).*trans(:,:,i));  % Backscattering component
-#    end
-#    turbidPatch = Ed + Eb;   
