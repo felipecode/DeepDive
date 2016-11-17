@@ -64,11 +64,6 @@ input_names=glob.glob(sim_input_path + "/*.png")
 depth_names=glob.glob(sim_depth_path + "/*.png")
 t_imgs_names=glob.glob(turbidity_path + "/*.png")
 
-#print t_imgs_names[2]
-#print input_names[2]
-#print depth_names[2]
-
-
 for i in xrange(batch_size):
 	in_image = Image.open(input_names[i]).convert('RGB')
 	in_image = in_image.resize(input_size, Image.ANTIALIAS)
@@ -90,16 +85,7 @@ for i in xrange(t_batch_size):
 	t_image = t_image.astype(np.float32)
 	turbidities[i] = np.multiply(t_image, 1.0 / 255.0)
 
-""" Creating section"""
-#x = tf.placeholder("float",(config.batch_size,)+config.input_size, name="input_image")
-#y_ = tf.placeholder("float",(config.batch_size,)+config.output_size, name="output_image")
-#lr = tf.placeholder("float", name = "learning_rate")
-#training = tf.placeholder(tf.bool, name="training")
-
 sess = tf.InteractiveSession()
-
-
-
 
 tf_turbidity=tf.placeholder("float",turbidities.shape, name="turbidity")
 properties=acquireProperties(tf_turbidity)
@@ -144,12 +130,13 @@ duration=time.time()-start_time
 
 print duration
 
-img=result[2]
-img=(img-img.min())
-img*=(255/img.max())
-img=img.astype(np.uint8)
-img = Image.fromarray(img)
-img.save("resultado.png")
+for i in xrange(batch_size):
+	img=result[i]
+	img=(img-img.min())
+	img*=(255/img.max())
+	img=img.astype(np.uint8)
+	img = Image.fromarray(img)
+	img.save("resultado"+str(i)+".png")
 
 #print np.amax(result[2,:,:,0]), np.amin(result[2,:,:,0])
 #print np.amax(result[2,:,:,1]), np.amin(result[2,:,:,1])

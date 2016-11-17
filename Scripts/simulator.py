@@ -19,8 +19,7 @@ def applyTurbidity(images, depths, c, binf, ranges):
 	ranges+=tf.random_uniform(ranges.get_shape(), minval=-max_range_dev, maxval=max_range_dev) #adicionando variacao no ranges
 	ranges=tf.expand_dims(tf.expand_dims(ranges,1),1)
 	depths=tf.mul(depths, ranges)
-	depths=tf.expand_dims(depths,3)
-	trans=tf.concat(3, [tf.concat(3, [depths, depths]),depths]) #nao sei se tem um jeito melhor de fazer isso
+	trans=tf.expand_dims(depths,3)
 	c=tf.expand_dims(tf.expand_dims(c,1),1)#outra gambiarra, talves tenha um jeito melhor de fazer isso
 	binf=tf.expand_dims(tf.expand_dims(binf,1),1)#outra gambiarra, talves tenha um jeito melhor de fazer isso
 	trans=tf.exp(-tf.mul(trans,c))
