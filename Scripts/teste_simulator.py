@@ -34,23 +34,12 @@ import glob
 import json
 
 
-"""Verifying options integrity"""
-config = configMain()
 
 input_size=(224,224)
 turbidity_size=(128,128)
 batch_size=20
 t_batch_size=4
 range_max=5.0
-
-if config.restore not in (True, False):
-  raise Exception('Wrong restore option. (True or False)')
-if config.save_features_to_disk not in (True, False):
-  raise Exception('Wrong save_features_to_disk option. (True or False)')
-if config.save_json_summary not in (True, False):
-  raise Exception('Wrong save_json_summary option. (True or False)')
-if config.use_tensorboard not in (True, False):
-  raise Exception('Wrong use_tensorboard option. (True or False)')
 
 sim_input_path='../datasets/simteste/images'
 sim_depth_path='../datasets/simteste/depths'
@@ -76,7 +65,7 @@ for i in xrange(batch_size):
 	d_image = np.asarray(d_image)
 	d_image = d_image.astype(np.float32)
 	depths[i] = np.multiply(d_image, 10.0 / 255.0)
-
+depths=np.reshape(depths,(batch_size,)+input_size+(1,))
 
 for i in xrange(t_batch_size):
 	t_image = Image.open(t_imgs_names[i]).convert('RGB')
@@ -97,22 +86,27 @@ c_old=c
 c=np.empty((batch_size,c_old.shape[1]))
 for i in xrange(batch_size):
 	c[i]=c_old[i%len(c_old)]
+c=np.reshape(c,[batch_size,1,1,3])
 
 binf_old=binf
 binf=np.empty((batch_size,binf_old.shape[1]))
 for i in xrange(batch_size):
 	binf[i]=binf_old[i%len(binf_old)]
+binf=np.reshape(binf,[batch_size,1,1,3])
 
 
-range_step=range_max/t_batch_size
+range_step=range_max/(t_batch_size-1)
 range_values=np.empty(t_batch_size)
 for i in xrange(t_batch_size):
-	range_values[i]=(i+1)*range_step
+	range_values[i]=(i)*range_step
+
+#print range_values
 
 #parte fixa do range
 range_array=np.empty(batch_size)
 for i in xrange(batch_size):
 	range_array[i]=range_values[(i/(batch_size/t_batch_size))%t_batch_size]
+range_array=np.reshape(range_array,[batch_size, 1,1,1])
 
 tf_images=tf.placeholder("float",inputs.shape, name="images")
 tf_depths=tf.placeholder("float",depths.shape, name="depths")
@@ -122,7 +116,7 @@ tf_binf=tf.placeholder("float",binf.shape, name="binf")
 
 feedDict={tf_images: inputs, tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf}
 
-turbid_images=applyTurbidity(tf_images, tf_depths, tf_c, tf_binf, tf_range)
+turbid_images=applyTurbidity(tf_images, tf_depths, tf_c, tf_binf, tf_range)#, range_step)
 
 start_time =time.time()
 result=sess.run(turbid_images, feed_dict=feedDict)
