@@ -9,7 +9,7 @@ from loss_network import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from perceptual_loss_network import create_structure
+from inception_res_BACBAC_normalized import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -40,11 +40,11 @@ if config.restore not in (True, False):
 if config.save_features_to_disk not in (True, False):
   raise Exception('Wrong save_features_to_disk option. (True or False)')
 if config.save_json_summary not in (True, False):
-  raise Exception('Wrong save_json_summary option. (True or False)')
+  raise Exception('Wrong save_json_summary option. (True or False)') 
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
-dataset = DataSetManager(config)
+dataset = DataSetManager(config) 
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """ Creating section"""
@@ -56,12 +56,13 @@ lr = tf.placeholder("float", name = "learning_rate")
 sess = tf.InteractiveSession()
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-feature_loss=create_loss_structure(tf, last_layer, y_, sess)
+feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*y_, sess)
 
-" Creating comparation metrics"
+" Creating comparison metrics"
 y_image = y_
+#lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3]) 
-loss_function = (mse_loss+feature_loss)
+loss_function = (mse_loss+feature_loss)/2
 
 #loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
 #loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
@@ -142,8 +143,8 @@ print 'Logging into ' + config.summary_path
 
 """Training"""
 
-lowest_error = 1.5;
-lowest_val  = 1.5;
+lowest_error = 1500;
+lowest_val  = 1500;
 lowest_iter = 1;
 lowest_val_iter = 1;
 
