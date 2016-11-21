@@ -47,22 +47,24 @@ if config.use_tensorboard not in (True, False):
 dataset = DataSetManager(config)
 
 input_size=config.input_size
-turbidity_size=(128,128)
+turbidity_size=config.turbidity_size
 batch_size=config.batch_size
-t_batch_size=4
-range_max=5.0
+range_max=config.range_max
+range_min=config.range_min
 
-sim_input_path='../datasets/simteste/images'
-sim_depth_path='../datasets/simteste/depths'
 turbidity_path='../datasets/simteste/TurbidityV3'
 
 #inputs = np.empty((batch_size,)+input_size+(3,))
 #depths = np.empty((batch_size,)+input_size)
+t_imgs_names=glob.glob(turbidity_path + "/*.png")
+t_batch_size=len(t_imgs_names)
+
 turbidities=np.empty((t_batch_size,)+turbidity_size+(3,))
 
 #input_names=glob.glob(sim_input_path + "/*.png")
 #depth_names=glob.glob(sim_depth_path + "/*.png")
-t_imgs_names=glob.glob(turbidity_path + "/*.png")
+
+
 
 #for i in xrange(batch_size):
 #	in_image = Image.open(input_names[i]).convert('RGB')
@@ -106,10 +108,10 @@ for i in xrange(batch_size):
 binf=np.reshape(binf,[batch_size,1,1,3])
 
 
-range_step=range_max/(t_batch_size-1)
+range_step=(range_max-range_min)/(t_batch_size-1)
 range_values=np.empty(t_batch_size)
 for i in xrange(t_batch_size):
-	range_values[i]=(i)*range_step
+	range_values[i]=(i)*range_step+range_min
 
 #print range_values
 

@@ -3,17 +3,20 @@
 
 class configMain:
 	def __init__(self):
-		self.learning_rate = 1e-7
+		self.range_max=5.0
+		self.range_min=0.0
+		self.learning_rate = 1e-5
 		self.lr_update_value = 1
 		self.lr_update_period =1
 		self.beta1=0.9
 		self.beta2=0.999
-		self.epsilon=1e-08
+		self.epsilon=1e-06
 		self.use_locking=False
 		self.batch_size = 16
-		self.batch_size_val = 16
+		self.batch_size_val =16
 		self.variable_names = []#['MSE']
 		self.n_epochs = 120   # the number of epochs that we are going to run
+		self.turbidity_path='../datasets/simteste/TurbidityV3'
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
 		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/'
 		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Training/'
@@ -21,12 +24,13 @@ class configMain:
 		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/new_10_10BN/'
 		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/modelnew_10_10BN/'
-		self.input_size = (244, 244, 3)
-		self.output_size = (244, 244, 3)
-		self.ground_truth_size = (244, 244, 3)
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/new_25_10BN/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/modelnew_25_10BN/'
+		self.input_size = (224, 224,3)
+		self.output_size = (224, 224, 3)
+		self.turbidity_size=(128,128)
+		self.ground_truth_size = (224, 224, 3)
 		self.restore = False
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
@@ -74,16 +78,15 @@ class configVisualization:
 
 class configConvert:
 	def __init__(self):
-		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/'
-		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Training/'
-		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Transmission/'
-		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationTransmission/'
-		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/GroundTruth/'
-		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Validation/'
-		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationGroundTruth/'
-		self.input_size = (400, 600, 3)
-		self.output_size = (400, 600,3)
-		self.ground_truth_size = (400,600,3)
+		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/'
+		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Training/'
+		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Transmission/'
+		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationTransmission/'
+		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/GroundTruth/'
+		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/Validation/'
+		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.input_size = (224, 224, 3)
+		self.output_size = (224, 224,3)
 
 
 class configDehazenet:
