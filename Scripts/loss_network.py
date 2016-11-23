@@ -91,8 +91,7 @@ def create_loss_structure(tf, x_image, y_image, sess):
 	conv22_gt = tf.nn.relu(conv22_gt)
 
 	# Loss
-	norm = tf.to_float(conv22.get_shape()[1] * conv22.get_shape()[2] * conv22.get_shape()[3])
-	loss += tf.div(tf.reduce_sum(tf.squared_difference(conv22, conv22_gt), reduction_indices=[1,2,3]), norm)
+	loss += tf.reduce_mean(tf.abs(conv22- conv22_gt), reduction_indices=[1,2,3])
 	
 	# Second Maxpool
 	pool2 = tf.nn.max_pool(conv22, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name="pool2")

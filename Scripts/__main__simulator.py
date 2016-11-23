@@ -4,6 +4,7 @@ from config import *
 from utils import *
 from features_optimization import optimize_feature
 from loss_network import *
+from simulator import *
 
 """Structure"""
 import sys
@@ -28,6 +29,7 @@ import subprocess
 import time
 from ssim_tf import ssim_tf
 from scipy import misc
+import glob
 
 import json
 
@@ -44,29 +46,80 @@ if config.save_json_summary not in (True, False):
 if config.use_tensorboard not in (True, False):
   raise Exception('Wrong use_tensorboard option. (True or False)')
 
+sess = tf.InteractiveSession()
+
 dataset = DataSetManager(config) 
 global_step = tf.Variable(0, trainable=False, name="global_step")
 
-""" Creating section"""
-x = tf.placeholder("float",(config.batch_size,)+config.input_size, name="input_image")
-y_ = tf.placeholder("float",(config.batch_size,)+config.output_size, name="output_image")
+batch_size=config.batch_size
+
+
+t_imgs_names=glob.glob(config.turbidity_path + "/*.jpg")
+t_batch_size=len(t_imgs_names)
+turbidities=np.empty((t_batch_size,)+config.turbidity_size+(3,))
+for i in xrange(t_batch_size):
+  t_image = Image.open(t_imgs_names[i]).convert('RGB')
+  t_image = t_image.resize(config.turbidity_size, Image.ANTIALIAS)
+  t_image = np.asarray(t_image)
+  t_image = t_image.astype(np.float32)
+  turbidities[i] = np.multiply(t_image, 1.0 / 255.0)
+
+tf_turbidity=tf.placeholder("float",turbidities.shape, name="turbidity")
+properties=acquireProperties(tf_turbidity)
+
+c, binf=sess.run(properties, feed_dict={tf_turbidity: turbidities})
+#colocando os vetores no tamanho do batch, nao sei se tem um jeito melhor de fazer isso
+c_old=c
+c=np.empty((batch_size,c_old.shape[1]))
+for i in xrange(batch_size):
+  c[i]=c_old[i%len(c_old)]
+c=np.reshape(c,[batch_size,1,1,3])
+
+binf_old=binf
+binf=np.empty((batch_size,binf_old.shape[1]))
+for i in xrange(batch_size):
+  binf[i]=binf_old[i%len(binf_old)]
+binf=np.reshape(binf,[batch_size,1,1,3])
+
+
+range_step=(config.range_min-config.range_max)/(t_batch_size-1)
+range_values=np.empty(t_batch_size)
+for i in xrange(t_batch_size):
+  range_values[i]=(i)*range_step+config.range_max
+
+#print range_values
+
+#parte fixa do range
+range_array=np.empty(batch_size)
+for i in xrange(batch_size):
+  range_array[i]=range_values[(i/(batch_size/t_batch_size))%t_batch_size]
+range_array=np.reshape(range_array,[batch_size, 1,1,1])
+
+tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
+tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
+tf_range=tf.placeholder("float",range_array.shape, name="ranges")
+tf_c=tf.placeholder("float",c.shape, name="c")
+tf_binf=tf.placeholder("float",binf.shape, name="binf")
 lr = tf.placeholder("float", name = "learning_rate")
+""" Creating section"""
+#x = tf.placeholder("float",(config.batch_size,)+config.input_size, name="input_image")
+#y_ = tf.placeholder("float",(config.batch_size,)+config.output_size, name="output_image")
+
 #training = tf.placeholder(tf.bool, name="training")
 
-sess = tf.InteractiveSession()
+
+
+x=applyTurbidity(tf_images, tf_depths, tf_c, tf_binf, tf_range)
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*y_, sess)
+#feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*y_, sess)
 
 " Creating comparison metrics"
-y_image = y_
+y_image = tf_images
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3]) 
-loss_function = (mse_loss+feature_loss)/2
+loss_function = mse_loss
 
-#loss_function = tf.reduce_mean(tf.reduce_mean(tf.reduce_mean(tf.sqrt(tf.pow(tf.sub(last_layer, y_image),2)),3),2),1)
-#loss_function = tf.reduce_mean(tf.abs(tf.sub(last_layer, y_image)))
-print y_image
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function)
 
@@ -91,7 +144,7 @@ for key in scalars:
 for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
-tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
+#tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
 tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
 
@@ -169,7 +222,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   start_time = time.time()
 
   batch = dataset.train.next_batch(config.batch_size)
-  feedDict.update({x: batch[0], y_: batch[1], lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))})
+  feedDict={tf_images: batch[0], tf_depths: batch[1], tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
@@ -195,7 +248,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       ft_maps= []
 
     if config.use_deconv:
-	deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
+      deconv=deconvolution(x, feedDict, ft_ops, config.features_list, config.batch_size, config.input_size)
     else:
     	deconv=[None]*len(ft_ops)
 
@@ -238,8 +291,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     count_per_transmission=[0] * config.num_bins
     validation_result_error = 0
     for j in range(0,dataset.getNImagesValidation()/(config.batch_size)):
+      #batch_val = dataset.validation.next_batch(config.batch_size)
       batch_val = dataset.validation.next_batch(config.batch_size)
-      feedDictVal = {x: batch_val[0], y_: batch_val[1]}
+      feedDictVal={tf_images: batch_val[0], tf_depths: batch_val[1], tf_range: range_array, tf_c: c, tf_binf: binf}
+      #turbid_images=applyTurbidity(tf_images, tf_depths, tf_c, tf_binf, tf_range)
+      #result=sess.run(turbid_images, feed_dict=feedDict)
+      #feedDictVal = {x: result, y_: batch_val[0]}
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += sum(result)
       if config.save_error_transmission:

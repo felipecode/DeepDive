@@ -78,7 +78,6 @@ class DataSetManager(object):
 
   def __init__(self, config):
     self.input_size = config.input_size
-    self.output_size = config.output_size
     self.depth_size = config.depth_size
     self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
     self.num_examples = int(self.db.Get('num_examples'))

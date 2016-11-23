@@ -51,12 +51,11 @@ turbidity_size=config.turbidity_size
 batch_size=config.batch_size
 range_max=config.range_max
 range_min=config.range_min
-
-turbidity_path='../datasets/simteste/TurbidityV3'
+turbidity_path=config.turbidity_path
 
 #inputs = np.empty((batch_size,)+input_size+(3,))
 #depths = np.empty((batch_size,)+input_size)
-t_imgs_names=glob.glob(turbidity_path + "/*.png")
+t_imgs_names=glob.glob(turbidity_path + "/*.jpg")
 t_batch_size=len(t_imgs_names)
 
 turbidities=np.empty((t_batch_size,)+turbidity_size+(3,))

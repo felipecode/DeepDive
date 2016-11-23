@@ -28,9 +28,55 @@ class configMain:
 		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/new_25_10BN/'
 		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/modelnew_25_10BN/'
 		self.input_size = (224, 224,3)
+		self.depth_size = (224, 224,1)
 		self.output_size = (224, 224, 3)
 		self.turbidity_size=(128,128)
 		self.ground_truth_size = (224, 224, 3)
+		self.restore = False
+		self.dropout = [1,1,1,1]
+		self.summary_writing_period = 20
+		self.validation_period = 120
+		self.histograms_list=[]#"W_conv1","W_conv2","W_conv3","W_conv4","W_conv5","W_conv6"]
+		self.features_list=[]
+		self.features_opt_list=[]
+		self.opt_every_iter= 0
+		self.save_features_to_disk=False
+		self.save_json_summary=True
+		self.save_error_transmission=False
+		self.num_bins = 10
+		self.use_tensorboard=True
+		self.use_deconv=False
+
+class configMainSimulator:
+	def __init__(self):
+		self.turbidity_size=(128,128)
+		self.turbidity_path="/home/nautec/DeepDive-master/Simulator/MistDataBase"
+		self.range_max=2
+		self.range_min=0.1
+		self.learning_rate = 1e-5
+		self.lr_update_value = 1
+		self.lr_update_period =1
+		self.beta1=0.9
+		self.beta2=0.999
+		self.epsilon=1e-08
+		self.use_locking=False
+		self.batch_size = 16
+		self.batch_size_val = 16
+		self.variable_names = []#['MSE']
+		self.n_epochs = 120   # the number of epochs that we are going to run
+		self.WEIGHTS_FILE = "vgg16_weights.npz"
+		self.leveldb_path = '../datasets/simulator_data/'
+		self.training_path = '../datasets/datasetDepthV6/Training/'
+		self.training_transmission_path = '../datasets/datasetDepthV6/Transmission/'
+		self.validation_transmission_path = '../datasets/datasetDepthV6/ValidationTransmission/'
+		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
+		self.validation_path = '../datasets/datasetDepthV6/Validation/'
+		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/new_23_11BN/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/modelnew_23_11BN/'
+		self.input_size = (224, 224, 3)
+		self.output_size = (224, 224, 3)
+		self.depth_size = (224, 224, 1)
 		self.restore = False
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
@@ -75,6 +121,13 @@ class configVisualization:
 		self.num_bins = 10
 		self.use_tensorboard=True
 		self.use_deconv=True
+
+class configSimConvert:
+	def __init__(self):
+		self.imgs_path='../datasets/simulator_data/images'
+		self.depths_path='../datasets/simulator_data/depths'
+		self.leveldb_path='../datasets/simulator_data'
+		self.input_size = (224,224,3)
 
 class configConvert:
 	def __init__(self):
