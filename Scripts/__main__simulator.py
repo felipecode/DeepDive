@@ -240,7 +240,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 
   if i%config.summary_writing_period == 1 and (config.use_tensorboard or config.save_features_to_disk or config.save_json_summary):
     output, result, sim_input = sess.run([last_layer,loss_function, x], feed_dict=feedDict)
-    sess.run([last_layer,loss_function], feed_dict=feedDict)
     result = np.mean(result)
     if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
