@@ -131,9 +131,6 @@ tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_image)
 
 
-
-# for key in config.features_list:
-#   ft_ops.append(feature_maps[key])
 ft_ops=[]
 weights=[]
 for key in config.features_list:
