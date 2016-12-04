@@ -17,7 +17,7 @@ def save_optimized_image_to_disk(opt_output, channel,n_channels,key,path):
 	im.save(folder_name+"/"+file_name)
 
 def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
-		result_imgs=(result_imgs * 255).round().astype(np.uint8)
+		result_imgs=(np.clip(result_imgs, 0, 1) * 255).round().astype(np.uint8)
 		for j in xrange(result_imgs.shape[0]):
 			im = Image.fromarray(result_imgs[j])
 			file_name="output.bmp"
@@ -27,7 +27,7 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 				os.makedirs(folder_name)
 			im.save(folder_name+"/"+file_name)
 
-		input_imgs=(input_imgs * 255).round().astype(np.uint8)
+		input_imgs=(np.clip(input_imgs, 0, 1) * 255).round().astype(np.uint8)
 		for j in xrange(input_imgs.shape[0]):
 			im = Image.fromarray(input_imgs[j])
 			file_name="input.bmp"
@@ -37,7 +37,7 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 				os.makedirs(folder_name)
 			im.save(folder_name+"/"+file_name)
 
-		gt_imgs=(gt_imgs * 255).round().astype(np.uint8)
+		gt_imgs=(np.clip(gt_imgs, 0, 1) * 255).round().astype(np.uint8)
 		for j in xrange(gt_imgs.shape[0]):
 			im = Image.fromarray(gt_imgs[j])
 			file_name="ground_truth.bmp"
