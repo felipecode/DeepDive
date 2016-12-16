@@ -54,7 +54,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 batch_size=config.batch_size
 
 
-t_imgs_names=glob.glob(config.turbidity_path + "/*.jpg")
+t_imgs_names=glob.glob(config.turbidity_path + "/*.png")
 t_batch_size=len(t_imgs_names)
 turbidities=np.empty((t_batch_size,)+config.turbidity_size+(3,))
 for i in xrange(t_batch_size):
@@ -131,9 +131,6 @@ tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_image)
 
 
-
-# for key in config.features_list:
-#   ft_ops.append(feature_maps[key])
 ft_ops=[]
 weights=[]
 for key in config.features_list:
@@ -176,6 +173,8 @@ dados['variable_errors']=[]
 dados['time']=[]
 dados['variable_errors_val']=[]
 dados['learning_rate_update']=[]
+for key in config.features_list:
+  dados[key]=[]
 if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path
@@ -240,7 +239,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
         %(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
 
   if i%config.summary_writing_period == 1 and (config.use_tensorboard or config.save_features_to_disk or config.save_json_summary):
-    output, result = sess.run([last_layer,loss_function], feed_dict=feedDict)
+    output, result, sim_input = sess.run([last_layer,loss_function, x], feed_dict=feedDict)
     result = np.mean(result)
     if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
@@ -256,6 +255,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
       outfile = open(config.models_path +'summary.json','w')
+#     for ft, key in zip(ft_maps, config.features_list):
+#       dados[key].append(ft.mean(axis=(0,1,2)).tolist()) #salvando a ativacao media de cada feature map no json
       json.dump(dados, outfile)
       outfile.close()
     if config.use_tensorboard:
@@ -283,7 +284,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
 	 	summary_writer.add_summary(deconv_summary_str,i)
 
     if(config.save_features_to_disk):
-      save_images_to_disk(output,batch[0],batch[1],config.summary_path)
+      save_images_to_disk(output,sim_input,batch[0],config.summary_path)
       save_feature_maps_to_disk(ft_maps, weights, deconv, config.features_list,config.summary_path)
 
   if i%config.validation_period == 0:
