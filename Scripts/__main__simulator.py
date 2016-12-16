@@ -182,7 +182,12 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   start_time = time.time()
 
   batch = dataset.train.next_batch(config.batch_size)
-  feedDict={tf_images: batch[0], tf_depths: batch[1], tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
+  if config.use_depths:
+    feedDict={tf_images: batch[0], tf_depths: batch[1], tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
+  else:
+    constant_depths=np.ones((batch_size,)+config.depth_size);
+    depths=constant_depths*10*np.random.rand(batch_size,1,1,1)
+    feedDict={tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
   sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
