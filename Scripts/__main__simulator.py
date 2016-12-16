@@ -10,7 +10,7 @@ from simulator import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BACBAC_normalized import create_structure
+from inception_res_BACBAC_relu_normalized import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -53,47 +53,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 batch_size=config.batch_size
 
-
-t_imgs_names=glob.glob(config.turbidity_path + "/*.png")
-t_batch_size=len(t_imgs_names)
-turbidities=np.empty((t_batch_size,)+config.turbidity_size+(3,))
-for i in xrange(t_batch_size):
-  t_image = Image.open(t_imgs_names[i]).convert('RGB')
-  t_image = t_image.resize(config.turbidity_size, Image.ANTIALIAS)
-  t_image = np.asarray(t_image)
-  t_image = t_image.astype(np.float32)
-  turbidities[i] = np.multiply(t_image, 1.0 / 255.0)
-
-tf_turbidity=tf.placeholder("float",turbidities.shape, name="turbidity")
-properties=acquireProperties(tf_turbidity)
-
-c, binf=sess.run(properties, feed_dict={tf_turbidity: turbidities})
-#colocando os vetores no tamanho do batch, nao sei se tem um jeito melhor de fazer isso
-c_old=c
-c=np.empty((batch_size,c_old.shape[1]))
-for i in xrange(batch_size):
-  c[i]=c_old[i%len(c_old)]
-c=np.reshape(c,[batch_size,1,1,3])
-
-binf_old=binf
-binf=np.empty((batch_size,binf_old.shape[1]))
-for i in xrange(batch_size):
-  binf[i]=binf_old[i%len(binf_old)]
-binf=np.reshape(binf,[batch_size,1,1,3])
-
-
-range_step=(config.range_min-config.range_max)/(t_batch_size-1)
-range_values=np.empty(t_batch_size)
-for i in xrange(t_batch_size):
-  range_values[i]=(i)*range_step+config.range_max
-
-#print range_values
-
-#parte fixa do range
-range_array=np.empty(batch_size)
-for i in xrange(batch_size):
-  range_array[i]=range_values[(i/(batch_size/t_batch_size))%t_batch_size]
-range_array=np.reshape(range_array,[batch_size, 1,1,1])
+c,binf,range_array=acquireProperties(config,sess)
 
 tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
 tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
@@ -112,13 +72,13 @@ lr = tf.placeholder("float", name = "learning_rate")
 x=applyTurbidity(tf_images, tf_depths, tf_c, tf_binf, tf_range)
 last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-#feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*y_, sess)
+feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*tf_images, sess)
 
 " Creating comparison metrics"
 y_image = tf_images
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3]) 
-loss_function = mse_loss
+loss_function = (feature_loss + mse_loss)/2.0
 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function)
@@ -131,6 +91,9 @@ tf.image_summary('Output', last_layer)
 tf.image_summary('GroundTruth', y_image)
 
 
+
+# for key in config.features_list:
+#   ft_ops.append(feature_maps[key])
 ft_ops=[]
 weights=[]
 for key in config.features_list:
@@ -141,7 +104,7 @@ for key in scalars:
 for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
-#tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
+tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
 tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
 
@@ -173,8 +136,6 @@ dados['variable_errors']=[]
 dados['time']=[]
 dados['variable_errors_val']=[]
 dados['learning_rate_update']=[]
-for key in config.features_list:
-  dados[key]=[]
 if config.restore:
   if ckpt:
     print 'Restoring from ', ckpt.model_checkpoint_path
@@ -255,8 +216,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       dados['variable_errors'].append(float(result))
       dados['time'].append(time.time() - training_start_time)
       outfile = open(config.models_path +'summary.json','w')
-#     for ft, key in zip(ft_maps, config.features_list):
-#       dados[key].append(ft.mean(axis=(0,1,2)).tolist()) #salvando a ativacao media de cada feature map no json
       json.dump(dados, outfile)
       outfile.close()
     if config.use_tensorboard:
