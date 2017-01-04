@@ -75,7 +75,8 @@ x=applyTurbidity(y_image, tf_depths, tf_c, tf_binf, tf_range)
 with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')#pega as variaveis da rede
+#network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')#pega as variaveis da rede
+network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
 #se der erro aqui e porque ta com uma versao antiga do tensorflow, ai tem que usar tf.GraphKeys.VARIABLES
 
 feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*tf_images, sess)
@@ -86,14 +87,14 @@ with tf.variable_scope('discriminator', reuse=None):
 with tf.variable_scope('discriminator', reuse=True):
   d_score_output=create_discriminator_structure(tf,last_layer,config.input_size)
 
-discriminator_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='discriminator')
+discriminator_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='discriminator')
 
 " Creating comparison metrics"
 
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
 discriminator_loss=tf.reduce_mean(-tf.log(tf.clip_by_value(d_score_output,1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
-loss_function = (feature_loss + mse_loss)/2.0+discriminator_loss
+loss_function = (feature_loss + mse_loss+discriminator_loss)/3
 
 discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
 
@@ -126,6 +127,10 @@ tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
 tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
 tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
+tf.scalar_summary('discriminator_score_groundtruth', tf.reduce_mean(d_score_gt))
+tf.scalar_summary('discriminator_score_output', tf.reduce_mean(d_score_output))
+tf.scalar_summary('discriminator_loss', discriminator_loss)
+tf.scalar_summary('discriminator_error', discriminator_error)
 
 
 summary_op = tf.merge_all_summaries()
@@ -206,7 +211,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   else:
     constant_depths=np.ones((batch_size,)+config.depth_size, dtype=np.float32);
     depths=constant_depths*10*np.random.rand(batch_size,1,1,1)
-    print depths.shape, np.amax(depths)
     feedDict={tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
   sess.run([train_step,disc_train_step], feed_dict=feedDict)
 

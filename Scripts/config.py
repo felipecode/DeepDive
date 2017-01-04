@@ -60,20 +60,20 @@ class configMainSimulator:
 		self.beta2=0.999
 		self.epsilon=1e-08
 		self.use_locking=False
-		self.batch_size = 24
-		self.batch_size_val = 24
+		self.batch_size = 16
+		self.batch_size_val = 16
 		self.variable_names = []#['MSE']
 		self.n_epochs = 240   # the number of epochs that we are going to run
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
-		self.leveldb_path = '../datasets/simulator_data/'
+		self.leveldb_path = '/home/nautec/DeepDive/datasets/simulator_data/'
 		self.training_path = '../datasets/datasetDepthV6/Training/'
 		self.training_transmission_path = '../datasets/datasetDepthV6/Transmission/'
 		self.validation_transmission_path = '../datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_16_12_nodepth/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_16_12_nodepth/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_04_01_GANs/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_04_01_GANs/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
@@ -91,7 +91,7 @@ class configMainSimulator:
 		self.num_bins = 10
 		self.use_tensorboard=True
 		self.use_deconv=False
-		self.use_depths=False
+		self.use_depths=True
 
 class configVisualization:
 	def __init__(self):
@@ -125,9 +125,9 @@ class configVisualization:
 
 class configSimConvert:
 	def __init__(self):
-		self.imgs_path='../datasets/simulator_data/images'
+		self.imgs_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/simulator_data_outdoor/images'
 		self.depths_path='../datasets/simulator_data/depths'
-		self.leveldb_path='../datasets/simulator_data'
+		self.leveldb_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/simulator_data_outdoor'
 		self.input_size = (224,224,3)
 
 class configConvert:
