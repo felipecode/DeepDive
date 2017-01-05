@@ -34,47 +34,47 @@ def create_structure(tf, x, input_size,dropout,training=True):
   features.update(features1)
   histograms.update(histograms1)
 
-  last_layer2,features2,histograms2=residual(tf=tf, x=conv2,training=training,base_name="layer2")
+  last_layer2,features2,histograms2=residual(tf=tf, x=last_layer1,training=training,base_name="layer2")
   features.update(features2)
   histograms.update(histograms2)
 
-  last_layer3,features3,histograms3=residual(tf=tf, x=conv3,training=training,base_name="layer3")
+  last_layer3,features3,histograms3=residual(tf=tf, x=last_layer2,training=training,base_name="layer3")
   features.update(features3)
   histograms.update(histograms3)
 
-  last_layer4,features4,histograms4=residual(tf=tf, x=conv4,training=training,base_name="layer4")
+  last_layer4,features4,histograms4=residual(tf=tf, x=last_layer3,training=training,base_name="layer4")
   features.update(features4)
   histograms.update(histograms4)
 
-  last_layer5,features5,histograms5=residual(tf=tf, x=conv5,training=training,base_name="layer5")
+  last_layer5,features5,histograms5=residual(tf=tf, x=last_layer4,training=training,base_name="layer5")
   features.update(features5)
   histograms.update(histograms5)
 
-  last_layer6,features6,histograms6=residual(tf=tf, x=conv6,training=training,base_name="layer6")
+  last_layer6,features6,histograms6=residual(tf=tf, x=last_layer5,training=training,base_name="layer6")
   features.update(features6)
   histograms.update(histograms6)
 
-  last_layer7,features7,histograms7=residual(tf=tf, x=conv7,training=training,base_name="layer7")
+  last_layer7,features7,histograms7=residual(tf=tf, x=last_layer6,training=training,base_name="layer7")
   features.update(features7)
   histograms.update(histograms7)
 
-  last_layer8,features8,histograms8=residual(tf=tf, x=conv8,training=training,base_name="layer8")
+  last_layer8,features8,histograms8=residual(tf=tf, x=last_layer7,training=training,base_name="layer8")
   features.update(features8)
   histograms.update(histograms8)
 
-  last_layer9,features9,histograms9=residual(tf=tf, x=conv9,training=training,base_name="layer9")
+  last_layer9,features9,histograms9=residual(tf=tf, x=last_layer8,training=training,base_name="layer9")
   features.update(features9)
   histograms.update(histograms9)
 
-  last_layer10,features10,histograms10=residual(tf=tf, x=conv10,training=training,base_name="layer10")
+  last_layer10,features10,histograms10=residual(tf=tf, x=last_layer9,training=training,base_name="layer10")
   features.update(features10)
   histograms.update(histograms10)
 
-  last_layer11,features11,histograms11=residual(tf=tf, x=conv11,training=training,base_name="layer11")
+  last_layer11,features11,histograms11=residual(tf=tf, x=last_layer10,training=training,base_name="layer11")
   features.update(features11)
   histograms.update(histograms11)
 
-  last_layer12,features12,histograms12=residual(tf=tf, x=conv12,training=training,base_name="layer12")
+  last_layer12,features12,histograms12=residual(tf=tf, x=last_layer11,training=training,base_name="layer12")
   features.update(features12)
   histograms.update(histograms12)
 
@@ -82,7 +82,7 @@ def create_structure(tf, x, input_size,dropout,training=True):
   W_conv2 = deep_dive.weight_variable_scaling([7,7,64,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
 
-  conv2 = deep_dive.conv2d(last_layer12, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  conv2 = deep_dive.conv2d(last_layer12+conv1, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
 
   one_constant = tf.constant(1)
 

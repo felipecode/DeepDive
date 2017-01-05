@@ -10,7 +10,7 @@ from simulator import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from inception_res_BACBAC_normalized import create_structure
+from resnet_12 import create_structure
 from discriminator_net_test import create_discriminator_structure
 
 """Core libs"""
