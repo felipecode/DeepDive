@@ -78,10 +78,11 @@ def create_structure(tf, x, input_size,dropout,training=True):
   features.update(features12)
   histograms.update(histograms12)
 
+
   W_conv2 = deep_dive.weight_variable_scaling([7,7,64,3],name='W_conv2')
   b_conv2 = deep_dive.bias_variable([3])
 
-  conv2 = deep_dive.conv2d(last_layer12, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
+  conv2 = deep_dive.conv2d(last_layer12+conv1, W_conv2,strides=[1, 1, 1, 1], padding='SAME') + b_conv2
 
   one_constant = tf.constant(1)
 
