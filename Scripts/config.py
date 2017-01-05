@@ -50,7 +50,7 @@ class configMain:
 class configMainSimulator:
 	def __init__(self):
 		self.turbidity_size=(128,128)
-		self.turbidity_path="/home/nautec/DeepDive-master/Simulator/MistDataBase"
+		self.turbidity_path="/home/nautec/DeepDive/NewSimulator/MistDataBase/"
 		self.range_max=1.0
 		self.range_min=1.0
 		self.learning_rate = 1e-4
@@ -72,8 +72,8 @@ class configMainSimulator:
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_04_01_GANs/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_04_01_GANs/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_05_01_res/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_05_01_res/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
@@ -81,6 +81,7 @@ class configMainSimulator:
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
 		self.validation_period = 120
+		self.model_saving_period = 300
 		self.histograms_list=[]#"W_conv1","W_conv2","W_conv3","W_conv4","W_conv5","W_conv6"]
 		self.features_list=[]
 		self.features_opt_list=[]
