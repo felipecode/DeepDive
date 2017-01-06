@@ -29,7 +29,7 @@ def create_structure(tf, x, input_size,dropout,training=True):
   W_conv1 = deep_dive.weight_variable_scaling([7,7,3,64],name='W_conv1')
   b_conv1 = deep_dive.bias_variable([64])
   #conv1 = tf.nn.relu(tf.contrib.layers.batch_norm(deep_dive.conv2d(x_image, W_conv1,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training))
-  conv1 = tf.nn.elu(deep_dive.conv2d(x_image, W_conv1,strides=[1, 1, 1, 1], padding='SAME')+B_conv1)
+  conv1 = tf.nn.elu(deep_dive.conv2d(x_image, W_conv1,strides=[1, 1, 1, 1], padding='SAME')+b_conv1)
 
   last_layer1,features1,histograms1=residual(tf=tf, x=conv1,training=training,base_name="layer1")
   features.update(features1)
