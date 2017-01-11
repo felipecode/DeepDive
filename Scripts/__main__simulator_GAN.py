@@ -10,7 +10,7 @@ from simulator import *
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
-from resnet_12 import create_structure
+from inception_res_BACBAC_normalized_improved import create_structure
 from discriminator_net_test import create_discriminator_structure
 
 """Core libs"""
@@ -98,11 +98,21 @@ discriminator_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='discriminato
 """ Creating losses for generative network"""
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
-discriminator_loss=tf.reduce_mean(-tf.log(tf.clip_by_value(d_score_output,1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
-loss_function = (feature_loss + mse_loss+10*discriminator_loss)/3
+
+cross_entropy_fake = tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.zeros_like(d_score_output))
+disc_fake_loss     = tf.reduce_mean(cross_entropy_fake, name='disc_fake_loss')
+
+discriminator_loss=1-disc_fake_loss#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
+loss_function = (feature_loss + mse_loss+255*discriminator_loss)/3
 
 """ Loss for descriminative network"""
-discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
+cross_entropy_real = tf.nn.sigmoid_cross_entropy_with_logits(d_score_gt, tf.ones_like(d_score_gt))
+disc_real_loss     = tf.reduce_mean(cross_entropy_real, name='disc_real_loss')
+    
+
+
+discriminator_error = tf.add(disc_real_loss, disc_fake_loss)
+#discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)#treina so a rede, nao o discriminador
@@ -129,8 +139,8 @@ tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
 tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
 tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
-tf.scalar_summary('discriminator_score_groundtruth', tf.reduce_mean(d_score_gt))
-tf.scalar_summary('discriminator_score_output', tf.reduce_mean(d_score_output))
+tf.scalar_summary('discriminator_score_groundtruth', tf.nn.sigmoid(tf.reduce_mean(d_score_gt)))
+tf.scalar_summary('discriminator_score_output', tf.nn.sigmoid(tf.reduce_mean(d_score_output)))
 tf.scalar_summary('discriminator_loss', discriminator_loss)
 tf.scalar_summary('discriminator_error', discriminator_error)
 
