@@ -21,7 +21,7 @@ def residual(tf, x,base_name,training=True):
   W_conv2 = deep_dive.weight_variable_scaling([3,3,64,64], name='W_conv2'+base_name)
   b_conv2=deep_dive.bias_variable([64])
   #conv2 = tf.contrib.layers.batch_norm(deep_dive.conv2d(x_image, W_conv2,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
-  conv2 = deep_dive.conv2d(x_image, W_conv2,strides=[1, 1, 1, 1], padding='SAME')+b_conv2
+  conv2 = deep_dive.conv2d(conv, W_conv2,strides=[1, 1, 1, 1], padding='SAME')+b_conv2
   print conv2
   features["conv2"+base_name]=[conv2,None]
   histograms["conv2"+base_name]=W_conv2

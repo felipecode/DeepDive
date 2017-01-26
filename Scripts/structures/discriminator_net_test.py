@@ -24,5 +24,5 @@ def create_discriminator_structure(tf, x, input_size):
   fc1 = tf.matmul(conv1_pooled_flat, W_fc1) + b_fc1
 
 
-  return tf.nn.sigmoid(fc1)
+  return fc1#tf.nn.sigmoid(fc1)
 

@@ -8,7 +8,7 @@ from features_optimization import normalize_std
 
 def save_optimized_image_to_disk(opt_output, channel,n_channels,key,path):
 	opt_output_rescaled = (opt_output - opt_output.min())
-	opt_output_rescaled *= (255/opt_output_rescaled.max())
+	opt_output_rescaled *= (255/(opt_output_rescaled.max()+0.0001))
 	im = Image.fromarray(opt_output_rescaled.astype(np.uint8))
 	file_name="opt_"+str(channel).zfill(len(str(n_channels)))+".bmp"
 	folder_name=path+"/feature_maps/"+key+"/optimization"
@@ -51,7 +51,7 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 
 	for ft, w, d, key in zip(feature_maps, weights, deconv, feature_names):
 		ft_img = (ft - ft.min())
-		ft_img*=(255/ft_img.max())
+		ft_img*=(255/(ft_img.max()+0.0001))
 		for k in xrange(ft.shape[0]):
 			for l in xrange(ft.shape[3]):
 				ch_img=ft_img[k,:,:,l].astype(np.uint8) 
@@ -65,7 +65,7 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 		if w is not None:
 			kernel=w.eval()
 			kernel_img = (kernel - kernel.min())
-			kernel_img*=(255/kernel_img.max())
+			kernel_img*=(255/(kernel_img.max()+0.0001))
 			for k in xrange(kernel_img.shape[3]):
 				im = Image.fromarray(kernel_img[:,:,:,k].astype(np.uint8))
 				k_file_name="W_"+str(k).zfill(len(str(ft.shape[3])))+".bmp"
@@ -78,7 +78,7 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 				for j in xrange(d.shape[0]):
 					d_img=d[j,:,:,:,i]
 					d_img = (d_img-d_img.min())
-					d_img*=(255/d_img.max())
+					d_img*=(255/(d_img.max()+0.0001))
 					deconv_img=d_img.astype(np.uint8) 
 					im = Image.fromarray(deconv_img)
 					file_name=str(i).zfill(len(str(d.shape[4])))+".bmp"
@@ -90,16 +90,15 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 
 
 def save_max_activations_to_disk(max_activation, feature_names,path):
-
 	for actv, key in zip(max_activation, feature_names):
-		for i in xrange(actv[0].shape[3]):
-			actv_img=actv[0][:,:,:,i]
+		for i in xrange(actv[0].shape[4]):
+			actv_img=actv[0][0,:,:,:,i]
 			actv_img = (actv_img-actv_img.min())
-			actv_img*=(255/actv_img.max())
+			actv_img*=(255/(actv_img.max()+0.0001))
 			max_actv_img=actv_img.astype(np.uint8)
-			input_img=actv[1][:,:,i]
+			input_img=actv[1][0,:,:,i]
 			input_img = (input_img-input_img.min())
-			input_img*=(255/input_img.max())
+			input_img*=(255/(input_img.max()+0.0001))
 			max_actv_input_img=input_img.astype(np.uint8) 
 			actv_im = Image.fromarray(max_actv_input_img)
 			actv_file_name=str(i).zfill(len(str(actv[0].shape[3])))+".bmp"

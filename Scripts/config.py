@@ -60,8 +60,8 @@ class configMainSimulator:
 		self.beta2=0.999
 		self.epsilon=1e-08
 		self.use_locking=False
-		self.batch_size = 16
-		self.batch_size_val = 16
+		self.batch_size = 10
+		self.batch_size_val = 10
 		self.variable_names = []#['MSE']
 		self.n_epochs = 240   # the number of epochs that we are going to run
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
@@ -72,8 +72,8 @@ class configMainSimulator:
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_05_01_res/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_05_01_res/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_11_01_sigmoid/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_11_01_sigmoid/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
