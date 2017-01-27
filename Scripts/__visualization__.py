@@ -210,8 +210,7 @@ for key, channel in config.features_opt_list:
             save_optimized_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
 
 print("Images in dataset: %d"%(dataset.getNImagesDataset()))
-#for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1):
-for i in range(initialIteration, 4):
+for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1):
   epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   start_time = time.time()
 
