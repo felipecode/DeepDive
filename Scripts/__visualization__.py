@@ -59,16 +59,17 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """creating plaholders"""
 batch_size=config.batch_size
-tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
-tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
-tf_range=tf.placeholder("float",range_array.shape, name="ranges")
-tf_c=tf.placeholder("float",c.shape, name="c")
-tf_binf=tf.placeholder("float",binf.shape, name="binf")
+tf_images=tf.placeholder("float",(None,) +config.input_size, name="images")
+tf_depths=tf.placeholder("float",(None,) +config.depth_size, name="depths")
+tf_range=tf.placeholder("float",(None,)+range_array.shape[1:], name="ranges")
+tf_c=tf.placeholder("float",(None,)+c.shape[1:], name="c")
+tf_binf=tf.placeholder("float",(None,)+binf.shape[1:], name="binf")
 lr = tf.placeholder("float", name = "learning_rate")
 
 """defining simulator structure"""
 y_image = tf_images
 x=applyTurbidity(y_image, tf_depths, tf_c, tf_binf, tf_range)
+
 
 with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
@@ -101,20 +102,12 @@ init_op=tf.global_variables_initializer()
 sess.run(init_op)
 summary_writer = tf.summary.FileWriter(config.summary_path, graph=sess.graph)
 
-"""Load a previous model if restore is set to True"""
-
 if not os.path.exists(config.models_path):
   os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
 
 dados={}
-#dados['learning_rate']=config.learning_rate
-#dados['beta1']=config.beta1
-#dados['beta2']=config.beta2
-#dados['epsilon']=config.epsilon
-#dados['use_locking']=config.use_locking
 dados['summary_writing_period']=config.summary_writing_period
-#dados['validation_period']=config.validation_period
 dados['batch_size']=config.batch_size
 dados['variable_errors']=[]
 dados['time']=[]
@@ -138,14 +131,6 @@ else:
 
 print 'Logging into ' + config.summary_path
 
-"""Training"""
-
-lowest_error = 1.5;
-lowest_val  = 1.5;
-lowest_iter = 1;
-lowest_val_iter = 1;
-
-feedDict=dropoutDict
 initialIteration = 1
 
 training_start_time =time.time()
@@ -216,11 +201,11 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1
 
   batch = dataset.train.next_batch(config.batch_size)
   if config.use_depths:
-   feedDict.update({tf_images: batch[0], tf_depths: batch[1], tf_range: range_array, tf_c: c, tf_binf: binf})
+    feedDict={tf_images: batch[0], tf_depths: batch[1], tf_range: range_array, tf_c: c, tf_binf: binf}
   else:
     constant_depths=np.ones((batch_size,)+config.depth_size, dtype=np.float32);
     depths=constant_depths*10*np.random.rand(batch_size,1,1,1)
-    feedDict.update({tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf})
+    feedDict={tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf}
 
   sim_output=sess.run(x,feed_dict=feedDict)
   if len(ft_ops) > 0:
