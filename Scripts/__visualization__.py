@@ -239,12 +239,6 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1
 
   if i%4 == 0:
     examples_per_sec = config.batch_size / duration
-    result=sess.run(loss_function, feed_dict=feedDict)
-    result > 0
-    train_accuracy = sum(result)/config.batch_size
-    if  train_accuracy < lowest_error:
-      lowest_error = train_accuracy
-      lowest_iter = i
     print("step %d, images used %d, examples per second %f"
         %(i, i*config.batch_size, examples_per_sec))
 
