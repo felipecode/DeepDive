@@ -91,19 +91,19 @@ def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path)
 
 def save_max_activations_to_disk(max_activation, feature_names,path):
 	for actv, key in zip(max_activation, feature_names):
-		for i in xrange(actv[0].shape[4]):
-			actv_img=actv[0][0,:,:,:,i]
+		for ch in xrange(actv[0].shape[4]):
+			actv_img=actv[1][0,:,:,ch]
 			actv_img = (actv_img-actv_img.min())
 			actv_img*=(255/(actv_img.max()+0.0001))
 			max_actv_img=actv_img.astype(np.uint8)
-			input_img=actv[1][0,:,:,i]
+			input_img=actv[0][0,:,:,:,ch]
 			input_img = (input_img-input_img.min())
 			input_img*=(255/(input_img.max()+0.0001))
 			max_actv_input_img=input_img.astype(np.uint8) 
-			actv_im = Image.fromarray(max_actv_input_img)
-			actv_file_name=str(i).zfill(len(str(actv[0].shape[3])))+".bmp"
-			input_im = Image.fromarray(max_actv_img)
-			input_file_name="input_"+str(i).zfill(len(str(actv[0].shape[3])))+".bmp"
+			actv_im = Image.fromarray(max_actv_img)
+			actv_file_name=str(ch).zfill(len(str(actv[0].shape[3])))+".bmp"
+			input_im = Image.fromarray(max_actv_input_img)
+			input_file_name="input_"+str(ch).zfill(len(str(actv[0].shape[3])))+".bmp"
 			folder_name=path+"/feature_maps/"+key+"/max_activations"
 			if not os.path.exists(folder_name):
 		  		os.makedirs(folder_name)
