@@ -52,7 +52,7 @@ class configMainSimulator:
 		self.turbidity_path="/home/nautec/DeepDive/NewSimulator/MistDataBase/"
 		self.range_max=1
 		self.range_min=1
-		self.learning_rate = 1e-4
+		self.learning_rate = 1e-5
 		self.lr_update_value = 1
 		self.lr_update_period =1
 		self.beta1=0.9
@@ -71,12 +71,12 @@ class configMainSimulator:
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_14_02_inception_res_BAC_normalized_feature/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_14_02_inception_res_BAC_normalized_feature/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_16_02_inception_res_BAC_normalized_feature/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_16_02_inception_res_BAC_normalized_feature/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
-		self.restore = False
+		self.restore = True
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
 		self.validation_period = 120
