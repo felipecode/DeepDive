@@ -3,13 +3,13 @@ from input_data_levelDB_simulator_data_augmentation import DataSetManager
 from config import *
 from utils import *
 from features_optimization import optimize_feature
-from loss_network import *
-from simulator import *
 
 """Structure"""
 import sys
 sys.path.append('structures')
 sys.path.append('utils')
+from loss_network import *
+from simulator import *
 from inception_res_BAC_normalized import create_structure
 from discriminator_network import create_discriminator_structure
 
@@ -66,11 +66,11 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """creating plaholders"""
 batch_size=config.batch_size
-tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
-tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
-tf_range=tf.placeholder("float",range_array.shape, name="ranges")
-tf_c=tf.placeholder("float",c.shape, name="c")
-tf_binf=tf.placeholder("float",binf.shape, name="binf")
+tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")  #groundtruth
+tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")  #depth
+tf_range=tf.placeholder("float",range_array.shape, name="ranges")   # multiplicative gain to depth
+tf_c=tf.placeholder("float",c.shape, name="c")          # scattering constant
+tf_binf=tf.placeholder("float",binf.shape, name="binf")   
 lr = tf.placeholder("float", name = "learning_rate")
 
 """defining simulator structure"""

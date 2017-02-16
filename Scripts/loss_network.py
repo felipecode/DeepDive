@@ -92,7 +92,7 @@ def create_loss_structure(tf, x_image, y_image, sess):
 
 	# Loss
 	loss += tf.reduce_mean(tf.squared_difference(conv22, conv22_gt, name=None), reduction_indices=[1,2,3])
-	
+	'''
 	# Second Maxpool
 	pool2 = tf.nn.max_pool(conv22, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name="pool2")
 	pool2_gt = tf.nn.max_pool(conv22_gt, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name="pool2_gt")
@@ -306,7 +306,7 @@ def create_loss_structure(tf, x_image, y_image, sess):
 	
 	# First Softmax
 	softmax = tf.nn.softmax(fc3)
-	softmax_gt = tf.nn.softmax(fc3_gt)
+	softmax_gt = tf.nn.softmax(fc3_gt)'''
 	
 	# Load Weights
 	load_loss_weights(loss_parameters, sess)
