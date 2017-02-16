@@ -1,4 +1,3 @@
-
 """configuration file"""
 
 class configMain:
@@ -51,8 +50,8 @@ class configMainSimulator:
 	def __init__(self):
 		self.turbidity_size=(128,128)
 		self.turbidity_path="/home/nautec/DeepDive/NewSimulator/MistDataBase/"
-		self.range_max=1.0
-		self.range_min=1.0
+		self.range_max=1
+		self.range_min=1
 		self.learning_rate = 1e-4
 		self.lr_update_value = 1
 		self.lr_update_period =1
@@ -60,20 +59,20 @@ class configMainSimulator:
 		self.beta2=0.999
 		self.epsilon=1e-08
 		self.use_locking=False
-		self.batch_size = 10
-		self.batch_size_val = 10
+		self.batch_size = 32
+		self.batch_size_val = 32
 		self.variable_names = []#['MSE']
-		self.n_epochs = 240   # the number of epochs that we are going to run
+		self.n_epochs = 20   # the number of epochs that we are going to run
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
-		self.leveldb_path = '/home/nautec/DeepDive/datasets/simulator_data/'
+		self.leveldb_path = '/home/nautec/DeepDive/datasets/geral/'
 		self.training_path = '../datasets/datasetDepthV6/Training/'
 		self.training_transmission_path = '../datasets/datasetDepthV6/Transmission/'
 		self.validation_transmission_path = '../datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_11_01_sigmoid/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_11_01_sigmoid/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_14_02_inception_res_BAC_normalized_feature/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_14_02_inception_res_BAC_normalized_feature/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
@@ -96,37 +95,43 @@ class configMainSimulator:
 
 class configVisualization:
 	def __init__(self):
-		self.turbidity_size=(128,128)
-		self.turbidity_path='../datasets/MistDataBase'
-		self.range_max=0.0
-		self.range_min=0.0
-		self.batch_size = 8
-		self.leveldb_path = '../datasets/simulator_data/'
-		self.summary_path = '../summary/16_01_resnet12_maxactv_gt'
-		self.models_path = 'models/model_16_01_resnet12'
-		self.input_size = (224, 224, 3)
-		self.output_size = (224, 224, 3)
-		self.ground_truth_size = (224,224, 3)
-                self.depth_size = (224, 224, 1)
+		self.batch_size = 32
+		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/'
+		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Training/'
+		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Transmission/'
+		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationTransmission/'
+		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/GroundTruth/'
+		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Validation/'
+		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationGroundTruth/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
+		self.input_size = (3536, 2234, 3)
+		self.output_size = (3536, 2234, 3)
+		self.ground_truth_size = (3536,2234, 3)
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
-		self.histograms_list=[]
-		self.features_list=[]#"conv1"]
-		self.features_opt_list=[]#["conv1",-1]]
+		self.histograms_list=["W_B_conv1","W_B_conv2","W_B_conv3","W_B_conv4","W_B_conv5",
+								"W_A_conv1","W_A_conv2","W_A_conv3","W_A_conv4","W_A_conv5",
+								"W_A_conv6","W_A_conv7","W_C_conv1","W_C_conv2","W_C_conv3",
+								"W_C_conv4","W_C_conv5"]
+		self.features_list=["B_conv4"]
+		self.features_opt_list=[["B_conv4",0]]
 		self.save_features_to_disk=True
 		self.save_json_summary=True
 		self.save_error_transmission=False
 		self.num_bins = 10
 		self.use_tensorboard=True
-		self.use_deconv=False
-		self.use_depths=True
-		self.num_top_actvs=10
+		self.use_deconv=True
 
 class configSimConvert:
 	def __init__(self):
-		self.imgs_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/simulator_data_outdoor/images'
-		self.depths_path='../datasets/simulator_data/depths'
-		self.leveldb_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/simulator_data_outdoor'
+		self.imgs_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/dataset_kinect/images'
+		self.imgs_path2='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/VOCB3DO/Dividido10/images'
+		self.imgs_path3='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/nyu/images'
+		self.depths_path='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/dataset_kinect/depths'
+		self.depths_path2='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/VOCB3DO/Dividido10/depths'
+		self.depths_path3='/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/datasets/nyu/depths'
+		self.leveldb_path='../datasets/geral/'
 		self.input_size = (224,224,3)
 
 class configConvert:
@@ -177,11 +182,11 @@ class configDehazenet:
 
 class configOptimization:
 	def __init__(self):
-		self.opt_step=0.01
+		self.opt_step=1
 		self.opt_n_iters=50
 		self.decay=0
 		self.blur_iter=0
-		self.blur_width=0
+		self.blur_width=1
 		self.norm_pct_thrshld=0
 		self.contrib_pct_thrshld=0
-		self.lap_grad_normalization=False
+		self.lap_grad_normalization=True

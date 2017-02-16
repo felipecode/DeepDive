@@ -59,7 +59,7 @@ def _acquireProperties(turbidity_patches):
 	binf=l*T*I0*tf.exp(-c*patch_max)
 	return c,binf
 
-def applyTurbidity(images, depths, c, binf, ranges):#, max_range_dev):
+def applyTurbidity(images, depths, c, binf, ranges):
 	trans=tf.exp(-depths*c*ranges)
 	return images*trans + binf *(1-trans)
 
