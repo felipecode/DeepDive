@@ -96,33 +96,31 @@ class configMainSimulator:
 
 class configVisualization:
 	def __init__(self):
-		self.batch_size = 32
-		self.leveldb_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/'
-		self.training_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Training/'
-		self.training_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Transmission/'
-		self.validation_transmission_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationTransmission/'
-		self.training_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/GroundTruth/'
-		self.validation_path = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/Validation/'
-		self.validation_path_ground_truth = '/home/nautec/DeepDive-master/datasets/datasetECCVTurbid2/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN_tes/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e1/modelnew_07_9BN/'
-		self.input_size = (3536, 2234, 3)
-		self.output_size = (3536, 2234, 3)
-		self.ground_truth_size = (3536,2234, 3)
+		self.turbidity_size=(128,128)
+		self.turbidity_path='../datasets/MistDataBase'
+		self.range_max=0.0
+		self.range_min=0.0
+		self.batch_size = 8
+		self.leveldb_path = '../datasets/simulator_data/'
+		self.summary_path = '../summary/16_01_resnet12_maxactv_gt'
+		self.models_path = 'models/model_16_01_resnet12'
+		self.input_size = (224, 224, 3)
+		self.output_size = (224, 224, 3)
+		self.ground_truth_size = (224,224, 3)
+                self.depth_size = (224, 224, 1)
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
-		self.histograms_list=["W_B_conv1","W_B_conv2","W_B_conv3","W_B_conv4","W_B_conv5",
-								"W_A_conv1","W_A_conv2","W_A_conv3","W_A_conv4","W_A_conv5",
-								"W_A_conv6","W_A_conv7","W_C_conv1","W_C_conv2","W_C_conv3",
-								"W_C_conv4","W_C_conv5"]
-		self.features_list=["B_conv4"]
-		self.features_opt_list=[["B_conv4",0]]
+		self.histograms_list=[]
+		self.features_list=[]#"conv1"]
+		self.features_opt_list=[]#["conv1",-1]]
 		self.save_features_to_disk=True
 		self.save_json_summary=True
 		self.save_error_transmission=False
 		self.num_bins = 10
 		self.use_tensorboard=True
-		self.use_deconv=True
+		self.use_deconv=False
+		self.use_depths=True
+		self.num_top_actvs=10
 
 class configSimConvert:
 	def __init__(self):
@@ -179,11 +177,11 @@ class configDehazenet:
 
 class configOptimization:
 	def __init__(self):
-		self.opt_step=1
+		self.opt_step=0.01
 		self.opt_n_iters=50
 		self.decay=0
 		self.blur_iter=0
-		self.blur_width=1
+		self.blur_width=0
 		self.norm_pct_thrshld=0
 		self.contrib_pct_thrshld=0
-		self.lap_grad_normalization=True
+		self.lap_grad_normalization=False
