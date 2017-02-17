@@ -87,41 +87,42 @@ network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
 
 """define structure feature loss"""
 feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*tf_images, sess)
-
-"""define discriminator structure for both ground truth and output"""
-with tf.variable_scope('discriminator', reuse=None):
-  d_score_gt=create_discriminator_structure(tf,y_image,config.input_size)
-with tf.variable_scope('discriminator', reuse=True):
-  d_score_output=create_discriminator_structure(tf,last_layer,config.input_size)
-
-discriminator_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='discriminator')
+if config.use_discriminator:
+  """define discriminator structure for both ground truth and output"""
+  with tf.variable_scope('discriminator', reuse=None):
+    d_score_gt=create_discriminator_structure(tf,y_image,config.input_size)
+  with tf.variable_scope('discriminator', reuse=True):
+    d_score_output=create_discriminator_structure(tf,last_layer,config.input_size)
+  discriminator_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='discriminator')
 
 """ Creating losses for generative network"""
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
 mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
 
 
-
-discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
+if config.use_discriminator:
+  discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
 loss_function = feature_loss#feature_loss + mse_loss)/2+10*discriminator_loss)/3
 
-""" Loss for descriminative network"""
+if config.use_discriminator:
+  """ Loss for descriminative network"""
 
-cross_entropy_real = tf.nn.sigmoid_cross_entropy_with_logits(d_score_gt, tf.ones_like(d_score_gt))
-disc_real_loss     = tf.reduce_mean(cross_entropy_real, name='disc_real_loss')
-    
-cross_entropy_fake = tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.zeros_like(d_score_output))
+  cross_entropy_real = tf.nn.sigmoid_cross_entropy_with_logits(d_score_gt, tf.ones_like(d_score_gt))
+  disc_real_loss     = tf.reduce_mean(cross_entropy_real, name='disc_real_loss')
+      
+  cross_entropy_fake = tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.zeros_like(d_score_output))
 
-disc_fake_loss     = tf.reduce_mean(cross_entropy_fake, name='disc_fake_loss')
+  disc_fake_loss     = tf.reduce_mean(cross_entropy_fake, name='disc_fake_loss')
 
-discriminator_error = tf.add(disc_real_loss, disc_fake_loss)
-discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
+  discriminator_error = tf.add(disc_real_loss, disc_fake_loss)
+  discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
+
+  disc_train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
+                                    use_locking=config.use_locking).minimize(discriminator_error, var_list=discriminator_vars)#treina so o discriminador, sem mexer nos pesos da rede
 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)#treina so a rede, nao o discriminador
 
-disc_train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
-                                    use_locking=config.use_locking).minimize(discriminator_error, var_list=discriminator_vars)#treina so o discriminador, sem mexer nos pesos da rede
 
 """Creating summaries"""
 
@@ -142,13 +143,17 @@ tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
 tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
 tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
 tf.scalar_summary('learning_rate',lr)
-tf.scalar_summary('discriminator_score_groundtruth', tf.nn.sigmoid(tf.reduce_mean(d_score_gt)))
-tf.scalar_summary('discriminator_score_output', tf.nn.sigmoid(tf.reduce_mean(d_score_output)))
-tf.scalar_summary('discriminator_loss', discriminator_loss)
-tf.scalar_summary('discriminator_error', discriminator_error)
+if config.use_discriminator:
+  tf.scalar_summary('discriminator_score_groundtruth', tf.nn.sigmoid(tf.reduce_mean(d_score_gt)))
+  tf.scalar_summary('discriminator_score_output', tf.nn.sigmoid(tf.reduce_mean(d_score_output)))
+  tf.scalar_summary('discriminator_loss', discriminator_loss)
+  tf.scalar_summary('discriminator_error', discriminator_error)
 
 summary_op = tf.merge_all_summaries()
-saver = tf.train.Saver(tf.all_variables())
+
+saver = tf.train.Saver(network_vars)
+if config.use_discriminator:
+  saver_discriminator = tf.train.Saver(discriminator_vars)
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
@@ -173,8 +178,20 @@ dados['learning_rate_update']=[]
 """Load a previous model if restore is set to True"""
 
 if not os.path.exists(config.models_path):
-  os.mkdir(config.models_path)
+  if config.restore:
+    raise ValueError('There is no model to be restore from:' + config.models_path)
+  else:
+    os.mkdir(config.models_path)
 ckpt = tf.train.get_checkpoint_state(config.models_path)
+
+if config.use_discriminator:
+  if not os.path.exists(config.models_path_discriminator):
+    if config.restore_discriminator:
+      raise ValueError('There is no model to be restore from:' + config.models_path_discriminator)
+    else:
+      os.mkdir(config.models_path_discriminator)
+  ckpt_discriminator = tf.train.get_checkpoint_state(config.models_path_discriminator)
+
 
 if config.restore:
   if ckpt:
@@ -196,11 +213,17 @@ else:
   ckpt = 0
   initialIteration = 1
 
+
+if config.restore_discriminator:
+  if ckpt_discriminator:
+    print 'Restoring from ', ckpt_discriminator.model_checkpoint_path
+    saver_discriminator.restore(sess,ckpt_discriminator.model_checkpoint_path)
+
 print 'Logging into ' + config.summary_path
 
 """Training"""
-lowest_error = 1500;
-lowest_val  = 1500;
+lowest_error = 150000;
+lowest_val  = 150000;
 lowest_iter = 1;
 lowest_val_iter = 1;
 
@@ -212,6 +235,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   """Save the model every model_saving_period iterations"""
   if i%config.model_saving_period == 0:
     saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
+    if config.use_discriminator:
+      saver_discriminator.save(sess, config.models_path + 'model.ckpt', global_step=i)
     print 'Model saved.'
 
 
@@ -224,7 +249,10 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     constant_depths=np.ones((batch_size,)+config.depth_size, dtype=np.float32);
     depths=constant_depths*10*np.random.rand(batch_size,1,1,1)
     feedDict={tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf, lr: (config.learning_rate/(config.lr_update_value ** int(int(epoch_number)/config.lr_update_period)))}
-  sess.run(train_step, feed_dict=feedDict)#,disc_train_step], feed_dict=feedDict)
+  if config.use_discriminator:
+    sess.run([train_step,disc_train_step], feed_dict=feedDict)
+  else:
+    sess.run(train_step, feed_dict=feedDict)
 
   duration = time.time() - start_time
 

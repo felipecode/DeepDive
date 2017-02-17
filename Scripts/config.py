@@ -46,12 +46,13 @@ class configMain:
 		self.use_tensorboard=True
 		self.use_deconv=False
 
+
 class configMainSimulator:
 	def __init__(self):
 		self.turbidity_size=(128,128)
 		self.turbidity_path="/home/nautec/DeepDive/NewSimulator/MistDataBase/"
-		self.range_max=10
-		self.range_min=0
+		self.range_max=1.2
+		self.range_min=0.8
 		self.learning_rate = 1e-4
 		self.lr_update_value = 1
 		self.lr_update_period =1
@@ -64,19 +65,22 @@ class configMainSimulator:
 		self.variable_names = []#['MSE']
 		self.n_epochs = 20   # the number of epochs that we are going to run
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
-		self.leveldb_path = '/home/nautec/DeepDive/datasets/geral2/'
+		self.leveldb_path = '/home/nautec/DeepDive/datasets/geral/'
 		self.training_path = '../datasets/datasetDepthV6/Training/'
 		self.training_transmission_path = '../datasets/datasetDepthV6/Transmission/'
 		self.validation_transmission_path = '../datasets/datasetDepthV6/ValidationTransmission/'
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_16_02_inception_res_BAC_normalized_feature_norm/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_16_02_inception_res_BAC_normalized_feature_norm/'
+		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_17_02_inception_res_BAC_normalized_feature/'
+		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_17_02_inception_res_BAC_normalized_feature/'
+		self.models_discriminator_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_17_02_inception_res_BAC_normalized_feature_discriminator/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
-		self.restore = True
+		self.restore = False
+		self.use_discriminator = False
+		self.restore_discriminator = False
 		self.dropout = [1,1,1,1]
 		self.summary_writing_period = 20
 		self.validation_period = 120
@@ -93,7 +97,7 @@ class configMainSimulator:
 		self.use_deconv=False
 		self.use_depths=True
 		self.invert = True
-    	self.rotate = True
+		self.rotate = True
 
 
 class configMainSimulatorTest:

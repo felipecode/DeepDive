@@ -29,6 +29,8 @@ class DataSet(object):
     self._index_in_epoch = 0
     self._input_size= input_size
     self._depth_size= depth_size
+    self.invert = invert
+    self.rotate = rotate
 
   def getTransmission(n):
     self._db.Get(str(n))
@@ -54,21 +56,22 @@ class DataSet(object):
     depths = np.empty((batch_size, self._depth_size[0], self._depth_size[1],self._depth_size[2]))
     for n in range(batch_size):
       key=self._images_key[start+n]
-      
-      if rotate:
+      rotation=0
+      inversion=0
+      if self.rotate:
         rotation=key & 3
-        key=key/4
+        key=int(key/4)
 
-      if invert:
+      if self.invert:
         inversion=key & 1
-        key=key/2
+        key=int(key/2)
         
       if self._is_validation:
-        images[n] = readImageFromDB(self._db,'val'+str(key),self._input_size,rotate=rotate,inversion=invert)
-        depths[n] = readImageFromDB(self._db,'val'+str(key)+"depth",self._depth_size,rotate=rotate,invert=invert)
+        images[n] = readImageFromDB(self._db,'val'+str(key),self._input_size)
+        depths[n] = readImageFromDB(self._db,'val'+str(key)+"depth",self._depth_size)
       else:
-        images[n] = readImageFromDB(self._db,str(key),self._input_size,rotate=rotate,invert=invert)
-        depths[n] = readImageFromDB(self._db,str(key)+"depth",self._depth_size,rotate=rotate,invert=invert)
+        images[n] = readImageFromDB(self._db,str(key),self._input_size)
+        depths[n] = readImageFromDB(self._db,str(key)+"depth",self._depth_size)
 
       np.rot90(images[n],rotation)
       np.rot90(depths[n],rotation)
@@ -86,18 +89,18 @@ class DataSetManager(object):
     self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
     self.num_examples = int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
-    if self.invert:
+    if config.invert:
       self.num_examples = self.num_examples * 2
       self.num_examples_val= self.num_examples_val * 2
-    if self.rotate:
+    if config.rotate:
       self.num_examples = self.num_examples * 4
       self.num_examples_val= self.num_examples_val * 4
     self.images_key = range(self.num_examples)
     self.images_key_val = range(self.num_examples_val)
     # for i in range(self.num_examples_val):
     #   self.images_key_val[i] = 'val' + str(i)
-    self.train = DataSet(self.images_key,config.input_size,config.depth_size,self.num_examples,self.db,validation=False,config.invert,convig.rotate)
-    self.validation = DataSet(self.images_key_val,config.input_size,config.depth_size,self.num_examples_val,self.db,validation=True,config.invert,config.rotate)
+    self.train = DataSet(self.images_key,config.input_size,config.depth_size,self.num_examples,self.db,validation=False,invert=config.invert,rotate=config.rotate)
+    self.validation = DataSet(self.images_key_val,config.input_size,config.depth_size,self.num_examples_val,self.db,validation=True,invert=config.invert,rotate=config.rotate)
 
   def getNImagesDataset(self):
     return self.num_examples
