@@ -92,6 +92,8 @@ class configMainSimulator:
 		self.use_tensorboard=True
 		self.use_deconv=False
 		self.use_depths=True
+		self.invert = True
+    	self.rotate = True
 
 
 class configMainSimulatorTest:
