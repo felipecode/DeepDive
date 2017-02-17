@@ -50,7 +50,7 @@ class configMainSimulator:
 	def __init__(self):
 		self.turbidity_size=(128,128)
 		self.turbidity_path="/home/nautec/DeepDive/NewSimulator/MistDataBase/"
-		self.range_max=16
+		self.range_max=10
 		self.range_min=0
 		self.learning_rate = 1e-4
 		self.lr_update_value = 1
