@@ -14,19 +14,12 @@ import matplotlib.pyplot as plt
 from time import time
 from config import *
 
-def readImageFromDB(db, key, size,rotation,inversion):
+def readImageFromDB(db, key, size):
   image =  np.reshape(np.fromstring(db.Get(key),dtype=np.float32),size)
-  
-  if inversion:
-    image = np.fliplr(image)
-  
-  if rotation:
-    image=np.rot90(image,rotation)
-
   return image
 
 class DataSet(object):
-  def __init__(self, images_key, input_size,depth_size, num_examples,db,validation):
+  def __init__(self, images_key, input_size,depth_size, num_examples,db,validation,invert,rotate):
     self._db=db
     self._is_validation = validation
     self._num_examples = num_examples
@@ -36,6 +29,8 @@ class DataSet(object):
     self._index_in_epoch = 0
     self._input_size= input_size
     self._depth_size= depth_size
+    self.invert = invert
+    self.rotate = rotate
 
   def getTransmission(n):
     self._db.Get(str(n))
@@ -59,47 +54,53 @@ class DataSet(object):
     if len(self._depth_size)==2:
       self._depth_size = (self._depth_size[0], self._depth_size[1],1)
     depths = np.empty((batch_size, self._depth_size[0], self._depth_size[1],self._depth_size[2]))
-    transmission = range(batch_size)
     for n in range(batch_size):
-      #print (str(self._images_key[start+n]))
       key=self._images_key[start+n]
       rotation=0
       inversion=0
-      rotation=key & 3
-      inversion=key & 4
-      key = str(int(key/8))
-      #print key
+      if self.rotate:
+        rotation=key & 3
+        key=int(key/4)
+
+      if self.invert:
+        inversion=key & 1
+        key=int(key/2)
+        
       if self._is_validation:
-        images[n] = readImageFromDB(self._db,'val'+str(key),self._input_size,rotation=rotation,inversion=inversion)
-        depths[n] = readImageFromDB(self._db,'val'+str(key)+"depth",self._depth_size,rotation=rotation,inversion=inversion)
+        images[n] = readImageFromDB(self._db,'val'+str(key),self._input_size)
+        depths[n] = readImageFromDB(self._db,'val'+str(key)+"depth",self._depth_size)
       else:
-        images[n] = readImageFromDB(self._db,str(key),self._input_size,rotation=rotation,inversion=inversion)
-        depths[n] = readImageFromDB(self._db,str(key)+"depth",self._depth_size,rotation=rotation,inversion=inversion)
-      #transmission[n] = self._db.Get(str(self._images_key[start+n])+"trans")
+        images[n] = readImageFromDB(self._db,str(key),self._input_size)
+        depths[n] = readImageFromDB(self._db,str(key)+"depth",self._depth_size)
+
+      np.rot90(images[n],rotation)
+      np.rot90(depths[n],rotation)
+
+      if inversion:
+        np.fliplr(images[n])
+        np.fliplr(depths[n])
     return images, depths#, transmission
 
 
 class DataSetManager(object):
   def __init__(self, config):
-    self.invert = True
-    self.rotate = True
     self.input_size = config.input_size
     self.depth_size = config.depth_size
     self.db = leveldb.LevelDB(config.leveldb_path + 'db') 
     self.num_examples = int(self.db.Get('num_examples'))
     self.num_examples_val = int(self.db.Get('num_examples_val'))
-    if self.invert:
+    if config.invert:
       self.num_examples = self.num_examples * 2
       self.num_examples_val= self.num_examples_val * 2
-    if self.rotate:
+    if config.rotate:
       self.num_examples = self.num_examples * 4
       self.num_examples_val= self.num_examples_val * 4
     self.images_key = range(self.num_examples)
     self.images_key_val = range(self.num_examples_val)
     # for i in range(self.num_examples_val):
     #   self.images_key_val[i] = 'val' + str(i)
-    self.train = DataSet(self.images_key,config.input_size,config.depth_size,self.num_examples,self.db,validation=False)
-    self.validation = DataSet(self.images_key_val,config.input_size,config.depth_size,self.num_examples_val,self.db,validation=True)
+    self.train = DataSet(self.images_key,config.input_size,config.depth_size,self.num_examples,self.db,validation=False,invert=config.invert,rotate=config.rotate)
+    self.validation = DataSet(self.images_key_val,config.input_size,config.depth_size,self.num_examples_val,self.db,validation=True,invert=config.invert,rotate=config.rotate)
 
   def getNImagesDataset(self):
     return self.num_examples
