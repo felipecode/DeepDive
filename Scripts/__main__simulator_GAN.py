@@ -11,7 +11,7 @@ import sys
 sys.path.append('structures')
 sys.path.append('utils')
 from inception_res_BAC_normalized import create_structure
-from discriminator_network import create_discriminator_structure
+from alex_discriminator import create_discriminator_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -103,7 +103,7 @@ mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduc
 
 
 discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
-loss_function = feature_loss#feature_loss + mse_loss)/2+10*discriminator_loss)/3
+loss_function = (feature_loss+10*discriminator_loss)/2
 
 """ Loss for descriminative network"""
 
@@ -148,7 +148,7 @@ tf.scalar_summary('discriminator_loss', discriminator_loss)
 tf.scalar_summary('discriminator_error', discriminator_error)
 
 summary_op = tf.merge_all_summaries()
-saver = tf.train.Saver(tf.all_variables())
+saver = tf.train.Saver(network_vars)
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
