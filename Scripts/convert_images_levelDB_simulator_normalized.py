@@ -12,13 +12,10 @@ import glob
 from time import time
 from config import *
 import leveldb
-#import matplotlib.pyplot as plt
-
 
 
 def read_image(image_name):
 	image = Image.open(image_name).convert('RGB')
-	image = image.resize((config.input_size[0], config.input_size[1]), Image.ANTIALIAS)
 	image = np.asarray(image)
 	image = image.astype(np.float32)
 	image = np.multiply(image, 1.0 / 255.0)
@@ -26,12 +23,10 @@ def read_image(image_name):
 
 def read_depth_image(image_name):
 	image = Image.open(image_name).convert('I')
-	image = image.resize((config.input_size[0],config.input_size[1]), Image.ANTIALIAS)
 	image = np.asarray(image,dtype=np.uint16)
-	
 	image = image.astype(np.float32)
-	image = np.multiply(image, 1.0 / 1000.0)
-	#print image
+	maximum = np.amax(image)
+	image = np.multiply(image, 1.0 / maximum)
 	return image
 
 config=configSimConvert()
