@@ -11,7 +11,7 @@ sys.path.append('utils')
 from loss_network import *
 from simulator import *
 from inception_res_BACBAC_normalized import create_structure
-from discriminator_net_test import create_discriminator_structure
+from discriminator_network import create_discriminator_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -102,8 +102,6 @@ mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduc
 
 if config.use_discriminator:
   discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
-
-if config.use_discriminator:
   loss_function = (feature_loss+1000*discriminator_loss)/2
 else:
   loss_function = feature_loss
@@ -155,12 +153,14 @@ if config.use_discriminator:
 
 summary_op = tf.merge_all_summaries()
 
+init_op=tf.initialize_all_variables()
+sess.run(init_op)
+
 saver = tf.train.Saver(network_vars)
 if config.use_discriminator:
   saver_discriminator = tf.train.Saver(discriminator_vars)
 
-init_op=tf.initialize_all_variables()
-sess.run(init_op)
+
 
 summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
 
@@ -240,7 +240,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
   if i%config.model_saving_period == 0:
     saver.save(sess, config.models_path + 'model.ckpt', global_step=i)
     if config.use_discriminator:
-      saver_discriminator.save(sess, config.models_path + 'model.ckpt', global_step=i)
+      saver_discriminator.save(sess, config.models_discriminator_path + 'model.ckpt', global_step=i)
     print 'Model saved.'
 
 

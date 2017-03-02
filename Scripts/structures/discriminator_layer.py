@@ -14,7 +14,7 @@ def discriminator_layer(tf, x, base_name, n, depth, stride, training=True):
   histograms["W_conv" + base_name] = W_conv
   histograms["b_conv" + base_name] = b_conv
 
-  conv = deep_dive.conv2d(x_image, W_conv2, strides = [1, stride, stride, 1], padding = 'VALID') + b_conv
+  conv = deep_dive.conv2d(x_image, W_conv, strides = [1, stride, stride, 1], padding = 'VALID') + b_conv
   features["conv" + base_name] = [conv, None]
 
   leaky_relu = tf.maximum(0.1*conv, conv)

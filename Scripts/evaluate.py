@@ -84,7 +84,7 @@ for i in im_names:
     h_conv3, dropoutDict,_,_,_ = create_structure(tf, x, config.input_size,[dout1,dout2,dout3,dout4],False)
   feedDict=dropoutDict
 
-  sess.run(tf.initialize_all_variables())
+  #sess.run(tf.initialize_all_variables())
   network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
   saver = tf.train.Saver(network_vars)
 
