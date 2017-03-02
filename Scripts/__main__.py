@@ -10,8 +10,8 @@ sys.path.append('structures')
 sys.path.append('utils')
 from loss_network import *
 from simulator import *
-from inception_res_BAC_normalized import create_structure
-from discriminator_network import create_discriminator_structure
+from inception_res_BACBAC_normalized import create_structure
+from discriminator_net_test import create_discriminator_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -102,7 +102,11 @@ mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduc
 
 if config.use_discriminator:
   discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
-loss_function = feature_loss#feature_loss + mse_loss)/2+10*discriminator_loss)/3
+
+if config.use_discriminator:
+  loss_function = (feature_loss+1000*discriminator_loss)/2
+else:
+  loss_function = feature_loss
 
 if config.use_discriminator:
   """ Loss for descriminative network"""
@@ -115,7 +119,7 @@ if config.use_discriminator:
   disc_fake_loss     = tf.reduce_mean(cross_entropy_fake, name='disc_fake_loss')
 
   discriminator_error = tf.add(disc_real_loss, disc_fake_loss)
-  discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
+  #discriminator_error=tf.reduce_mean(-(tf.log(tf.clip_by_value(d_score_gt,1e-10,1.0))+tf.log(tf.clip_by_value(1-d_score_output,1e-10,1.0))))
 
   disc_train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(discriminator_error, var_list=discriminator_vars)#treina so o discriminador, sem mexer nos pesos da rede
@@ -185,12 +189,12 @@ if not os.path.exists(config.models_path):
 ckpt = tf.train.get_checkpoint_state(config.models_path)
 
 if config.use_discriminator:
-  if not os.path.exists(config.models_path_discriminator):
+  if not os.path.exists(config.models_discriminator_path):
     if config.restore_discriminator:
-      raise ValueError('There is no model to be restore from:' + config.models_path_discriminator)
+      raise ValueError('There is no model to be restore from:' + config.models_discriminator_path)
     else:
-      os.mkdir(config.models_path_discriminator)
-  ckpt_discriminator = tf.train.get_checkpoint_state(config.models_path_discriminator)
+      os.mkdir(config.models_discriminator_path)
+  ckpt_discriminator = tf.train.get_checkpoint_state(config.models_discriminator_path)
 
 
 if config.restore:

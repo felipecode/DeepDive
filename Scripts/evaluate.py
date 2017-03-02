@@ -5,7 +5,7 @@ from config import *
 """Structure"""
 import sys
 sys.path.append('structures')
-from inception_res_BAC_normalized import create_structure
+from inception_res_BACBAC_normalized import create_structure
 
 """Core libs"""
 import tensorflow as tf
@@ -85,8 +85,8 @@ for i in im_names:
   feedDict=dropoutDict
 
   sess.run(tf.initialize_all_variables())
-  saver = tf.train.Saver(tf.all_variables())
-
+  network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
+  saver = tf.train.Saver(network_vars)
 
   """ Recover the previous state of the models. """
   print config.models_path

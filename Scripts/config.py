@@ -60,8 +60,8 @@ class configMainSimulator:
 		self.beta2=0.999
 		self.epsilon=1e-08
 		self.use_locking=False
-		self.batch_size = 32
-		self.batch_size_val = 32
+		self.batch_size = 16
+		self.batch_size_val = 16
 		self.variable_names = []#['MSE']
 		self.n_epochs = 20   # the number of epochs that we are going to run
 		self.WEIGHTS_FILE = "vgg16_weights.npz"
@@ -72,9 +72,9 @@ class configMainSimulator:
 		self.training_path_ground_truth = '../datasets/datasetDepthV6/GroundTruth/'
 		self.validation_path = '../datasets/datasetDepthV6/Validation/'
 		self.validation_path_ground_truth = '../datasets/datasetDepthV6/ValidationGroundTruth/'
-		self.summary_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/summary_17_02_inception_res_BAC_normalized_feature/'
-		self.models_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_17_02_inception_res_BAC_normalized_feature/'
-		self.models_discriminator_path = '/media/nautec/fcc48c1a-c797-4ba9-92c0-b93b9fc4dd0e/model_17_02_inception_res_BAC_normalized_feature_discriminator/'
+		self.summary_path = '../sumario/summary_02_03_inception_res_BACBAC_normalized_feature/'
+		self.models_path = '../modelo/model_02_03_inception_res_BACBAC_normalized_feature/'
+		self.models_discriminator_path = '../modelo/model_02_03_inception_res_BACBAC_normalized_feature_discriminator/'
 		self.input_size = (224, 224, 3)
 		self.output_size = (224, 224, 3)
 		self.depth_size = (224, 224, 1)
