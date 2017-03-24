@@ -50,11 +50,12 @@ def save_images_to_disk(result_imgs,input_imgs,gt_imgs, path):
 def save_feature_maps_to_disk(feature_maps, weights, deconv, feature_names,path):
 
 	for ft, w, d, key in zip(feature_maps, weights, deconv, feature_names):
-		ft_img = (ft - ft.min())
-		ft_img*=(255/(ft_img.max()+0.0001))
-		for k in xrange(ft.shape[0]):
-			for l in xrange(ft.shape[3]):
-				ch_img=ft_img[k,:,:,l].astype(np.uint8) 
+		for l in xrange(ft.shape[3]):
+			ft_img=ft[:,:,:,l]
+			ft_img = (ft_img - ft_img.min())
+			ft_img*=(255/(ft_img.max()+0.0001))
+			for k in xrange(ft.shape[0]):		
+				ch_img=ft_img[k,:,:].astype(np.uint8) 
 				im = Image.fromarray(ch_img)
 				file_name=str(l).zfill(len(str(ft.shape[3])))+".bmp"
 				im_folder=str(k).zfill(len(str(ft.shape[0])))
