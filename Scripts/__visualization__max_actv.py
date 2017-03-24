@@ -199,62 +199,6 @@ for i in xrange(initialIteration, (dataset.getNImagesDataset()/config.batch_size
     print("step %d, images used %d, examples per second %f"
         %(i, i*config.batch_size, examples_per_sec))
 
-  if (i%config.summary_writing_period == 1 or i==(dataset.getNImagesDataset()/config.batch_size)) and (config.use_tensorboard or config.save_features_to_disk or config.save_json_summary):
-    input_imgs, output = sess.run([x,last_layer], feed_dict=feedDict)
-
-    if config.use_deconv:
-      deconv=deconvolution(input_node, feedDict, ft_ops, sys.argv[1:], config.batch_size, config.input_size)
-    else:
-      deconv=[None]*len(ft_ops)
-
-    if config.save_json_summary:
-      dados['time'].append(time.time() - training_start_time)
-      outfile = open(config.summary_path +'summary.json','w')
-      json.dump(dados, outfile)
-      outfile.close()
-    if config.use_tensorboard:
-      summary_str = sess.run(summary_op, feed_dict=feedDict)
-      summary_writer.add_summary(summary_str,i)
-      if len(ft_ops) > 0:
-        for ft, w, d, actv, key in zip(ft_maps, weights, deconv, max_actvs, sys.argv[1:]):
-          #for ch in xrange(ft.shape[3]):
-          #	summary_name=key+"_"+str(ch).zfill(len(str(ft.shape[3])))
-          #	avg_actv_summary=tf.summary.scalar(summary_name, np.average(ft[:,:,:,ch]))
-          #	avg_actv_str = sess.run(avg_actv_summary, feed_dict=feedDict)
-          #	summary_writer.add_summary(avg_actv_str,i) 		
-          #ft_grid=put_features_on_grid_np(ft)
-          #ft_name="Features_map_"+key
-          #ft_summary=tf.summary.image(ft_name, ft_grid)
-          #summary_str=sess.run(ft_summary)
-          #summary_writer.add_summary(summary_str,i)
-          if w is not None:
-            kernel=w.eval()
-            kernel_grid=put_kernels_on_grid_np(kernel)
-            kernel_name="kernels_"+key
-            kernel_summary=tf.summary.image(kernel_name, kernel_grid)
-            kernel_summary_str=sess.run(kernel_summary)
-            summary_writer.add_summary(kernel_summary_str,i)
-          if d is not None:
-            deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
-            deconv_name="deconv_"+key
-            deconv_summary=tf.summary.image(deconv_name, deconv_grid)
-            deconv_summary_str=sess.run(deconv_summary)
-            summary_writer.add_summary(deconv_summary_str,i)
-#          max_actv_grid=put_features_on_grid_np(np.expand_dims(actv[1][:,:,0],0))
-#          max_actv_name="max_actv_"+key
-#          max_actv_summary=tf.summary.image(max_actv_name, max_actv_grid)
-#          max_actv_summary_str=sess.run(max_actv_summary)
-#          summary_writer.add_summary(max_actv_summary_str,i)
-#          max_actv_input_grid=put_grads_on_grid_np(np.expand_dims(actv[0][:,:,:,0],0))
-#          max_actv_input_name="max_actv_inputs_"+key
-#          max_actv_input_summary=tf.summary.image(max_actv_input_name, max_actv_input_grid)
-#          max_actv_input_summary_str=sess.run(max_actv_input_summary)
-#          summary_writer.add_summary(max_actv_input_summary_str,i)
-
-    if(config.save_features_to_disk):
-      save_images_to_disk(output,input_imgs,batch[0],config.summary_path)
-      save_feature_maps_to_disk(ft_maps, weights, deconv, sys.argv[1:],config.summary_path)
-
 for actv, key in zip(max_actvs, sys.argv[1:]):
  if(config.use_tensorboard):
    #for n in xrange(actv[0].shape[0]):
