@@ -33,7 +33,7 @@ def inception_res_B(tf, x,base_name,training=True):
   features["B_conv4"+base_name] = [B_conv4,None]
   histograms["W_B_conv4"+base_name]=W_B_conv4
 
-  B_concat = tf.concat(3, [B_conv1,B_conv4])
+  B_concat = tf.concat([B_conv1,B_conv4], 3)
 
   W_B_conv5 = deep_dive.weight_variable_scaling([1,1,56,16], name='W_B_conv5'+base_name)
   B_conv5 = tf.contrib.layers.batch_norm(deep_dive.conv2d(B_concat, W_B_conv5,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
