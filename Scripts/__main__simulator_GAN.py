@@ -66,11 +66,11 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """creating plaholders"""
 batch_size=config.batch_size
-tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
-tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
-tf_range=tf.placeholder("float",range_array.shape, name="ranges")
-tf_c=tf.placeholder("float",c.shape, name="c")
-tf_binf=tf.placeholder("float",binf.shape, name="binf")
+tf_images=tf.placeholder("float",(None,) +config.input_size, name="images")
+tf_depths=tf.placeholder("float",(None,) +config.depth_size, name="depths")
+tf_range=tf.placeholder("float",(None,)+range_array.shape[1:], name="ranges")
+tf_c=tf.placeholder("float",(None,)+c.shape[1:], name="c")
+tf_binf=tf.placeholder("float",(None,)+binf.shape[1:], name="binf")
 lr = tf.placeholder("float", name = "learning_rate")
 
 """defining simulator structure"""
@@ -146,10 +146,41 @@ tf.summary.scalar('learning_rate',lr)
 # tf.summary.scalar('discriminator_loss', discriminator_loss)
 # tf.summary.scalar('discriminator_error', discriminator_error)
 
+for ft, key in zip(ft_ops,config.features_list):
+  for ch in xrange(ft.get_shape()[3]):
+    summary_name=key+"_"+str(ch).zfill(len(str(ft.get_shape()[3])))
+    tf.summary.scalar(summary_name, tf.reduce_mean(ft[:,:,:,ch]))
+
 summary_op = tf.summary.merge_all()
 
 val_error = tf.placeholder(tf.float32, shape=(), name="Validation_Error")
 val_summary=tf.summary.scalar('Loss_Validation', val_error)
+
+ft_summaries={}
+deconv_summaries={}
+ft_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 1), name="Feature_Map_Activation")
+d_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Deconvolution")
+for key in config.features_list:
+  ft_summaries[key]=tf.summary.image("features_map_"+key, ft_grid_placeholder)
+  if config.use_deconv:
+    deconv_summaries[key]=tf.summary.image("deconv_"+key, d_grid_placeholder)
+
+weight_summaries={}
+w_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Weights")
+for key, w in zip(config.features_list, weights):
+  if w is not None:
+    weight_summaries[key]=tf.summary.image("weights_"+key, w_grid_placeholder)
+
+opt_summaries={}
+opt_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Optimization_Grid")
+opt_placeholder=tf.placeholder(tf.float32, shape=(None, None, 3), name="Optimization")
+for key, channel in config.features_opt_list:
+  if channel<0:
+    opt_summaries[key]=tf.summary.image("optimization_"+key, opt_grid_placeholder)
+  else:
+    n_channels=feature_maps[key][0].get_shape()[3]
+    opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
+    opt_summaries[opt_name]=tf.summary.image("optimization_"+opt_name, tf.expand_dims(opt_placeholder,0))
 
 saver = tf.train.Saver(network_vars)
 
@@ -266,22 +297,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       if len(ft_ops) > 0:
         for ft, w, d, key in zip(ft_maps, weights, deconv, config.features_list):
           ft_grid=put_features_on_grid_np(ft)
-          ft_name="Features_map_"+key
-          ft_summary=tf.summary.image(ft_name, ft_grid)
-          summary_str=sess.run(ft_summary)
+          ft_summary=ft_summaries[key]
+          summary_str=sess.run(ft_summary, feed_dict={ft_grid_placeholder:ft_grid})
           summary_writer.add_summary(summary_str,i)
           if w is not None:
             kernel=w.eval()
             kernel_grid=put_kernels_on_grid_np(kernel)
-            kernel_name="kernels_"+key
-            kernel_summary=tf.summary.image(kernel_name, kernel_grid)
-            kernel_summary_str=sess.run(kernel_summary)
+            kernel_summary=weight_summaries[key]
+            kernel_summary_str=sess.run(kernel_summary, feed_dict={w_grid_placeholder:kernel_grid})
             summary_writer.add_summary(kernel_summary_str,i)
           if d is not None:
             deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
-            deconv_name="deconv_"+key
-            deconv_summary=tf.summary.image(deconv_name, deconv_grid)
-            deconv_summary_str=sess.run(deconv_summary)
+            deconv_summary=deconv_summaries[key]
+            deconv_summary_str=sess.run(deconv_summary, feed_dict={d_grid_placeholder:deconv_grid})
             summary_writer.add_summary(deconv_summary_str,i)
     if(config.save_features_to_disk):
       save_images_to_disk(output,sim_input,batch[0],config.summary_path)
@@ -328,24 +356,27 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     for key, channel in config.features_opt_list:
         ft=feature_maps[key][0]
         n_channels=ft.get_shape()[3]
+	opt_results=np.empty((1,)+config.input_size+(n_channels,), dtype=np.float32)
         if channel<0:
           #otimiza todos os canais
           for ch in xrange(n_channels):
             opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
-            if config.use_tensorboard:
-              opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
-              opt_summary=tf.summary.image(opt_name, np.expand_dims(opt_output,0))
-              summary_str=sess.run(opt_summary)
-              summary_writer.add_summary(summary_str,i)
+            opt_results[0,:,:,:,ch]=opt_output
           # salvando as imagens como bmp
             if(config.save_features_to_disk):
               save_optimazed_image_to_disk(opt_output,ch,n_channels,key,config.summary_path)
+          if config.use_tensorboard:
+	    opt_grid=put_grads_on_grid_np(opt_results)
+            opt_summary=opt_summaries[key]
+            opt_summary_str=sess.run(opt_summary, feed_dict={opt_grid_placeholder:opt_grid})
+            summary_writer.add_summary(opt_summary_str,i)
+
         else:
           opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
           if config.use_tensorboard:
             opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
-            opt_summary=tf.summary.image(opt_name, np.expand_dims(opt_output,0))
-            summary_str=sess.run(opt_summary)
+            opt_summary=opt_summaries[opt_name]
+            summary_str=sess.run(opt_summary, feed_dict={opt_placeholder:opt_output})
             summary_writer.add_summary(summary_str,i)
           # salvando as imagens como bmp
           if(config.save_features_to_disk):

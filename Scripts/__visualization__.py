@@ -75,7 +75,7 @@ with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
 
 " Creating comparation metrics"
-mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
+mse_loss = tf.reduce_mean(tf.abs(tf.subtract(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
 loss_function = mse_loss
 
 """Creating summaries"""
@@ -95,7 +95,22 @@ for key in config.histograms_list:
  tf.histogram_summary('histograms_'+key, histograms[key])
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 
+for ft, key in zip(ft_ops,config.features_list):
+  for ch in xrange(ft.get_shape()[3]):
+    summary_name=key+"_"+str(ch).zfill(len(str(ft.get_shape()[3])))
+    tf.summary.scalar(summary_name, tf.reduce_mean(ft[:,:,:,ch]))
+
 summary_op = tf.summary.merge_all()
+
+ft_summaries={}
+deconv_summaries={}
+ft_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 1), name="Feature_Map_Activation")
+d_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Deconvolution")
+for key in config.features_list:
+  ft_summaries[key]=tf.summary.image("features_map_"+key, ft_grid_placeholder)
+  if config.use_deconv:
+    deconv_summaries[key]=tf.summary.image("deconv_"+key, d_grid_placeholder)
+
 saver = tf.train.Saver(tf.global_variables())
 
 init_op=tf.global_variables_initializer()
@@ -194,8 +209,18 @@ for key, channel in config.features_opt_list:
           if(config.save_features_to_disk):
             save_optimized_image_to_disk(opt_output,channel,n_channels,key,config.summary_path)
 
+
+for w, key in zip(weights, config.features_list):
+  if w is not None:
+    kernel=w.eval()
+    kernel_grid=put_kernels_on_grid_np(kernel)
+    kernel_summary=tf.summary.image("weights_"+key, kernel_grid)
+    kernel_summary_str=sess.run(kernel_summary)
+    summary_writer.add_summary(kernel_summary_str)
+
 print("Images in dataset: %d"%(dataset.getNImagesDataset()))
 for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1):
+#for i in range(initialIteration, 3):
   epoch_number = 1.0 + (float(i)*float(config.batch_size))/float(dataset.getNImagesDataset())
   start_time = time.time()
 
@@ -215,24 +240,24 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1
 
   for ft, actv, key in zip(ft_maps, max_actvs, config.features_list):
 	batch_actv_sum=np.zeros(ft.shape[3],dtype=np.float32)
-	"Percorre todo o batch"
+	#Percorre todo o batch
 	for j in xrange(ft.shape[0]):
-		"percorre os canais do feature map"
-		for k in xrange(ft.shape[3]):
-			ft_avg=np.average(ft[j,:,:,k])
-			ft_pos=-1
-			for p in xrange(0,config.num_top_actvs):
-				if ft_avg>actv[2][p,k]:
-					ft_pos=p
-					break
-			if ft_pos>=0:
-				for pos in xrange(config.num_top_actvs-1, ft_pos, -1):
-					actv[0][pos,:,:,:,k]=actv[0][pos-1,:,:,:,k]
-					actv[1][pos,:,:,k]=actv[1][pos-1,:,:,k]
-					actv[2][pos,k]=actv[2][pos-1,k]
-				actv[0][ft_pos,:,:,:,k]=sim_output[j,:,:,:]
-				actv[1][ft_pos,:,:,k]=ft[j,:,:,k]
-				actv[2][ft_pos,k]=ft_avg
+	  #percorre os canais do feature map
+	  for k in xrange(ft.shape[3]):
+	    ft_avg=np.average(ft[j,:,:,k])
+	    ft_pos=-1
+	    for p in xrange(0,config.num_top_actvs):
+	      if ft_avg>actv[2][p,k]:
+	        ft_pos=p
+	        break
+	    if ft_pos>=0:
+	      for pos in xrange(config.num_top_actvs-1, ft_pos, -1):
+	        actv[0][pos,:,:,:,k]=actv[0][pos-1,:,:,:,k]
+	        actv[1][pos,:,:,k]=actv[1][pos-1,:,:,k]
+	        actv[2][pos,k]=actv[2][pos-1,k]
+	      actv[0][ft_pos,:,:,:,k]=sim_output[j,:,:,:]
+	      actv[1][ft_pos,:,:,k]=ft[j,:,:,k]
+	      actv[2][ft_pos,k]=ft_avg
   	dados[key].append(ft.mean(axis=(0,1,2)).tolist())
 	
   duration = time.time() - start_time
@@ -262,39 +287,20 @@ for i in range(initialIteration, dataset.getNImagesDataset()/config.batch_size+1
       summary_writer.add_summary(summary_str,i)
       if len(ft_ops) > 0:
         for ft, w, d, actv, key in zip(ft_maps, weights, deconv, max_actvs, config.features_list):
-          for ch in xrange(ft.shape[3]):
-		summary_name=key+"_"+str(ch).zfill(len(str(ft.shape[3])))
-          	avg_actv_summary=tf.summary.scalar(summary_name, np.average(ft[:,:,:,ch]))
-          	avg_actv_str = sess.run(avg_actv_summary, feed_dict=feedDict)
-          	summary_writer.add_summary(avg_actv_str,i) 		
+          #for ch in xrange(ft.shape[3]):
+		#summary_name=key+"_"+str(ch).zfill(len(str(ft.shape[3])))
+          #	avg_actv_summary=ft_avg_summaries[summary_name]
+          #	avg_actv_str = sess.run(avg_actv_summary, feed_dict={ft_avg_placeholder:np.average(ft[:,:,:,ch])})
+          #	summary_writer.add_summary(avg_actv_str,i)		
           ft_grid=put_features_on_grid_np(ft)
-          ft_name="Features_map_"+key
-          ft_summary=tf.summary.image(ft_name, ft_grid)
-          summary_str=sess.run(ft_summary)
+          ft_summary=ft_summaries[key]
+          summary_str=sess.run(ft_summary, feed_dict={ft_grid_placeholder:ft_grid})
           summary_writer.add_summary(summary_str,i)
-          if w is not None:
-            kernel=w.eval()
-            kernel_grid=put_kernels_on_grid_np(kernel)
-            kernel_name="kernels_"+key
-            kernel_summary=tf.summary.image(kernel_name, kernel_grid)
-            kernel_summary_str=sess.run(kernel_summary)
-            summary_writer.add_summary(kernel_summary_str,i)
           if d is not None:
             deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
-            deconv_name="deconv_"+key
-            deconv_summary=tf.summary.image(deconv_name, deconv_grid)
-            deconv_summary_str=sess.run(deconv_summary)
+            deconv_summary=deconv_summaries[key]
+            deconv_summary_str=sess.run(deconv_summary, feed_dict={d_grid_placeholder:deconv_grid})
             summary_writer.add_summary(deconv_summary_str,i)
-#          max_actv_grid=put_features_on_grid_np(np.expand_dims(actv[1][:,:,0],0))
-#          max_actv_name="max_actv_"+key
-#          max_actv_summary=tf.summary.image(max_actv_name, max_actv_grid)
-#          max_actv_summary_str=sess.run(max_actv_summary)
-#          summary_writer.add_summary(max_actv_summary_str,i)
-#          max_actv_input_grid=put_grads_on_grid_np(np.expand_dims(actv[0][:,:,:,0],0))
-#          max_actv_input_name="max_actv_inputs_"+key
-#          max_actv_input_summary=tf.summary.image(max_actv_input_name, max_actv_input_grid)
-#          max_actv_input_summary_str=sess.run(max_actv_input_summary)
-#          summary_writer.add_summary(max_actv_input_summary_str,i)
 
     if(config.save_features_to_disk):
       save_images_to_disk(output,sim_output,batch[0],config.summary_path)

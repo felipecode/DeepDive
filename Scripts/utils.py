@@ -183,7 +183,7 @@ def deconvolution(x, feedDict, ft_maps, features_list, batch_size, input_size):
 			score = tf.reduce_mean(ft_map[:,:,:,ch])
 			grad = tf.gradients(score, x)[0]
 			grad=normalize_std(grad)
-			deconv_op=tf.mul(x,grad)
+			deconv_op=tf.multiply(x,grad)
 			ft_deconv[:,:,:,:,ch]=sess.run(grad, feed_dict=feedDict)
 		deconv.append(ft_deconv)
 	return deconv
