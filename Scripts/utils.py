@@ -120,7 +120,7 @@ def put_features_on_grid_np(features):
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
  black=min(0,features.min())
- pad=1+int(math.ceil(ix/64))
+ pad=1+int(ix/64)
  features = np.pad(features, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  features = np.reshape(features,[b_size,iy,ix,square_size,square_size])
  features = np.pad(features, [[0,0],[pad,0],[pad,0],[0,0],[0,0]], mode='constant',constant_values=black)
@@ -137,7 +137,7 @@ def put_kernels_on_grid_np(kernels):
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
  black=min(0,kernels.min())
- pad=1+int(math.ceil(ix/64))
+ pad=1+int(ix/64)
  kernels = np.pad(kernels, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  kernels = np.transpose(kernels,(0,1,3,2))
  kernels = np.reshape(kernels,[iy,ix,square_size,square_size,3])
@@ -157,7 +157,7 @@ def put_grads_on_grid_np(grads):
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
  black=min(0,grads.min())
- pad=1+int(math.ceil(ix/64))
+ pad=1+int(ix/64)
  grads = np.pad(grads, [[0,0],[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  grads = np.transpose(grads,(0,1,2,4,3))
  grads = np.reshape(grads,[b_size,iy,ix,square_size,square_size,3])
