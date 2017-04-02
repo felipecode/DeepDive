@@ -112,53 +112,61 @@ def save_max_activations_to_disk(max_activation, feature_names,path):
 			  actv_im.save(folder_name+"/"+actv_file_name)
 			  input_im.save(folder_name+"/"+input_file_name)
 
-def put_features_on_grid_np (features, pad=4):
+def put_features_on_grid_np(features):
  iy=features.shape[1]
  ix=features.shape[2]
  n_ch=features.shape[3]
  b_size=features.shape[0]
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
- features = np.pad(features, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ black=min(0,features.min())
+ pad=1+int(math.ceil(ix/64))
+ features = np.pad(features, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  features = np.reshape(features,[b_size,iy,ix,square_size,square_size])
- features = np.pad(features, [[0,0],[pad,0],[pad,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ features = np.pad(features, [[0,0],[pad,0],[pad,0],[0,0],[0,0]], mode='constant',constant_values=black)
  iy+=pad
  ix+=pad
  features = np.transpose(features,(0,3,1,4,2))
- return np.reshape(features,[-1,square_size*iy,square_size*ix,1])
+ features = np.reshape(features,[-1,square_size*iy,square_size*ix,1])
+ return np.pad(features, [[0,0],[0,pad],[0,pad],[0,0]], mode='constant',constant_values=black)
 
-def put_kernels_on_grid_np (kernels, pad=4):
+def put_kernels_on_grid_np(kernels):
  iy=kernels.shape[0]
  ix=kernels.shape[1]
  n_ch=kernels.shape[3]
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
- kernels = np.pad(kernels, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ black=min(0,kernels.min())
+ pad=1+int(math.ceil(ix/64))
+ kernels = np.pad(kernels, [[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  kernels = np.transpose(kernels,(0,1,3,2))
  kernels = np.reshape(kernels,[iy,ix,square_size,square_size,3])
- kernels = np.pad(kernels, [[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ kernels = np.pad(kernels, [[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=black)
  iy+=pad
  ix+=pad
  kernels = np.transpose(kernels,(2,0,3,1,4))
  kernels = np.reshape(kernels,[square_size*iy,square_size*ix,3])
+ kernels = np.pad(kernels, [[0,pad],[0,pad],[0,0]], mode='constant',constant_values=black)
  return np.expand_dims(kernels, axis=0)
 
-def put_grads_on_grid_np (grads, pad=4):
+def put_grads_on_grid_np(grads):
  b_size=grads.shape[0]
  iy=grads.shape[1]
  ix=grads.shape[2]
  n_ch=grads.shape[4]
  square_size=int(math.ceil(np.sqrt(n_ch)))
  z_pad=square_size**2-n_ch
- grads = np.pad(grads, [[0,0],[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=0)
+ black=min(0,grads.min())
+ pad=1+int(math.ceil(ix/64))
+ grads = np.pad(grads, [[0,0],[0,0],[0,0],[0,0],[0,z_pad]], mode='constant',constant_values=black)
  grads = np.transpose(grads,(0,1,2,4,3))
  grads = np.reshape(grads,[b_size,iy,ix,square_size,square_size,3])
- grads = np.pad(grads, [[0,0],[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=0)
+ grads = np.pad(grads, [[0,0],[pad,0],[pad,0],[0,0],[0,0],[0,0]], mode='constant',constant_values=black)
  iy+=pad
  ix+=pad
  grads = np.transpose(grads,(0,3,1,4,2,5))
  grads = np.reshape(grads,[b_size,square_size*iy,square_size*ix,3])
- return grads
+ return np.pad(grads, [[0,0],[0,pad],[0,pad],[0,0]], mode='constant',constant_values=black)
 
 def put_features_on_grid_tf (features, cy=1, pad=4):
  iy=tf.shape(features)[1]
