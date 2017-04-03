@@ -137,16 +137,16 @@ def create_structure(tf, x, input_size,dropout,training=True):
   relu3_scale8=tf.nn.relu(relu2_scale8+conv6_scale8)
 
 
-  W_conv7 = deep_dive.weight_variable_scaling([3,3,16,3], name='W_conv7')
+  W_conv7 = deep_dive.weight_variable_scaling([3,3,16,16], name='W_conv7')
   conv7 = tf.contrib.layers.batch_norm(deep_dive.conv2d(relu3, W_conv7,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
 
-  W_conv7_scale2 = deep_dive.weight_variable_scaling([3,3,16,3], name='W_conv7_scale2')
+  W_conv7_scale2 = deep_dive.weight_variable_scaling([3,3,16,16], name='W_conv7_scale2')
   conv7_scale2 = tf.contrib.layers.batch_norm(deep_dive.conv2d(relu3_scale2, W_conv7_scale2,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
 
-  W_conv7_scale4 = deep_dive.weight_variable_scaling([3,3,16,3], name='W_conv7_scale4')
+  W_conv7_scale4 = deep_dive.weight_variable_scaling([3,3,16,16], name='W_conv7_scale4')
   conv7_scale4 = tf.contrib.layers.batch_norm(deep_dive.conv2d(relu3_scale4, W_conv7_scale4,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
 
-  W_conv7_scale8 = deep_dive.weight_variable_scaling([3,3,16,3], name='W_conv7_scale8')
+  W_conv7_scale8 = deep_dive.weight_variable_scaling([3,3,16,16], name='W_conv7_scale8')
   conv7_scale8 = tf.contrib.layers.batch_norm(deep_dive.conv2d(relu3_scale8, W_conv7_scale8,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
 
   print relu2
@@ -155,11 +155,15 @@ def create_structure(tf, x, input_size,dropout,training=True):
   conv7_scale4=tf.image.resize_images(conv7_scale4, shapeScale1[1:3], method=0, align_corners=False)
   conv7_scale8=tf.image.resize_images(conv7_scale8, shapeScale1[1:3], method=0, align_corners=False)
 
-  result = conv7_scale8 + conv7_scale4 + conv7_scale2 + conv7 +x_image
+  #result = tf.concat(3,[conv7_scale8, conv7_scale4, conv7_scale2, conv7])
+  result = tf.concat([conv7_scale8, conv7_scale4, conv7_scale2, conv7],3)
 
+  W_conv8 = deep_dive.weight_variable_scaling([3,3,64,3], name='W_conv8')
+  conv8 = deep_dive.conv2d(result, W_conv8,strides=[1, 1, 1, 1], padding='SAME')
+
+  result2 = conv8 + x_image
   one_constant = tf.constant(1)
-  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(result, name = "relu"), name = "brelu")
-  
+  brelu = tf.minimum(tf.to_float(one_constant), tf.nn.relu(conv8, name = "relu"), name = "brelu")
   
   return brelu,dropoutDict,features,scalars,histograms
   
