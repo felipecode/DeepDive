@@ -73,12 +73,12 @@ class DataSet(object):
         images[n] = readImageFromDB(self._db,str(key),self._input_size)
         depths[n] = readImageFromDB(self._db,str(key)+"depth",self._depth_size)
 
-      np.rot90(images[n],rotation)
-      np.rot90(depths[n],rotation)
+      images[n]=np.rot90(images[n],rotation)
+      depths[n]=np.rot90(depths[n],rotation)
 
       if inversion:
-        np.fliplr(images[n])
-        np.fliplr(depths[n])
+        images[n]=np.fliplr(images[n])
+        depths[n]=np.fliplr(depths[n])
     return images, depths#, transmission
 
 
