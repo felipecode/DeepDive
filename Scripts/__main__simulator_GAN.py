@@ -13,7 +13,6 @@ sys.path.append('utils')
 from inception_res_BAC_normalized import create_structure
 from alex_discriminator import create_discriminator_structure
 
-
 """Core libs"""
 import tensorflow as tf
 import numpy as np
@@ -67,11 +66,11 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 
 """creating plaholders"""
 batch_size=config.batch_size
-tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")
-tf_depths=tf.placeholder("float",(batch_size,) +config.depth_size, name="depths")
-tf_range=tf.placeholder("float",range_array.shape, name="ranges")
-tf_c=tf.placeholder("float",c.shape, name="c")
-tf_binf=tf.placeholder("float",binf.shape, name="binf")
+tf_images=tf.placeholder("float",(None,) +config.input_size, name="images")
+tf_depths=tf.placeholder("float",(None,) +config.depth_size, name="depths")
+tf_range=tf.placeholder("float",(None,)+range_array.shape[1:], name="ranges")
+tf_c=tf.placeholder("float",(None,)+c.shape[1:], name="c")
+tf_binf=tf.placeholder("float",(None,)+binf.shape[1:], name="binf")
 lr = tf.placeholder("float", name = "learning_rate")
 
 """defining simulator structure"""
@@ -82,9 +81,7 @@ x=applyTurbidity(y_image, tf_depths, tf_c, tf_binf, tf_range)
 with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
-#network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')#pega as variaveis da rede
-network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
-#se der erro aqui e porque ta com uma versao antiga do tensorflow, ai tem que usar tf.GraphKeys.VARIABLES
+network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 
 """define structure feature loss"""
 feature_loss=create_loss_structure(tf, 255.0*last_layer, 255.0*tf_images, sess)
@@ -95,15 +92,15 @@ with tf.variable_scope('discriminator', reuse=None):
 with tf.variable_scope('discriminator', reuse=True):
   d_score_output=create_discriminator_structure(tf,last_layer,config.input_size)
 
-discriminator_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='discriminator')
+discriminator_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='discriminator')
 
 """ Creating losses for generative network"""
 #lab_mse_loss = tf.reduce_mean(np.absolute(np.subtract(color.rgb2lab((255.0*last_layer).eval()), color.rgb2lab((255.0*y_image).eval()))))
-mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
+mse_loss = tf.reduce_mean(tf.abs(tf.subtract(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
 
 
 
-discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(d_score_output, tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
+discriminator_loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=d_score_output, logits=tf.ones_like(d_score_output)))#tf.reduce_mean(-tf.log(tf.clip_by_value(tf.nn.sigmoid(d_score_output),1e-10,1.0)))#com log puro tava dando log(0)=NaN depois de um tempo
 loss_function = (feature_loss+10*discriminator_loss)/2
 
 
@@ -127,9 +124,9 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 
 """Creating summaries"""
 
-tf.image_summary('Input', x)
-tf.image_summary('Output', last_layer)
-tf.image_summary('GroundTruth', y_image)
+tf.summary.image('Input', x)
+tf.summary.image('Output', last_layer)
+tf.summary.image('GroundTruth', y_image)
 
 ft_ops=[]
 weights=[]
@@ -137,25 +134,60 @@ for key in config.features_list:
   ft_ops.append(feature_maps[key][0])
   weights.append(feature_maps[key][1])
 for key in scalars:
-  tf.scalar_summary(key,scalars[key])
+  tf.summary.scalar(key,scalars[key])
 for key in config.histograms_list:
   tf.histogram_summary('histograms_'+key, histograms[key])
-tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
-tf.scalar_summary('feature_loss',tf.reduce_mean(feature_loss))
-tf.scalar_summary('mse_loss',tf.reduce_mean(mse_loss))
-tf.scalar_summary('learning_rate',lr)
-# tf.scalar_summary('discriminator_score_groundtruth', tf.nn.sigmoid(tf.reduce_mean(d_score_gt)))
-# tf.scalar_summary('discriminator_score_output', tf.nn.sigmoid(tf.reduce_mean(d_score_output)))
-# tf.scalar_summary('discriminator_loss', discriminator_loss)
-# tf.scalar_summary('discriminator_error', discriminator_error)
+tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
+tf.summary.scalar('feature_loss',tf.reduce_mean(feature_loss))
+tf.summary.scalar('mse_loss',tf.reduce_mean(mse_loss))
+tf.summary.scalar('learning_rate',lr)
+# tf.summary.scalar('discriminator_score_groundtruth', tf.nn.sigmoid(tf.reduce_mean(d_score_gt)))
+# tf.summary.scalar('discriminator_score_output', tf.nn.sigmoid(tf.reduce_mean(d_score_output)))
+# tf.summary.scalar('discriminator_loss', discriminator_loss)
+# tf.summary.scalar('discriminator_error', discriminator_error)
 
-summary_op = tf.merge_all_summaries()
+for ft, key in zip(ft_ops,config.features_list):
+  for ch in xrange(ft.get_shape()[3]):
+    summary_name=key+"_"+str(ch).zfill(len(str(ft.get_shape()[3])))
+    tf.summary.scalar(summary_name, tf.reduce_mean(ft[:,:,:,ch]))
+
+summary_op = tf.summary.merge_all()
+
+val_error = tf.placeholder(tf.float32, shape=(), name="Validation_Error")
+val_summary=tf.summary.scalar('Loss_Validation', val_error)
+
+ft_summaries={}
+deconv_summaries={}
+ft_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 1), name="Feature_Map_Activation")
+d_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Deconvolution")
+for key in config.features_list:
+  ft_summaries[key]=tf.summary.image("features_map_"+key, ft_grid_placeholder)
+  if config.use_deconv:
+    deconv_summaries[key]=tf.summary.image("deconv_"+key, d_grid_placeholder)
+
+weight_summaries={}
+w_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Weights")
+for key, w in zip(config.features_list, weights):
+  if w is not None:
+    weight_summaries[key]=tf.summary.image("weights_"+key, w_grid_placeholder)
+
+opt_summaries={}
+opt_grid_placeholder=tf.placeholder(tf.float32, shape=(None, None, None, 3), name="Optimization_Grid")
+opt_placeholder=tf.placeholder(tf.float32, shape=(None, None, 3), name="Optimization")
+for key, channel in config.features_opt_list:
+  if channel<0:
+    opt_summaries[key]=tf.summary.image("optimization_"+key, opt_grid_placeholder)
+  else:
+    n_channels=feature_maps[key][0].get_shape()[3]
+    opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
+    opt_summaries[opt_name]=tf.summary.image("optimization_"+opt_name, tf.expand_dims(opt_placeholder,0))
+
 saver = tf.train.Saver(network_vars)
 
-init_op=tf.initialize_all_variables()
+init_op=tf.global_variables_initializer()
 sess.run(init_op)
 
-summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
+summary_writer = tf.summary.FileWriter(config.summary_path, graph=sess.graph)
 
 """create dictionary to be saved in json""" #talves fazer em outra funcao
 dados={} 
@@ -265,22 +297,19 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       if len(ft_ops) > 0:
         for ft, w, d, key in zip(ft_maps, weights, deconv, config.features_list):
           ft_grid=put_features_on_grid_np(ft)
-          ft_name="Features_map_"+key
-          ft_summary=tf.image_summary(ft_name, ft_grid)
-          summary_str=sess.run(ft_summary)
+          ft_summary=ft_summaries[key]
+          summary_str=sess.run(ft_summary, feed_dict={ft_grid_placeholder:ft_grid})
           summary_writer.add_summary(summary_str,i)
           if w is not None:
             kernel=w.eval()
             kernel_grid=put_kernels_on_grid_np(kernel)
-            kernel_name="kernels_"+key
-            kernel_summary=tf.image_summary(kernel_name, kernel_grid)
-            kernel_summary_str=sess.run(kernel_summary)
+            kernel_summary=weight_summaries[key]
+            kernel_summary_str=sess.run(kernel_summary, feed_dict={w_grid_placeholder:kernel_grid})
             summary_writer.add_summary(kernel_summary_str,i)
           if d is not None:
             deconv_grid=put_grads_on_grid_np(d.astype(np.float32))
-            deconv_name="deconv_"+key
-            deconv_summary=tf.image_summary(deconv_name, deconv_grid)
-            deconv_summary_str=sess.run(deconv_summary)
+            deconv_summary=deconv_summaries[key]
+            deconv_summary_str=sess.run(deconv_summary, feed_dict={d_grid_placeholder:deconv_grid})
             summary_writer.add_summary(deconv_summary_str,i)
     if(config.save_features_to_disk):
       save_images_to_disk(output,sim_input,batch[0],config.summary_path)
@@ -313,8 +342,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
       
     if config.use_tensorboard:
-      val=tf.scalar_summary('Loss_Validation', validation_result_error)
-      summary_str_val=sess.run(val)
+      summary_str_val=sess.run(val_summary, feed_dict={val_error: validation_result_error})
       summary_writer.add_summary(summary_str_val,i)
     if config.save_json_summary:
       dados['variable_errors_val'].append(validation_result_error)
@@ -328,24 +356,27 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     for key, channel in config.features_opt_list:
         ft=feature_maps[key][0]
         n_channels=ft.get_shape()[3]
+	opt_results=np.empty((1,)+config.input_size+(n_channels,), dtype=np.float32)
         if channel<0:
           #otimiza todos os canais
           for ch in xrange(n_channels):
             opt_output=optimize_feature(config.input_size, x, ft[:,:,:,ch])
-            if config.use_tensorboard:
-              opt_name="optimization_"+key+"_"+str(ch).zfill(len(str(n_channels)))
-              opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-              summary_str=sess.run(opt_summary)
-              summary_writer.add_summary(summary_str,i)
+            opt_results[0,:,:,:,ch]=opt_output
           # salvando as imagens como bmp
             if(config.save_features_to_disk):
               save_optimazed_image_to_disk(opt_output,ch,n_channels,key,config.summary_path)
+          if config.use_tensorboard:
+	    opt_grid=put_grads_on_grid_np(opt_results)
+            opt_summary=opt_summaries[key]
+            opt_summary_str=sess.run(opt_summary, feed_dict={opt_grid_placeholder:opt_grid})
+            summary_writer.add_summary(opt_summary_str,i)
+
         else:
           opt_output=optimize_feature(config.input_size, x, ft[:,:,:,channel])
           if config.use_tensorboard:
             opt_name="optimization_"+key+"_"+str(channel).zfill(len(str(n_channels)))
-            opt_summary=tf.image_summary(opt_name, np.expand_dims(opt_output,0))
-            summary_str=sess.run(opt_summary)
+            opt_summary=opt_summaries[opt_name]
+            summary_str=sess.run(opt_summary, feed_dict={opt_placeholder:opt_output})
             summary_writer.add_summary(summary_str,i)
           # salvando as imagens como bmp
           if(config.save_features_to_disk):

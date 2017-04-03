@@ -36,7 +36,7 @@ def inception_res_C(tf, x,base_name,training=True):
   features["C_conv4"+base_name]=[C_conv4,None]
   histograms["W_C_conv4"+base_name]=W_C_conv4
 
-  C_concat = tf.concat(3, [C_conv1,C_conv4])
+  C_concat = tf.concat([C_conv1,C_conv4], 3)
 
   W_C_conv5 = deep_dive.weight_variable_scaling([1,1,64,16], name='W_C_conv5'+base_name)
   C_conv5 = tf.contrib.layers.batch_norm(deep_dive.conv2d(C_concat, W_C_conv5,strides=[1, 1, 1, 1], padding='SAME'),center=True,updates_collections=None,scale=True,is_training=training)
