@@ -81,7 +81,7 @@ with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
 
 " Creating comparation metrics"
-mse_loss = tf.reduce_mean(tf.abs(tf.sub(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
+mse_loss = tf.reduce_mean(tf.abs(tf.subtract(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
 loss_function = mse_loss
 
 """Creating summaries"""
