@@ -116,7 +116,7 @@ x = tf.placeholder("float", shape= (None,)+config.input_size , name="input_image
 y_ = tf.placeholder("float", name="output_image")
 sess = tf.InteractiveSession()
 with tf.variable_scope("network", reuse=None):
- last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
+  last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
 
 saver = tf.train.Saver(tf.global_variables())
 
@@ -146,7 +146,7 @@ for key in config.features_list:
   weights.append(feature_maps[key][1]) 
 
 path=config.summary_path
-loss_function=tf.reduce_mean(tf.abs(tf.sub(last_layer, y_)))
+loss_function=tf.reduce_mean(tf.abs(tf.subtract(last_layer, y_)))
 
 img_inds=map(int, sys.argv[1:])
 
