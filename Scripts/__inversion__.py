@@ -170,6 +170,8 @@ for i in xrange(dataset.getNImagesValidation()):
 	  summary_writer.add_summary(summary_str_out,i)
         # salvando as imagens como bmp
         if(config.save_features_to_disk):
+	  opt-=opt.min()
+	  opt/=max(opt.max(),0.0000001)
           opt_img=(opt * 255).round().astype(np.uint8)
           im = Image.fromarray(opt_img)
           file_name="opt.bmp"
@@ -178,6 +180,8 @@ for i in xrange(dataset.getNImagesValidation()):
           	os.makedirs(folder_name)
           im.save(folder_name+"/"+file_name)
 
+	  ground_truth-=ground_truth.min()
+	  ground_truth/=max(ground_truth.max(),0.0000001)
           gt_img=(ground_truth * 255).round().astype(np.uint8)
           im = Image.fromarray(gt_img)
           file_name="gt.bmp"
@@ -186,6 +190,8 @@ for i in xrange(dataset.getNImagesValidation()):
           	os.makedirs(folder_name)
           im.save(folder_name+"/"+file_name)
 
+	  output[0]-=output[0].min()
+	  output[0]/=max(output[0].max(),0.0000001)
           out_img=(output[0] * 255).round().astype(np.uint8)
           im = Image.fromarray(out_img)
           file_name="output.bmp"
