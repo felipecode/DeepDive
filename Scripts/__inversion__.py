@@ -51,7 +51,7 @@ def optimize_input_to_ground_truth(input_size, x, y,ground_truth):
  img_noise = np.zeros(input_size) + 0.5
  #img_noise = ground_truth
  sess=tf.get_default_session()
- t_score = tf.reduce_mean(tf.abs(tf.sub(y, ground_truth)))
+ t_score = tf.reduce_mean(tf.abs(tf.subtract(y, ground_truth)))
  t_grad = tf.gradients(t_score, x)[0]
 
  if config.lap_grad_normalization:
