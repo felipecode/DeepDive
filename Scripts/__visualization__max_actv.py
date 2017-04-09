@@ -77,8 +77,8 @@ y_image = tf_images
 x=applyTurbidity(y_image, tf_depths, tf_c, tf_binf, tf_range)
 
 
-with tf.variable_scope("network", reuse=None):
-  last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
+#with tf.variable_scope("network", reuse=None):
+last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout,training=False)
 
 " Creating comparation metrics"
 mse_loss = tf.reduce_mean(tf.abs(tf.subtract(255.0*last_layer, 255.0*y_image)), reduction_indices=[1,2,3])
@@ -165,6 +165,7 @@ for i in xrange(initialIteration, (dataset.getNImagesDataset()/config.batch_size
     depths=constant_depths*10*np.random.rand(batch_size,1,1,1)
     feedDict={tf_images: batch[0], tf_depths: depths, tf_range: range_array, tf_c: c, tf_binf: binf}
 
+  inputs=sess.run(x, feed_dict=feedDict)
   if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
   else:
@@ -186,7 +187,7 @@ for i in xrange(initialIteration, (dataset.getNImagesDataset()/config.batch_size
             actv[0][pos,:,:,:,k]=actv[0][pos-1,:,:,:,k]
             actv[1][pos,:,:,k]=actv[1][pos-1,:,:,k]
             actv[2][pos,k]=actv[2][pos-1,k]
-          actv[0][ft_pos,:,:,:,k]=batch[0][j,:,:,:]
+          actv[0][ft_pos,:,:,:,k]=inputs[j,:,:,:]
           actv[1][ft_pos,:,:,k]=ft[j,:,:,k]
           actv[2][ft_pos,k]=ft_avg
     dados[key].append(ft.mean(axis=(0,1,2)).tolist())
