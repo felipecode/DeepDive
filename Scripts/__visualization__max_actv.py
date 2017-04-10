@@ -130,7 +130,7 @@ if ckpt:
     else:
       outfile= open(config.summary_path +'summary.json','w')
       json.dump(dados, outfile)
-      outfile.close()   
+      outfile.close() 
 else:
   print 'Can\'t Restore from ', config.models_path
   sys.exit()
@@ -201,6 +201,10 @@ for i in xrange(initialIteration, (dataset.getNImagesDataset()/config.batch_size
         %(i, i*config.batch_size, examples_per_sec))
 
 for actv, key in zip(max_actvs, sys.argv[1:]):
+ if(config.save_json_summary):
+      outfile= open(config.summary_path +'summary.json','w')
+      json.dump(dados, outfile)
+      outfile.close()
  if(config.use_tensorboard):
    #for n in xrange(actv[0].shape[0]):
      max_actv_grid=put_features_on_grid_np(actv[1])
