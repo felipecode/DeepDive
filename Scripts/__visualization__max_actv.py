@@ -98,7 +98,7 @@ for key in sys.argv[1:]:
 for key in scalars:
   tf.summary.scalar(key,scalars[key])
 for key in config.histograms_list:
- tf.histogram_summary('histograms_'+key, histograms[key])
+  tf.summary.histogram('histograms_'+key, histograms[key])
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 
 summary_op = tf.summary.merge_all()
