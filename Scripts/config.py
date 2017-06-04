@@ -244,3 +244,29 @@ class configOptimization:
 		self.norm_pct_thrshld=0
 		self.contrib_pct_thrshld=0
 		self.lap_grad_normalization=True
+
+class configEscape:
+	def __init__(self):
+		self.restore = False
+		self.save_features_to_disk = False
+		self.save_json_summary = True
+		self.use_tensorboard = True
+		self.use_locking = False
+		self.beta1=0.9
+		self.beta2=0.999
+		self.epsilon=1e-06
+		self.learning_rate = 1e-5
+		self.lr_update_value = 1
+		self.lr_update_period =1
+		self.batch_size = 32
+		self.batch_size_val = 32
+		self.n_epochs = 40 # the number of epochs that we are going to run
+		self.use_deconv = False
+		self.dropout = []
+		self.input_size = (224, 224,3)
+		self.output_size = (2, 1, 1)
+		self.summary_writing_period = 20
+		self.validation_period = 120
+		self.features_list=[]
+		self.summary_path = '../datasets/dataset_escape/summary/'
+		self.models_path = '../datasets/dataset_escape/model/'
