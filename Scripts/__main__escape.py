@@ -1,7 +1,7 @@
 #-*- encoding:UTF-8 -*-
 #pylint: disable=W0311
 """Deep dive libs"""
-from input_data_levelDB_escape import DataSetManager
+from input_data_levelDB_escape_data_augmentation import DataSetManager
 from config import *
 from utils import *
 from loss_network import *
@@ -39,7 +39,7 @@ def verifyConfig(config):
   if config.use_deconv not in (True, False):
     raise Exception('Wrong use_deconv option. (True or False)')
 config = configEscape()
-#verifyConfig(config)
+verifyConfig(config)
 
 """Creating session"""
 sess = tf.InteractiveSession()
@@ -51,7 +51,7 @@ global_step = tf.Variable(0, trainable=False, name="global_step")
 """Creating Placeholders"""
 batch_size=config.batch_size
 tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")  #inputs
-tf_points=tf.placeholder("float",(batch_size,) +config.output_size, name="depths")  #ground truth
+tf_points=tf.placeholder("float",(batch_size,) +config.output_size, name="points")  #ground truth
 lr = tf.placeholder("float", name = "learning_rate")
 x = tf_images
 with tf.variable_scope("network", reuse=None):
