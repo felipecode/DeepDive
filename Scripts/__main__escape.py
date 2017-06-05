@@ -71,14 +71,14 @@ tf.summary.scalar('GroundTruth', tf_points)
 tf.summary.scalar('Output', last_layer)
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 tf.summary.scalar('learning_rate',lr)
-summary_op = tf.merge_all_summaries()
+summary_op = tf.summary.merge_all()
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
 
 saver = tf.train.Saver(network_vars)
 
-summary_writer = tf.train.SummaryWriter(config.summary_path, graph=sess.graph)
+summary_writer = tf.summary.FileWriter(config.summary_path, graph=sess.graph)
 
 """create dictionary to be saved in json""" #talves fazer em outra funcao
 dados={} 
