@@ -56,7 +56,7 @@ lr = tf.placeholder("float", name = "learning_rate")
 x = tf_images
 with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
-network_vars=tf.get_collection(tf.GraphKeys.VARIABLES, scope='network')
+network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
 loss_function = l2_loss
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
@@ -67,10 +67,10 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
 #tf.image_summary('GroundTruth', y_image)
 
-tf.scalar_summary('GroundTruth', tf_points)
-tf.scalar_summary('Output', last_layer)
-tf.scalar_summary('Loss', tf.reduce_mean(loss_function))
-tf.scalar_summary('learning_rate',lr)
+tf.summary.scalar('GroundTruth', tf_points)
+tf.summary.scalar('Output', last_layer)
+tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
+tf.summary.scalar('learning_rate',lr)
 summary_op = tf.merge_all_summaries()
 
 init_op=tf.initialize_all_variables()
