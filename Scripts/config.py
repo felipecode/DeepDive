@@ -270,3 +270,6 @@ class configEscape:
 		self.features_list=[]
 		self.summary_path = '../datasets/dataset_escape/summary/'
 		self.models_path = '../datasets/dataset_escape/model/'
+		self.leveldb_path = '../datasets/dataset_escape/'
+		self.invert = True
+		self.rotate = True

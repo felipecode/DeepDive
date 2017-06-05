@@ -2,6 +2,7 @@ import input_data_levelDB_simulator_data_augmentation
 import numpy as np
 from input_data_levelDB_simulator_data_augmentation import readImageFromDB
 from ast import literal_eval
+import leveldb
 def readPointFromDB(db, key, size):
   point_str = db.Get(key)
   point = literal_eval(point_str)
@@ -24,7 +25,7 @@ def flipHPoint(point, origin):
 
 class DataSet(input_data_levelDB_simulator_data_augmentation.DataSet):
     def __init__(self, images_key, input_size, num_examples, db, validation,invert, rotate):
-        super(DataSet, self).__init__(self, images_key, input_size, (), num_examples, db, validation, invert, rotate)
+        super(DataSet, self).__init__(images_key, input_size, (), num_examples, db, validation, invert, rotate)
     def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
         start = self._index_in_epoch
