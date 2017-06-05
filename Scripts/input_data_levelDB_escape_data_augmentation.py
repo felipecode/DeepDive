@@ -1,27 +1,28 @@
 import input_data_levelDB_simulator_data_augmentation
 import numpy as np
+import random
 from input_data_levelDB_simulator_data_augmentation import readImageFromDB
 from ast import literal_eval
 import leveldb
-def readPointFromDB(db, key, size):
+def readPointFromDB(db, key, size=(2,1,1)):
   point_str = db.Get(key)
   point = literal_eval(point_str)
-  return np.array([point]).T #returns shape (2, 1, 1)
+  return np.reshape(np.array(point, dtype=np.int32).T, size)
 
 def rotPoint90(point, origin, rotation):
     rotation = rotation % 4
     p_o = point - origin
     if rotation == 1:
-        return np.array(-p_o[1], p_o[0]) + origin
+        return np.array((-p_o[1], p_o[0]), dtype=np.int32) + origin
     elif rotation == 2:
-        return np.array(-p_o[0], -p_o[1]) + origin
+        return np.array((-p_o[0], -p_o[1]), dtype=np.int32) + origin
     elif rotation == 3:
-        return np.array(p_o[1], -p_o[0]) + origin
+        return np.array((p_o[1], -p_o[0]), dtype=np.int32) + origin
     else:
         return point
 
 def flipHPoint(point, origin):
-    return np.array(-(point - origin)[0], (point - origin)[1]) + origin
+    return np.array((-(point - origin)[0], (point - origin)[1]), dtype=np.int32) + origin
 
 class DataSet(input_data_levelDB_simulator_data_augmentation.DataSet):
     def __init__(self, images_key, input_size, num_examples, db, validation,invert, rotate):
@@ -42,8 +43,9 @@ class DataSet(input_data_levelDB_simulator_data_augmentation.DataSet):
             assert batch_size <= self._num_examples
 
         images = np.empty((batch_size, self._input_size[0], self._input_size[1],self._input_size[2]))
-        points = np.empty((batch_size, 2))
-        origem = np.array(self._input_size[0] / 2, self._input_size[1] / 2)
+        points = np.empty((batch_size, 2, 1, 1))
+        origem = np.array((self._input_size[0] / 2, self._input_size[1] / 2), dtype=np.int32)
+        origem = np.reshape(origem, (2, 1, 1))
         for n in range(batch_size):
             key=self._images_key[start+n]
             rotation=0

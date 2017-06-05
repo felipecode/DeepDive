@@ -67,10 +67,12 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
 #tf.image_summary('GroundTruth', y_image)
 
-tf.summary.scalar('GroundTruth', tf_points)
-tf.summary.scalar('Output', last_layer)
+#tf.summary.scalar('GroundTruthX', tf_points[:,0,0,0])
+#tf.summary.scalar('Output', last_layer)
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 tf.summary.scalar('learning_rate',lr)
+ft_ops=[]
+weights=[]
 summary_op = tf.summary.merge_all()
 
 init_op=tf.initialize_all_variables()
@@ -123,7 +125,11 @@ else:
   initialIteration = 1
 
 print 'Logging into ' + config.summary_path
-
+"""Training"""
+lowest_error = 150000
+lowest_val  = 150000
+lowest_iter = 1
+lowest_val_iter = 1
 """training loop"""
 training_start_time =time.time()
 print config.n_epochs*dataset.getNImagesDataset()/config.batch_size
@@ -147,7 +153,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     examples_per_sec = config.batch_size / duration
     result=sess.run(loss_function, feed_dict=feedDict)
     result > 0
-    train_accuracy = sum(result)/config.batch_size
+    print(result)
+    train_accuracy = result/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
@@ -201,11 +208,11 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       batch_val = dataset.validation.next_batch(config.batch_size)
       feedDictVal={tf_images: batch_val[0], tf_points: batch_val[1]}
       result = sess.run(loss_function, feed_dict=feedDictVal)
-      validation_result_error += sum(result)
+      validation_result_error += result
     if dataset.getNImagesValidation() !=0 :
       validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
-      val=tf.scalar_summary('Loss_Validation', validation_result_error)
+      val=tf.summary.scalar('Loss_Validation', validation_result_error)
       summary_str_val=sess.run(val)
       summary_writer.add_summary(summary_str_val,i)
     if config.save_json_summary:
