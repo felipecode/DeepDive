@@ -60,7 +60,7 @@ with tf.variable_scope("network", reuse=None):
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
 loss_function = l2_loss
-loss_validation = 
+#loss_validation = 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""

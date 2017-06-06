@@ -247,7 +247,7 @@ class configOptimization:
 
 class configEscape:
 	def __init__(self):
-		self.restore = True
+		self.restore = False
 		self.save_features_to_disk = False
 		self.save_json_summary = True
 		self.use_tensorboard = True
