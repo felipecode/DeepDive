@@ -23,7 +23,7 @@ import time
 
 import json
 
-
+tf.device('/gpu:0')
 """Verifying options integrity"""
 def verifyConfig(config):
   if config.restore not in (True, False):
@@ -42,7 +42,7 @@ config = configEscape()
 verifyConfig(config)
 
 """Creating session"""
-sess = tf.InteractiveSession()
+sess = tf.InteractiveSession()#config=tf.ConfigProto(log_device_placement=True))
 dataset = DataSetManager(config)
 print dataset.getNImagesDataset()
 
@@ -56,9 +56,11 @@ lr = tf.placeholder("float", name = "learning_rate")
 x = tf_images
 with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
+
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
 loss_function = l2_loss
+loss_validation = 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""
@@ -67,9 +69,12 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
 #tf.image_summary('GroundTruth', y_image)
 
-#tf.summary.scalar('GroundTruthX', tf_points[:,0,0,0])
-#tf.summary.scalar('Output', last_layer)
-tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
+tf.summary.scalar('GroundTruthX', tf_points[0,0,0,0])
+tf.summary.scalar('OutputX', last_layer[0,0,0,0])
+
+tf.summary.scalar('GroundTruthY', tf_points[0,1,0,0])
+tf.summary.scalar('OutputY', last_layer[0,1,0,0])
+tf.summary.scalar('Loss', loss_function)
 tf.summary.scalar('learning_rate',lr)
 ft_ops=[]
 weights=[]
@@ -153,6 +158,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     examples_per_sec = config.batch_size / duration
     result=sess.run(loss_function, feed_dict=feedDict)
     result > 0
+   # print sess.run(tf_points, feed_dict=feedDict)[0]
+    #print sess.run(last_layer, feed_dict=feedDict)[0]
     print(result)
     train_accuracy = result/config.batch_size
     if  train_accuracy < lowest_error:
@@ -207,10 +214,10 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     for j in range(0,dataset.getNImagesValidation()/(config.batch_size)):
       batch_val = dataset.validation.next_batch(config.batch_size)
       feedDictVal={tf_images: batch_val[0], tf_points: batch_val[1]}
+      #print sess.run(tf_points, feed_dict=feedDictVal)[0]
+      #print sess.run(last_layer, feed_dict=feedDictVal)[0]
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += result
-    if dataset.getNImagesValidation() !=0 :
-      validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
       val=tf.summary.scalar('Loss_Validation', validation_result_error)
       summary_str_val=sess.run(val)

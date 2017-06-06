@@ -247,7 +247,7 @@ class configOptimization:
 
 class configEscape:
 	def __init__(self):
-		self.restore = False
+		self.restore = True
 		self.save_features_to_disk = False
 		self.save_json_summary = True
 		self.use_tensorboard = True
@@ -255,7 +255,7 @@ class configEscape:
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-06
-		self.learning_rate = 1e-5
+		self.learning_rate = 2e-4
 		self.lr_update_value = 1
 		self.lr_update_period =1
 		self.batch_size = 32
