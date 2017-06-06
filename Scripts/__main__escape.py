@@ -60,10 +60,13 @@ with tf.variable_scope("network", reuse=None):
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
 loss_function = l2_loss
-#loss_validation = 
+
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""
+
+val_error = tf.placeholder(tf.float32, shape=(), name="Validation_Error")
+val_summary = tf.summary.scalar('Loss_Validation', val_error)
 
 #tf.image_summary('Input', x)
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
@@ -219,8 +222,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += result
     if config.use_tensorboard:
-      val=tf.summary.scalar('Loss_Validation', validation_result_error)
-      summary_str_val=sess.run(val)
+      summary_str_val=sess.run(val_summary, feed_dict={val_error: validation_result_error})
       summary_writer.add_summary(summary_str_val,i)
     if config.save_json_summary:
       dados['variable_errors_val'].append(validation_result_error)
