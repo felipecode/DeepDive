@@ -58,15 +58,12 @@ with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
-l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
-loss_function = l2_loss
-
+#l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
+l1_loss = tf.reduce_mean((tf.reduce_sum(tf.abs(tf_points - last_layer), 1)))
+loss_function = l1_loss
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""
-
-val_error = tf.placeholder(tf.float32, shape=(), name="Validation_Error")
-val_summary = tf.summary.scalar('Loss_Validation', val_error)
 
 #tf.image_summary('Input', x)
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
@@ -79,9 +76,15 @@ tf.summary.scalar('GroundTruthY', tf_points[0,1,0,0])
 tf.summary.scalar('OutputY', last_layer[0,1,0,0])
 tf.summary.scalar('Loss', loss_function)
 tf.summary.scalar('learning_rate',lr)
+
+
+
 ft_ops=[]
 weights=[]
 summary_op = tf.summary.merge_all()
+
+val_error = tf.placeholder(tf.float32, shape=(), name="Validation_Error")
+val_summary=tf.summary.scalar('Loss_Validation', val_error)
 
 init_op=tf.initialize_all_variables()
 sess.run(init_op)
@@ -221,6 +224,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       #print sess.run(last_layer, feed_dict=feedDictVal)[0]
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += result
+    if dataset.getNImagesValidation() !=0 :
+      validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
       summary_str_val=sess.run(val_summary, feed_dict={val_error: validation_result_error})
       summary_writer.add_summary(summary_str_val,i)
