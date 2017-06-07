@@ -268,8 +268,8 @@ class configEscape:
 		self.summary_writing_period = 20
 		self.validation_period = 120
 		self.features_list=[]
-		self.summary_path = '../datasets/dataset_escape/summary/'
-		self.models_path = '../datasets/dataset_escape/model/'
+		self.summary_path = '../datasets/dataset_escape/summary2/'
+		self.models_path = '../datasets/dataset_escape/model2/'
 		self.leveldb_path = '../datasets/dataset_escape/'
 		self.model_saving_period = 300
 		self.invert = True

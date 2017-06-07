@@ -58,9 +58,10 @@ with tf.variable_scope("network", reuse=None):
   last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
 
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
-#l2_loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
-l1_loss = tf.reduce_mean((tf.reduce_sum(tf.abs(tf_points - last_layer), 1)))
-loss_function = l1_loss
+l2_loss = (tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
+print l2_loss
+#l1_loss = tf.reduce_mean((tf.reduce_sum(tf.abs(tf_points - last_layer), 1)))
+loss_function = l2_loss
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""
@@ -74,7 +75,7 @@ tf.summary.scalar('OutputX', last_layer[0,0,0,0])
 
 tf.summary.scalar('GroundTruthY', tf_points[0,1,0,0])
 tf.summary.scalar('OutputY', last_layer[0,1,0,0])
-tf.summary.scalar('Loss', loss_function)
+tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 tf.summary.scalar('learning_rate',lr)
 
 
@@ -166,8 +167,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     result > 0
    # print sess.run(tf_points, feed_dict=feedDict)[0]
     #print sess.run(last_layer, feed_dict=feedDict)[0]
-    print(result)
-    train_accuracy = result/config.batch_size
+    #print(result)
+    train_accuracy = sum(result)/config.batch_size
     if  train_accuracy < lowest_error:
       lowest_error = train_accuracy
       lowest_iter = i
@@ -223,7 +224,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       #print sess.run(tf_points, feed_dict=feedDictVal)[0]
       #print sess.run(last_layer, feed_dict=feedDictVal)[0]
       result = sess.run(loss_function, feed_dict=feedDictVal)
-      validation_result_error += result
+      validation_result_error += sum(result)
     if dataset.getNImagesValidation() !=0 :
       validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
