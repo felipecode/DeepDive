@@ -7,6 +7,7 @@ import leveldb
 def readPointFromDB(db, key, size=(2,1,1)):
   point_str = db.Get(key)
   point = literal_eval(point_str)
+  point = point[1], point[0] #Converte de Y,X para X,Y
   return np.reshape(np.array(point, dtype=np.int32).T, size)
 
 def rotPoint90(point, origin, rotation):

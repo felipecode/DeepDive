@@ -132,9 +132,12 @@ if config.restore:
         outfile= open(config.models_path +'summary.json','w')
         json.dump(dados, outfile)
         outfile.close()
+  else:
+    ckpt = 0
+    initialIteration = 1
 else:
-  ckpt = 0
-  initialIteration = 1
+    ckpt = 0
+    initialIteration = 1
 
 print 'Logging into ' + config.summary_path
 """Training"""
@@ -225,6 +228,8 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       #print sess.run(last_layer, feed_dict=feedDictVal)[0]
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += sum(result)
+    if validation_result_error:
+      validation_result_error = validation_result_error[0][0]
     if dataset.getNImagesValidation() !=0 :
       validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
