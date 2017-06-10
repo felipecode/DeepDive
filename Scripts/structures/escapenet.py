@@ -164,7 +164,7 @@ def create_structure(tf, x, input_size, dropout, training=True):
     print conv8
     features ["A_conv8"+base_name] = conv8
     #histograms ["W_conv8"+base_name] = W_conv8
-    
+    """
     # CONV 9
     # INPUT: (224x224x32)
     # 1x1
@@ -178,12 +178,23 @@ def create_structure(tf, x, input_size, dropout, training=True):
     
     print conv9
     features ["A_conv9"+base_name] = conv9
+    """
+    # Z-POOLING 1
+    # INPUT: (224x224x32)
+    # 1x1x32
+    # SAME
+    # STRIDE 1
+    # OUTPUT (224x224x1)
+    pool = tf.reduce_max(conv8, reduction_indices=[3], keep_dims=True, name="Z-POOL")
+    print pool
+    features["pool" + base_name] = pool
 
     # FC 1
     # INPUT: (224^2x1x1)
     # OUTPUT: (2x1)
-    conv9_flat = tf.reshape(conv9, (batch_size, conv9.shape[1].value * conv9.shape[2].value))
-    fc = tf.contrib.layers.fully_connected(conv9_flat, 2,
+    #conv9_flat = tf.reshape(conv9, (batch_size, conv9.shape[1].value * conv9.shape[2].value))
+    pool_flat = tf.reshape(pool, (batch_size, pool.shape[1].value * pool.shape[2].value))
+    fc = tf.contrib.layers.fully_connected(pool_flat, 2,
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     fc = tf.reshape(fc, (batch_size, 2, 1, 1))
     print fc
