@@ -255,7 +255,7 @@ class configEscape:
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-06
-		self.learning_rate = 2e-4
+		self.learning_rate = 1e-1
 		self.lr_update_value = 1
 		self.lr_update_period =1
 		self.batch_size = 32
@@ -268,8 +268,8 @@ class configEscape:
 		self.summary_writing_period = 20
 		self.validation_period = 120
 		self.features_list=[]
-		self.summary_path = '../datasets/dataset_escape/summary2/'
-		self.models_path = '../datasets/dataset_escape/model2/'
+		self.summary_path = '../datasets/dataset_escape/summary/'
+		self.models_path = '../datasets/dataset_escape/model/'
 		self.leveldb_path = '../datasets/dataset_escape/'
 		self.model_saving_period = 300
 		self.invert = True

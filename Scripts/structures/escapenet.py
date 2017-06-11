@@ -23,12 +23,12 @@ def create_structure(tf, x, input_size, dropout, training=True):
     #   INPUT: (224x224x5)
     #   3x1
     #   SAME
-    #   16x
-    #   OUTPUT: (224x224x16)
+    #   32x
+    #   OUTPUT: (224x224x32)
 
     #W_conv1 = deep_dive.weight_variable_scaling ( [3, 1, 3, 16], name='W_conv1'+base_name )
     #bias = deep_dive.bias_variable([16])
-    conv1 = tf.contrib.layers.conv2d(x_image, 16, [3, 1], stride=(1, 1) ,padding='SAME',
+    conv1 = tf.contrib.layers.conv2d(x_image, 32, [3, 1], stride=(1, 1) ,padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv1
@@ -36,15 +36,15 @@ def create_structure(tf, x, input_size, dropout, training=True):
     #histograms ["W_conv1"+base_name] = W_conv1
 
     # CONV 2
-    #   INPUT: (224x224x16)
+    #   INPUT: (224x224x32)
     #   1x3
     #   SAME
-    #   16x
-    #   OUTPUT: (224x224x16)
+    #   32x
+    #   OUTPUT: (224x224x32)
 
     #W_conv2 = deep_dive.weight_variable_scaling ( [1, 3, 16, 16], name='W_conv2'+base_name )
     #bias = deep_dive.bias_variable([16])
-    conv2 = tf.contrib.layers.conv2d(conv1, 16, [1, 3], stride=(1, 1), padding='SAME',
+    conv2 = tf.contrib.layers.conv2d(conv1, 32, [1, 3], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv2
@@ -52,21 +52,21 @@ def create_structure(tf, x, input_size, dropout, training=True):
     #histograms ["W_conv2"+base_name] = W_conv2
 
     # CONCAT X AND Y MATRICES
-    # INPUT: (224x224x16)
-    # OUTPUT: (224x224x18)
+    # INPUT: (224x224x32)
+    # OUTPUT: (224x224x34)
     conv2xy = tf.concat([conv2, x_idx_matrix], 3)
     conv2xy = tf.concat([conv2xy, y_idx_matrix], 3)
 
     # CONV 3
-    # INPUT: (224x224x18)
+    # INPUT: (224x224x34)
     # 3x1
     # SAME
-    # 16x
-    # OUTPUT: (224x224x16)
+    # 32x
+    # OUTPUT: (224x224x32)
 
     #W_conv3 = deep_dive.weight_variable_scaling ( [3, 1, 16, 16], name='W_conv3'+base_name )
     #bias = deep_dive.bias_variable([16])
-    conv3 = tf.contrib.layers.conv2d(conv2xy, 16, [3, 1], stride=(1, 1), padding='SAME',
+    conv3 = tf.contrib.layers.conv2d(conv2xy, 32, [3, 1], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv3
@@ -74,15 +74,15 @@ def create_structure(tf, x, input_size, dropout, training=True):
     #histograms ["W_conv3"+base_name] = W_conv3
 
     # CONV 4
-    # INPUT: (224x224x16)
+    # INPUT: (224x224x32)
     # 1x3
     # SAME
-    # 16x
-    # OUTPUT: (224x224x16)
+    # 32x
+    # OUTPUT: (224x224x32)
 
     #W_conv4 = deep_dive.weight_variable_scaling ( [1, 3, 16, 16], name='W_conv4'+base_name )
     #bias = deep_dive.bias_variable([16])
-    conv4 = tf.contrib.layers.conv2d(conv3, 16, [1, 3], stride=(1, 1), padding='SAME',
+    conv4 = tf.contrib.layers.conv2d(conv3, 32, [1, 3], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv4
@@ -90,13 +90,13 @@ def create_structure(tf, x, input_size, dropout, training=True):
     #histograms ["W_conv4"+base_name] = W_conv4
 
     # CONCAT X AND Y MATRICES
-    # INPUT: (224x224x16)
-    # OUTPUT: (224x224x18)
+    # INPUT: (224x224x32)
+    # OUTPUT: (224x224x34)
     conv4xy = tf.concat([conv4, x_idx_matrix], 3)
     conv4xy = tf.concat([conv4xy, y_idx_matrix], 3)
 
     # CONV 5
-    # INPUT: (224x224x18)
+    # INPUT: (224x224x34)
     # 3x3
     # SAME
     # 32x
@@ -190,7 +190,7 @@ def create_structure(tf, x, input_size, dropout, training=True):
     features["pool" + base_name] = pool
 
     # FC 1
-    # INPUT: (224^2x1x1)
+    # INPUT: (224^2)
     # OUTPUT: (2x1)
     #conv9_flat = tf.reshape(conv9, (batch_size, conv9.shape[1].value * conv9.shape[2].value))
     pool_flat = tf.reshape(pool, (batch_size, pool.shape[1].value * pool.shape[2].value))
