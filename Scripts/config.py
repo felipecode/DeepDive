@@ -255,7 +255,7 @@ class configEscape:
 		self.beta1=0.9
 		self.beta2=0.999
 		self.epsilon=1e-06
-		self.learning_rate = 1e-1
+		self.learning_rate = 1e-3
 		self.lr_update_value = 1
 		self.lr_update_period =1
 		self.batch_size = 32

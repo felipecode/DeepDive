@@ -53,15 +53,29 @@ batch_size=config.batch_size
 tf_images=tf.placeholder("float",(batch_size,) +config.input_size, name="images")  #inputs
 tf_points=tf.placeholder("float",(batch_size,) +config.output_size, name="points")  #ground truth
 lr = tf.placeholder("float", name = "learning_rate")
-x = tf_images
+
 with tf.variable_scope("network", reuse=None):
-  last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, x,config.input_size,config.dropout)
+  last_layer, dropoutDict, feature_maps,scalars,histograms = create_structure(tf, tf_images,config.input_size,config.dropout)
+
+last_layer_reshape = tf.reshape(last_layer, (last_layer.shape[0].value,last_layer.shape[1].value, last_layer.shape[2].value))
 
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
-l2_loss = (tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
-print l2_loss
+
+coord_matrix = np.array([[[x, y] for x in range(config.input_size[0])] for y in range(config.input_size[1])], dtype=np.float32) #arr[x,y] = (x,y)
+#print coord_matrix
+tf_points_reshape = tf.reshape(tf_points, (batch_size, 1, 1, 2,))
+points_matrix = tf.tile(tf_points_reshape, [1, config.input_size[0], config.input_size[1], 1]) #matriz onde todos os valores são o ponto em tf_points
+print points_matrix
+distance_matrix = tf.sqrt(tf.reduce_sum(tf.square(points_matrix - coord_matrix), -1)) #distance_matrix[x,y] = l2(ponto, last_layer[x,y])
+print distance_matrix
+loss_function = distance_matrix * last_layer_reshape
+loss_function = tf.reduce_sum(loss_function, (1, 2))
+#loss_function /= (config.epsilon + tf.reduce_max(last_layer_reshape, (1, 2))) 
+print loss_function
+#l2_loss = (tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
+#print l2_loss
 #l1_loss = tf.reduce_mean((tf.reduce_sum(tf.abs(tf_points - last_layer), 1)))
-loss_function = l2_loss
+
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
 """Creating summaries"""
@@ -70,11 +84,25 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
 #tf.image_summary('GroundTruth', y_image)
 
+#Cálcudo do argmax (talvez fazer em outra função)
+argmax_flat = tf.argmax(tf.reshape(last_layer, [last_layer.shape[0].value, -1]), axis=1)
+print(argmax_flat)
+part1 = argmax_flat // last_layer.shape[2].value
+part2 = tf.mod(argmax_flat, last_layer.shape[2].value)
+argmax = tf.stack([part1, part2])
+argmax = tf.transpose(argmax)
+argmax = (tf.reshape(argmax, (argmax.shape[0].value, argmax.shape[1].value, 1,1)))
+print argmax
 tf.summary.scalar('GroundTruthX', tf_points[0,0,0,0])
-tf.summary.scalar('OutputX', last_layer[0,0,0,0])
+tf.summary.scalar('OutputX', argmax[0,0,0,0])
 
 tf.summary.scalar('GroundTruthY', tf_points[0,1,0,0])
-tf.summary.scalar('OutputY', last_layer[0,1,0,0])
+tf.summary.scalar('OutputY', argmax[0,1,0,0])
+
+print tf_images
+tf.summary.image('Input', tf_images)
+tf.summary.image('Output', last_layer)
+
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 tf.summary.scalar('learning_rate',lr)
 
@@ -178,7 +206,7 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
     print("Epoch %f step %d, images used %d, loss %g, lowest_error %g on %d,examples per second %f"
         %(epoch_number, i, i*config.batch_size, train_accuracy, lowest_error, lowest_iter,examples_per_sec))
   if i%config.summary_writing_period == 1 and (config.use_tensorboard or config.save_json_summary):
-    output, result, sim_input = sess.run([last_layer,loss_function, x], feed_dict=feedDict)
+    output, result = sess.run([last_layer,loss_function], feed_dict=feedDict)
     result = np.mean(result)
     if len(ft_ops) > 0:
       ft_maps= sess.run(ft_ops, feed_dict=feedDict)
@@ -228,8 +256,6 @@ for i in range(initialIteration, config.n_epochs*dataset.getNImagesDataset()/con
       #print sess.run(last_layer, feed_dict=feedDictVal)[0]
       result = sess.run(loss_function, feed_dict=feedDictVal)
       validation_result_error += sum(result)
-    if validation_result_error:
-      validation_result_error = validation_result_error[0][0]
     if dataset.getNImagesValidation() !=0 :
       validation_result_error = (validation_result_error)/dataset.getNImagesValidation()
     if config.use_tensorboard:
