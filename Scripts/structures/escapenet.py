@@ -82,12 +82,12 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     # INPUT: (224x224x32)
     # 3x3
     # SAME
-    # 32x
-    # OUTPUT: (224x224x32)
+    # 64x
+    # OUTPUT: (224x224x64)
 
     #W_conv5 = deep_dive.weight_variable_scaling ( [3, 3, 16, 32], name='W_conv5'+base_name )
     #bias = deep_dive.bias_variable([32])
-    conv5 = tf.contrib.layers.conv2d(conv4, 32, [3, 3], stride=(1, 1), padding='SAME',
+    conv5 = tf.contrib.layers.conv2d(conv4, 64, [3, 3], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv5
@@ -95,15 +95,15 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     #histograms ["W_conv5"+base_name] = W_conv5
 
     # CONV 6
-    # INPUT: (224x224x32)
+    # INPUT: (224x224x64)
     # 3x3   
     # SAME
-    # 32x
-    # OUTPUT: (224x224x32)
+    # 64x
+    # OUTPUT: (224x224x64)
     
     #W_conv6 = deep_dive.weight_variable_scaling ( [3, 3, 32, 32], name='W_conv6'+base_name )
     #bias = deep_dive.bias_variable([32])
-    conv6 = tf.contrib.layers.conv2d(conv5, 32, [3, 3], stride=(1, 1), padding='SAME',
+    conv6 = tf.contrib.layers.conv2d(conv5, 64, [3, 3], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv6
@@ -112,15 +112,15 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
 
     #
     # CONV 7
-    # INPUT: (224x224x32)
+    # INPUT: (224x224x64)
     # 3x1
     # SAME
-    # 32x
-    # OUTPUT: (224x224x32)
+    # 64x
+    # OUTPUT: (224x224x64)
 
     #W_conv7 = deep_dive.weight_variable_scaling ( [3, 3, 32, 64], name='W_conv7'+base_name )
     #bias = deep_dive.bias_variable([64])
-    conv7 = tf.contrib.layers.conv2d(conv6, 32, [3, 1], stride=(1, 1), padding='SAME',
+    conv7 = tf.contrib.layers.conv2d(conv6, 64, [3, 1], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv7
@@ -128,22 +128,22 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     #histograms ["W_conv7"+base_name] = W_conv7
 
     # CONV 8
-    # INPUT: (224x224x32)
+    # INPUT: (224x224x64)
     # 1x3
     # SAME
-    # 32x
-    # OUTPUT: (224x224x32)
+    # 64x
+    # OUTPUT: (224x224x64)
     #W_conv8 = deep_dive.weight_variable_scaling ( [1, 1, 64, 16], name='W_conv8'+base_name )
     #bias = deep_dive.bias_variable([16])
-    conv8 = tf.contrib.layers.conv2d(conv7, 32, [1, 3], stride=(1, 1), padding='SAME',
+    conv8 = tf.contrib.layers.conv2d(conv7, 64, [1, 3], stride=(1, 1), padding='SAME',
         normalizer_fn=tf.contrib.layers.batch_norm, normalizer_params=n_params, trainable=training)
     
     print conv8
     features ["A_conv8"+base_name] = conv8
     #histograms ["W_conv8"+base_name] = W_conv8
-    """
+    
     # CONV 9
-    # INPUT: (224x224x32)
+    # INPUT: (224x224x64)
     # 1x1
     # SAME
     # 1x
@@ -165,8 +165,7 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     pool = tf.reduce_max(conv8, reduction_indices=[3], keep_dims=True, name="Z-POOL")
     print pool
     features["pool" + base_name] = pool
-
-    """
+    
     # FC 1
     # INPUT: (224^2)
     # OUTPUT: (2x1)
@@ -177,8 +176,8 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     fc = tf.reshape(fc, (batch_size, 2, 1, 1))
     print fc
     """
-    maxes = tf.reshape(tf.reduce_max(pool, (1, 2)), (batch_size, 1, 1, 1))
-    normal_final = pool / (maxes + epsilon)
+    maxes = tf.reshape(tf.reduce_max(conv9, (1, 2)), (batch_size, 1, 1, 1))
+    normal_final = (conv9) / (maxes + epsilon)
     return normal_final, dropoutDict, features, scalars, histograms
 """
     #ARGMAX

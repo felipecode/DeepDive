@@ -61,7 +61,7 @@ last_layer_reshape = tf.reshape(last_layer, (last_layer.shape[0].value,last_laye
 
 network_vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='network')
 
-coord_matrix = np.array([[[x, y] for x in range(config.input_size[0])] for y in range(config.input_size[1])], dtype=np.float32) #arr[x,y] = (x,y)
+coord_matrix = np.array([[[y, x] for x in range(config.input_size[0])] for y in range(config.input_size[1])], dtype=np.float32) #arr[x,y] = (x,y)
 #print coord_matrix
 tf_points_reshape = tf.reshape(tf_points, (batch_size, 1, 1, 2,))
 points_matrix = tf.tile(tf_points_reshape, [1, config.input_size[0], config.input_size[1], 1]) #matriz onde todos os valores são o ponto em tf_points
@@ -69,12 +69,10 @@ print points_matrix
 distance_matrix = tf.sqrt(tf.reduce_sum(tf.square(points_matrix - coord_matrix), -1)) #distance_matrix[x,y] = l2(ponto, last_layer[x,y])
 print distance_matrix
 loss_function = distance_matrix * last_layer_reshape
-loss_function = tf.reduce_sum(loss_function, (1, 2))
-#loss_function /= (config.epsilon + tf.reduce_max(last_layer_reshape, (1, 2))) 
+ones = tf.ones(last_layer_reshape.shape)
+loss_function += ones - ones * tf.reshape(tf.reduce_max(last_layer_reshape, (1, 2)), (batch_size, 1, 1))
+loss_function = tf.reduce_sum(loss_function, (1, 2)) / tf.reduce_sum(last_layer_reshape, (1, 2))
 print loss_function
-#l2_loss = (tf.sqrt(tf.reduce_sum(tf.square(tf_points - last_layer), 1)))
-#print l2_loss
-#l1_loss = tf.reduce_mean((tf.reduce_sum(tf.abs(tf_points - last_layer), 1)))
 
 train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta2=config.beta2, epsilon=config.epsilon,
                                     use_locking=config.use_locking).minimize(loss_function, var_list=network_vars)
@@ -84,15 +82,30 @@ train_step = tf.train.AdamOptimizer(learning_rate = lr, beta1=config.beta1, beta
 #tf.image_summary('Output', last_layer)TODO: Gerar imagens pra visualização
 #tf.image_summary('GroundTruth', y_image)
 
-#Cálcudo do argmax (talvez fazer em outra função)
+#Cálculo do argmax (talvez fazer em outra função)
 argmax_flat = tf.argmax(tf.reshape(last_layer, [last_layer.shape[0].value, -1]), axis=1)
 print(argmax_flat)
-part1 = argmax_flat // last_layer.shape[2].value
-part2 = tf.mod(argmax_flat, last_layer.shape[2].value)
+part2 = argmax_flat // last_layer.shape[2].value
+part1 = tf.mod(argmax_flat, last_layer.shape[2].value)
 argmax = tf.stack([part1, part2])
 argmax = tf.transpose(argmax)
 argmax = (tf.reshape(argmax, (argmax.shape[0].value, argmax.shape[1].value, 1,1)))
 print argmax
+"""
+#############TEST
+batch = dataset.train.next_batch(config.batch_size)
+print batch[1][0]
+print batch[1][0][0][0][0]
+print batch[1][0][1][0][0]
+x = min(int(batch[1][0][0][0][0]), 223)
+y = min(int(batch[1][0][1][0][0]), 223)
+dist_map = sess.run(distance_matrix, feed_dict={tf_points: batch[1]})[0]
+print dist_map.shape
+print np.unravel_index(np.argmin(dist_map), (224, 224))
+sys.exit()
+#############/TEST
+"""
+l2_loss = (tf.sqrt(tf.reduce_sum(tf.square(tf_points - tf.to_float(argmax)), 1)))
 tf.summary.scalar('GroundTruthX', tf_points[0,0,0,0])
 tf.summary.scalar('OutputX', argmax[0,0,0,0])
 
@@ -102,11 +115,12 @@ tf.summary.scalar('OutputY', argmax[0,1,0,0])
 print tf_images
 tf.summary.image('Input', tf_images)
 tf.summary.image('Output', last_layer)
+tf.summary.image('Ground Distance Matrix', tf.reshape(distance_matrix, (distance_matrix.shape[0].value, distance_matrix.shape[1].value, distance_matrix.shape[2].value, 1)))
 
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
 tf.summary.scalar('learning_rate',lr)
 
-
+tf.summary.scalar('Loss_L2', tf.reduce_mean(l2_loss))
 
 ft_ops=[]
 weights=[]
