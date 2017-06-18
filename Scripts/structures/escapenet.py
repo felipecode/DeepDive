@@ -180,8 +180,13 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     print fc
     """
     maxes = tf.reshape(tf.reduce_max(conv9, (1, 2)), (batch_size, 1, 1, 1))
-    normal_final = (conv9) / (maxes + epsilon)
-    return normal_final, dropoutDict, features, scalars, histograms
+    normal_map = (conv9) / (maxes + epsilon)
+    vector_x = tf.reduce_sum(normal_map, (1,))
+    vector_y = tf.reduce_sum(normal_map, (2,))
+
+    x = soft_argmax(vector_x)
+    y = soft_argmax(vector_y)
+    return [x, y], dropoutDict, features, scalars, histograms
 """
     #ARGMAX
     argmax_flat = tf.argmax(tf.reshape(conv9, [conv9.shape[0].value, -1]), axis=1)
