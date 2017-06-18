@@ -1,3 +1,6 @@
+import sys
+sys.path.append('utils')
+from soft_argmax import soft_argmax
 
 def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     
