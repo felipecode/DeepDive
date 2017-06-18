@@ -145,6 +145,7 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     features ["A_conv8"+base_name] = conv8
     #histograms ["W_conv8"+base_name] = W_conv8
     
+    """
     # CONV 9
     # INPUT: (224x224x64)
     # 1x1
@@ -169,6 +170,7 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     print pool
     features["pool" + base_name] = pool
     
+    """
     # FC 1
     # INPUT: (224^2)
     # OUTPUT: (2x1)
@@ -179,8 +181,8 @@ def create_structure(tf, x, input_size, dropout, training=True, epsilon=1e-6):
     fc = tf.reshape(fc, (batch_size, 2, 1, 1))
     print fc
     """
-    maxes = tf.reshape(tf.reduce_max(conv9, (1, 2)), (batch_size, 1, 1, 1))
-    normal_map = (conv9) / (maxes + epsilon)
+    maxes = tf.reshape(tf.reduce_max(pool, (1, 2)), (batch_size, 1, 1, 1))
+    normal_map = (pool) / (maxes + epsilon)
     vector_x = tf.reduce_sum(normal_map, (1,))
     vector_y = tf.reduce_sum(normal_map, (2,))
 

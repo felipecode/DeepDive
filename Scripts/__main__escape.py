@@ -75,7 +75,7 @@ tf.summary.scalar('OutputY', last_layer[0,1])
 
 print tf_images
 tf.summary.image('Input', tf_images)
-tf.summary.image('Heat Map', feature_maps['A_conv9esc_net'])
+tf.summary.image('Heat Map', feature_maps['poolesc_net'])
 #tf.summary.image('Ground Distance Matrix', tf.reshape(distance_matrix, (distance_matrix.shape[0].value, distance_matrix.shape[1].value, distance_matrix.shape[2].value, 1)))
 
 tf.summary.scalar('Loss', tf.reduce_mean(loss_function))
