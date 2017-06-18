@@ -264,7 +264,7 @@ class configEscape:
 		self.use_deconv = False
 		self.dropout = []
 		self.input_size = (224, 224,3)
-		self.output_size = (2, 1, 1)
+		self.output_size = (2,)
 		self.summary_writing_period = 20
 		self.validation_period = 120
 		self.features_list=[]
